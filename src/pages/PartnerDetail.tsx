@@ -10,13 +10,18 @@ import clsx from 'clsx';
 export default function PartnerDetail() {
     const { id } = useParams();
     const { getPartner, addRequest } = usePartners();
-    const { user, isAuthenticated } = useAuthStore(); // Assuming user object has id/name
+    const { user, isAuthenticated, viewMode } = useAuthStore(); // Assuming user object has id/name
     const navigate = useNavigate();
     const location = useLocation();
 
+    const isCompany = (user?.type === 'Company' || user?.type === 'company') || (!user && viewMode === 'company');
+
     const partner = getPartner(Number(id));
     const [selectedSchedule, setSelectedSchedule] = useState<Schedule | null>(null);
-    const [applicationStep, setApplicationStep] = useState<'idle' | 'checking' | 'confirm' | 'success'>('idle');
+    const [applicationStep, setApplicationStep] = useState<'idle' | 'checking' | 'confirm' | 'payment' | 'processing' | 'success'>('idle');
+    const [cardNumber, setCardNumber] = useState('');
+    const [cardExpiry, setCardExpiry] = useState('');
+    const [cardCVC, setCardCVC] = useState('');
 
     if (!partner) {
         return (
@@ -38,7 +43,8 @@ export default function PartnerDetail() {
         e.stopPropagation();
 
         if (!isAuthenticated || !user) {
-            navigate('/login?type=personal', { state: { from: location.pathname } });
+            const redirectType = viewMode === 'company' ? 'company' : 'personal';
+            navigate(`/login?type=${redirectType}`, { state: { from: location.pathname } });
             return;
         }
 
@@ -59,7 +65,32 @@ export default function PartnerDetail() {
         }, 600);
     };
 
-    const handleFinalApply = () => {
+    const handleProceedToPayment = () => {
+        if (!selectedSchedule) return;
+
+        // Determine Price
+        const price = isCompany ? selectedSchedule.priceCompany : selectedSchedule.pricePersonal;
+
+        if (price && price > 0) {
+            setApplicationStep('payment');
+        } else {
+            // Free event, skip payment
+            handleCompleteBooking(0);
+        }
+    };
+
+    const handlePaymentSubmit = (e: React.FormEvent) => {
+        e.preventDefault();
+        setApplicationStep('processing');
+
+        // Simulate Payment Gateway
+        setTimeout(() => {
+            const price = isCompany ? selectedSchedule?.priceCompany : selectedSchedule?.pricePersonal;
+            handleCompleteBooking(price || 0);
+        }, 1500);
+    };
+
+    const handleCompleteBooking = (amout: number) => {
         if (!selectedSchedule || !user) return;
 
         addRequest({
@@ -69,7 +100,12 @@ export default function PartnerDetail() {
             userName: user.name || user.id,
             scheduleId: selectedSchedule.id,
             scheduleTitle: selectedSchedule.title,
-            scheduleDate: selectedSchedule.date
+            scheduleDate: selectedSchedule.date,
+            paymentStatus: amout > 0 ? 'paid' : 'pending',
+            paymentAmount: amout,
+            paymentDate: new Date().toISOString(),
+            paymentMethod: amout > 0 ? 'Credit Card' : 'Free',
+            userType: isCompany ? 'Company' : 'Personal'
         });
         setApplicationStep('success');
     };
@@ -147,6 +183,28 @@ export default function PartnerDetail() {
                                         <h3 className="font-bold text-lg mb-2">{schedule.title}</h3>
                                         <p className="text-sm text-gray-500 mb-4 h-10 line-clamp-2">{schedule.description}</p>
 
+                                        <div className="mb-4">
+                                            {isCompany && schedule.priceCompany ? (
+                                                <div className="flex flex-col">
+                                                    <span className="text-xs text-blue-500 font-semibold">기업 회원가</span>
+                                                    <div className="flex items-baseline gap-1">
+                                                        <span className="text-xl font-bold text-blue-700">₩{schedule.priceCompany.toLocaleString()}</span>
+                                                        <span className="text-sm text-gray-500">(${(schedule.priceCompany / 1450).toFixed(2)})</span>
+                                                    </div>
+                                                </div>
+                                            ) : !isCompany && schedule.pricePersonal ? (
+                                                <div className="flex flex-col">
+                                                    <span className="text-xs text-emerald-500 font-semibold">개인 회원가</span>
+                                                    <div className="flex items-baseline gap-1">
+                                                        <span className="text-xl font-bold text-emerald-700">₩{schedule.pricePersonal.toLocaleString()}</span>
+                                                        <span className="text-sm text-gray-500">(${(schedule.pricePersonal / 1450).toFixed(2)})</span>
+                                                    </div>
+                                                </div>
+                                            ) : (
+                                                <div className="h-[3.25rem]"></div>
+                                            )}
+                                        </div>
+
                                         <div className="flex items-center justify-between text-sm pt-4 border-t border-gray-100">
                                             <div className="flex items-center text-gray-600">
                                                 <Users size={16} className="mr-1" />
@@ -206,11 +264,11 @@ export default function PartnerDetail() {
                                     <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
                                         <CheckCircle className="text-blue-600" size={32} />
                                     </div>
-                                    <h3 className="text-xl font-bold text-gray-900 mb-2">신청 가능합니다!</h3>
+                                    <h3 className="text-xl font-bold text-gray-900 mb-2">신청 하시겠습니까?</h3>
                                     <p className="text-gray-600 mb-6">
                                         선택하신 <strong>{selectedSchedule?.title}</strong><br />
                                         ({selectedSchedule?.date}) 일정에<br />
-                                        참여 신청을 완료하시겠습니까?
+                                        참여를 신청합니다.
                                     </p>
                                     <div className="flex gap-3">
                                         <button
@@ -220,12 +278,92 @@ export default function PartnerDetail() {
                                             취소
                                         </button>
                                         <button
-                                            onClick={handleFinalApply}
+                                            onClick={handleProceedToPayment}
                                             className="flex-1 bg-blue-600 text-white py-3 rounded-lg font-bold hover:bg-blue-700 transition-colors"
                                         >
-                                            신청완료
+                                            다음 (결제)
                                         </button>
                                     </div>
+                                </div>
+                            )}
+
+                            {applicationStep === 'payment' && (
+                                <form onSubmit={handlePaymentSubmit} className="text-left">
+                                    <h3 className="text-xl font-bold text-gray-900 mb-4 text-center">결제 정보 입력</h3>
+
+                                    <div className="bg-gray-50 p-4 rounded-lg mb-4 border border-gray-100">
+                                        <div className="flex justify-between items-center mb-2">
+                                            <span className="text-gray-600">결제 금액</span>
+                                            <span className="font-bold text-lg text-blue-600">
+                                                ₩{(isCompany ? selectedSchedule?.priceCompany : selectedSchedule?.pricePersonal)?.toLocaleString() || 0}
+                                            </span>
+                                        </div>
+                                        <div className="text-xs text-right text-gray-400">
+                                            (${((isCompany ? selectedSchedule?.priceCompany || 0 : selectedSchedule?.pricePersonal || 0) / 1450).toFixed(2)})
+                                        </div>
+                                    </div>
+
+                                    <div className="space-y-3 mb-6">
+                                        <div>
+                                            <label className="block text-xs font-semibold text-gray-500 mb-1">카드 번호</label>
+                                            <input
+                                                type="text"
+                                                placeholder="0000 0000 0000 0000"
+                                                className="w-full border border-gray-300 rounded p-2 text-sm"
+                                                value={cardNumber}
+                                                onChange={(e) => setCardNumber(e.target.value)}
+                                                required
+                                            />
+                                        </div>
+                                        <div className="flex gap-3">
+                                            <div className="flex-1">
+                                                <label className="block text-xs font-semibold text-gray-500 mb-1">유효기간</label>
+                                                <input
+                                                    type="text"
+                                                    placeholder="MM/YY"
+                                                    className="w-full border border-gray-300 rounded p-2 text-sm"
+                                                    value={cardExpiry}
+                                                    onChange={(e) => setCardExpiry(e.target.value)}
+                                                    required
+                                                />
+                                            </div>
+                                            <div className="w-1/3">
+                                                <label className="block text-xs font-semibold text-gray-500 mb-1">CVC</label>
+                                                <input
+                                                    type="text"
+                                                    placeholder="123"
+                                                    className="w-full border border-gray-300 rounded p-2 text-sm"
+                                                    value={cardCVC}
+                                                    onChange={(e) => setCardCVC(e.target.value)}
+                                                    required
+                                                />
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div className="flex gap-3">
+                                        <button
+                                            type="button"
+                                            onClick={() => setApplicationStep('idle')}
+                                            className="flex-1 bg-gray-100 text-gray-700 py-3 rounded-lg font-bold hover:bg-gray-200 transition-colors"
+                                        >
+                                            취소
+                                        </button>
+                                        <button
+                                            type="submit"
+                                            className="flex-1 bg-blue-600 text-white py-3 rounded-lg font-bold hover:bg-blue-700 transition-colors"
+                                        >
+                                            결제하기
+                                        </button>
+                                    </div>
+                                </form>
+                            )}
+
+                            {applicationStep === 'processing' && (
+                                <div className="py-8">
+                                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+                                    <p className="text-lg font-medium text-gray-700">결제 진행 중...</p>
+                                    <p className="text-sm text-gray-500 mt-2">잠시만 기다려 주세요.</p>
                                 </div>
                             )}
 

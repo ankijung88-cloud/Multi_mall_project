@@ -1,21 +1,31 @@
 import { useNavigate } from 'react-router-dom';
 import { usePartners } from '../context/PartnerContext';
+import { useAuthStore } from '../store/useAuthStore';
 import MainLayout from '../layouts/MainLayout';
 import { motion } from 'framer-motion';
+import clsx from 'clsx';
 
 export default function Partners() {
     const { partners } = usePartners();
     const navigate = useNavigate();
+    const { userType } = useAuthStore();
 
     return (
         <MainLayout>
             <div className="bg-gray-50 min-h-screen pb-20">
                 {/* Hero */}
-                <div className="bg-gray-900 text-white py-16 mb-12">
+                <div className={clsx(
+                    "text-white py-16 mb-12 transition-colors duration-300",
+                    userType === 'company' ? "bg-blue-900" : "bg-gray-900"
+                )}>
                     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-                        <h1 className="text-4xl md:text-5xl font-bold mb-4">K-Culture Partners</h1>
-                        <p className="text-xl text-gray-300 max-w-2xl mx-auto">
-                            대한민국 최고의 문화 체험 및 교육 프로그램을 제공하는 파트너사를 소개합니다.
+                        <h1 className="text-4xl md:text-5xl font-bold mb-4">
+                            {userType === 'company' ? 'Corporate Partnership' : 'K-Culture Partners'}
+                        </h1>
+                        <p className={clsx("text-xl max-w-2xl mx-auto", userType === 'company' ? "text-blue-200" : "text-gray-300")}>
+                            {userType === 'company'
+                                ? '기업의 성장을 돕는 전문 파트너사와 교육 프로그램을 확인하세요.'
+                                : '대한민국 최고의 문화 체험 및 교육 프로그램을 제공하는 파트너사를 소개합니다.'}
                         </p>
                     </div>
                 </div>

@@ -104,10 +104,12 @@ export default function AdminMembers() {
                                         <td className="px-6 py-4">
                                             <span className={clsx(
                                                 "inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border",
-                                                member.type === 'Company' ? 'bg-blue-50 text-blue-700 border-blue-200' : 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                                                member.type.toLowerCase() === 'company'
+                                                    ? 'bg-sky-100 text-sky-800 border-sky-200'
+                                                    : 'bg-emerald-50 text-emerald-700 border-emerald-200'
                                             )}>
-                                                {member.type === 'Company' && <Shield size={10} className="mr-1" />}
-                                                {member.type}
+                                                {member.type.toLowerCase() === 'company' && <Shield size={10} className="mr-1" />}
+                                                {member.type.toLowerCase() === 'company' ? 'company' : member.type.toLowerCase()}
                                             </span>
                                         </td>
                                         <td className="px-6 py-4">

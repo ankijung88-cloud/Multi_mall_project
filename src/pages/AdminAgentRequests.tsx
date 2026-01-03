@@ -1,6 +1,6 @@
 import { useAgents } from '../context/AgentContext';
 import { useAuthStore } from '../store/useAuthStore';
-import { Send, CheckCircle, Trash, Edit, X, Save } from 'lucide-react';
+import { Send, CheckCircle, Trash, Edit, X, Save, FileCheck } from 'lucide-react';
 import clsx from 'clsx';
 import { useState } from 'react';
 import type { AgentRequest } from '../context/AgentContext';
@@ -32,6 +32,13 @@ export default function AdminAgentRequests() {
         updateRequestStatus(id, 'approved');
     };
 
+    const handleSendConfirmation = (id: string, userName: string) => {
+        if (window.confirm(`${userName}님에게 예약확정서를 전송하시겠습니까?`)) {
+            updateRequestStatus(id, 'confirmation_sent');
+            alert(`${userName}님에게 예약확정서가 전송되었습니다.`);
+        }
+    };
+
     const handleDelete = (id: string) => {
         if (window.confirm("정말로 이 요청을 삭제하시겠습니까?")) {
             deleteRequest(id);
@@ -59,16 +66,18 @@ export default function AdminAgentRequests() {
                         <tr>
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">신청일시</th>
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">신청자</th>
+                            <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">회원구분</th>
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">에이전트</th>
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">신청 일정</th>
                             <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">상태</th>
+                            <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">결제금액</th>
                             <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">관리</th>
                         </tr>
                     </thead>
                     <tbody className="bg-white divide-y divide-gray-200">
                         {sortedRequests.length === 0 ? (
                             <tr>
-                                <td colSpan={6} className="px-6 py-12 text-center text-gray-500">
+                                <td colSpan={8} className="px-6 py-12 text-center text-gray-500">
                                     {Array.isArray(requests) ? "참여 신청 내역이 없습니다." : "데이터 로딩 중..."}
                                 </td>
                             </tr>
@@ -82,6 +91,16 @@ export default function AdminAgentRequests() {
                                         <div className="text-sm font-medium text-gray-900">{request.userName}</div>
                                         <div className="text-sm text-gray-500">{request.userId}</div>
                                     </td>
+                                    <td className="px-6 py-4 whitespace-nowrap text-center">
+                                        <span className={clsx(
+                                            "px-2 inline-flex text-xs leading-5 font-semibold rounded-full border",
+                                            request.userType === 'Company'
+                                                ? "bg-sky-100 text-sky-800 border-sky-200"
+                                                : "bg-emerald-50 text-emerald-700 border-emerald-200"
+                                        )}>
+                                            {request.userType === 'Company' ? 'company' : 'personal'}
+                                        </span>
+                                    </td>
                                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                                         {request.agentName}
                                     </td>
@@ -94,11 +113,16 @@ export default function AdminAgentRequests() {
                                             "px-2 inline-flex text-xs leading-5 font-semibold rounded-full",
                                             request.status === 'approved' ? "bg-green-100 text-green-800" :
                                                 request.status === 'sent_to_agent' ? "bg-blue-100 text-blue-800" :
-                                                    "bg-yellow-100 text-yellow-800"
+                                                    request.status === 'confirmation_sent' ? "bg-purple-100 text-purple-800" :
+                                                        "bg-yellow-100 text-yellow-800"
                                         )}>
                                             {request.status === 'sent_to_agent' ? '전송 완료' :
-                                                request.status === 'approved' ? '승인됨' : '대기중'}
+                                                request.status === 'confirmation_sent' ? '확정서 전송옴' :
+                                                    request.status === 'approved' ? '승인됨' : '대기중'}
                                         </span>
+                                    </td>
+                                    <td className="px-6 py-4 whitespace-nowrap text-right font-medium text-gray-900">
+                                        {request.paymentAmount ? `₩${request.paymentAmount.toLocaleString()}` : '-'}
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                         <div className="flex justify-end items-center space-x-2">
@@ -129,6 +153,17 @@ export default function AdminAgentRequests() {
                                                     title="에이전트 전송"
                                                 >
                                                     <Send size={16} className="mr-1" />
+                                                </button>
+                                            )}
+
+                                            {/* Confirmation Button */}
+                                            {(adminRole === 'agent' || adminRole === 'super') && request.status !== 'pending' && (
+                                                <button
+                                                    onClick={() => handleSendConfirmation(request.id, request.userName)}
+                                                    className="text-purple-600 hover:text-purple-900"
+                                                    title="예약확정서 전송"
+                                                >
+                                                    <FileCheck size={18} />
                                                 </button>
                                             )}
 

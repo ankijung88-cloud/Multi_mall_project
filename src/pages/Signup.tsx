@@ -34,6 +34,27 @@ export default function Signup() {
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+
+        // Validation: Password Length
+        if (formData.password.length < 8 || formData.password.length > 12) {
+            alert('비밀번호는 8자 이상 12자 이하로 입력해주세요.');
+            return;
+        }
+
+        // Validation: Password Match
+        if (formData.password !== formData.confirmPassword) {
+            alert('비밀번호가 일치하지 않습니다.');
+            return;
+        }
+
+        // Validation: Duplicate Email
+        const storedMembers = localStorage.getItem('mall_members');
+        const members = storedMembers ? JSON.parse(storedMembers) : [];
+        if (members.some((m: any) => m.email === formData.email)) {
+            alert('이미 가입된 이메일(ID)입니다. 다른 이메일을 사용해 주세요.');
+            return;
+        }
+
         setIsLoading(true);
 
         // Simulate API call
@@ -44,7 +65,7 @@ export default function Signup() {
             id: Date.now(), // Simple unique ID
             name: formData.name,
             email: formData.email,
-            type: type === 'company' ? 'Company' : 'Personal',
+            type: type === 'company' ? 'company' : 'personal',
             status: 'Active',
             date: new Date().toISOString().split('T')[0],
             companyName: formData.companyName || undefined,
@@ -52,8 +73,6 @@ export default function Signup() {
         };
 
         // Save to localStorage
-        const storedMembers = localStorage.getItem('mall_members');
-        const members = storedMembers ? JSON.parse(storedMembers) : [];
         members.push(newUser);
         localStorage.setItem('mall_members', JSON.stringify(members));
 
@@ -74,6 +93,34 @@ export default function Signup() {
     return (
         <AuthLayout>
             <div className="bg-white py-8 px-4 shadow-2xl shadow-gray-200/50 sm:rounded-2xl sm:px-10 border border-gray-100">
+                {/* Type Switcher */}
+                <div className="flex justify-center mb-8">
+                    <div className="bg-gray-100 p-1 rounded-lg flex space-x-1">
+                        <Link
+                            to="?type=personal"
+                            className={clsx(
+                                "px-6 py-2 rounded-md text-sm font-medium transition-all duration-200",
+                                type === 'personal'
+                                    ? "bg-white text-emerald-600 shadow-sm ring-1 ring-black/5"
+                                    : "text-gray-500 hover:text-gray-700"
+                            )}
+                        >
+                            개인 회원
+                        </Link>
+                        <Link
+                            to="?type=company"
+                            className={clsx(
+                                "px-6 py-2 rounded-md text-sm font-medium transition-all duration-200",
+                                type === 'company'
+                                    ? "bg-white text-blue-600 shadow-sm ring-1 ring-black/5"
+                                    : "text-gray-500 hover:text-gray-700"
+                            )}
+                        >
+                            기업 회원
+                        </Link>
+                    </div>
+                </div>
+
                 <div className="sm:mx-auto sm:w-full sm:max-w-md mb-6">
                     <h2 className={clsx("mt-2 text-center text-3xl font-extrabold tracking-tight", isCompany ? "text-blue-900" : "text-emerald-900")}>
                         {isCompany ? '파트너 회원가입' : '회원가입'}

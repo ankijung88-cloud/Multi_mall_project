@@ -9,6 +9,8 @@ export interface AgentSchedule {
     description: string;
     maxSlots: number;
     currentSlots: number;
+    pricePersonal?: number;
+    priceCompany?: number;
 }
 
 export interface Agent {
@@ -32,8 +34,13 @@ export interface AgentRequest {
     scheduleId: string;
     scheduleTitle: string;
     scheduleDate: string;
-    status: 'pending' | 'approved' | 'sent_to_agent';
+    status: 'pending' | 'approved' | 'sent_to_agent' | 'confirmation_sent';
     timestamp: string;
+    paymentStatus?: 'pending' | 'paid';
+    paymentAmount?: number;
+    paymentDate?: string;
+    paymentMethod?: string;
+    userType?: 'Personal' | 'Company';
 }
 
 interface AgentContextType {
@@ -58,7 +65,7 @@ const initialAgents: Agent[] = [
         image: "https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&q=80&w=1000",
         description: "Professional Real Estate Agent.",
         schedules: [
-            { id: 'S1', date: '2026-02-10', time: '10:00', title: 'Consultation', description: 'Real Estate Consultation', maxSlots: 5, currentSlots: 0 }
+            { id: 'S1', date: '2026-02-10', time: '10:00', title: 'Consultation', description: 'Real Estate Consultation', maxSlots: 5, currentSlots: 0, pricePersonal: 100000, priceCompany: 150000 }
         ],
         credentials: { username: 'agentkim', password: 'password' }
     }
@@ -74,7 +81,16 @@ export function AgentProvider({ children }: { children: ReactNode }) {
             try {
                 const parsed = JSON.parse(storedAgents);
                 if (Array.isArray(parsed)) {
-                    setAgents(parsed);
+                    // Migration: Ensure pricing fields exist
+                    const migrated = parsed.map((a: Agent) => ({
+                        ...a,
+                        schedules: a.schedules.map((s: AgentSchedule) => ({
+                            ...s,
+                            pricePersonal: s.pricePersonal !== undefined ? s.pricePersonal : 30000,
+                            priceCompany: s.priceCompany !== undefined ? s.priceCompany : 50000
+                        }))
+                    }));
+                    setAgents(migrated);
                 } else {
                     console.error("Invalid agents data in localStorage, resetting.");
                     setAgents(initialAgents);

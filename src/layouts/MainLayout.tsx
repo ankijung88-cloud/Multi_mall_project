@@ -11,9 +11,14 @@ interface MainLayoutProps {
 }
 
 export default function MainLayout({ children }: MainLayoutProps) {
-    const { userType, logout, isAuthenticated } = useAuthStore();
+    const { userType, logout, isAuthenticated, viewMode } = useAuthStore();
     const navigate = useNavigate();
     const { toggleCart, totalItems } = useCart();
+
+    // Determine current view mode: prioritize userType (if logged in), otherwise viewMode (set by Landing Pages)
+    // Default to 'personal' if neither is set
+    const activeType = userType || viewMode || 'personal';
+    const isCompany = activeType === 'company';
 
     const handleLogout = () => {
         logout();
@@ -32,23 +37,47 @@ export default function MainLayout({ children }: MainLayoutProps) {
         <div className="min-h-screen bg-gray-50 flex flex-col font-sans">
             <nav className={clsx(
                 "bg-white shadow-sm sticky top-0 z-50 transition-colors duration-300",
-                userType === 'company' ? "border-b-4 border-blue-600" : "border-b-4 border-emerald-500"
+                isCompany ? "border-b-4 border-blue-600" : "border-b-4 border-emerald-500"
             )}>
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                    <div className="flex justify-between h-16 items-center">
+                    <div className="flex justify-between h-16 items-center relative">
                         <div className="flex items-center space-x-8">
-                            <Link to={userType === 'company' ? '/company' : '/personal'} className="flex items-center space-x-2">
+                            <Link to={isCompany ? '/company' : '/personal'} className="flex items-center space-x-2">
                                 <div className={clsx(
                                     "p-2 rounded-lg text-white",
-                                    userType === 'company' ? "bg-blue-600" : "bg-emerald-500"
+                                    isCompany ? "bg-blue-600" : "bg-emerald-500"
                                 )}>
                                     <ShoppingBag size={24} />
                                 </div>
                                 <span className="text-xl font-bold text-gray-800">
-                                    {userType === 'company' ? 'BizMall' : 'LifeStyle'}
+                                    {isCompany ? 'BizMall' : 'LifeStyle'}
                                 </span>
                             </Link>
+                        </div>
 
+                        {/* Centered Navigation Menu */}
+                        <div className="hidden md:flex absolute left-1/2 transform -translate-x-1/2 space-x-8">
+                            {[
+                                { name: '홈', path: isCompany ? '/company' : '/personal' },
+                                { name: '쇼핑', path: '/shop' },
+                                { name: 'K-Culture', path: '/partners' },
+                                { name: '에이전트', path: '/agents' },
+                                { name: '커뮤니티', path: '#' },
+                            ].map((item) => (
+                                <Link
+                                    key={item.name}
+                                    to={item.path}
+                                    className={clsx(
+                                        "text-base font-medium transition-colors",
+                                        "text-gray-600 hover:text-gray-900",
+                                        isCompany
+                                            ? "hover:text-blue-600"
+                                            : "hover:text-emerald-500"
+                                    )}
+                                >
+                                    {item.name}
+                                </Link>
+                            ))}
                         </div>
 
                         <div className="flex items-center space-x-3">
@@ -68,7 +97,7 @@ export default function MainLayout({ children }: MainLayoutProps) {
                                 {totalItems > 0 && (
                                     <span className={clsx(
                                         "absolute -top-1 -right-1 text-xs font-bold text-white px-1.5 py-0.5 rounded-full",
-                                        userType === 'company' ? "bg-blue-600" : "bg-emerald-500"
+                                        isCompany ? "bg-blue-600" : "bg-emerald-500"
                                     )}>
                                         {totalItems}
                                     </span>
@@ -76,7 +105,7 @@ export default function MainLayout({ children }: MainLayoutProps) {
                             </button>
 
                             <span className="text-sm font-medium text-gray-500">
-                                {userType === 'company' ? '기업 회원' : '개인 회원'}
+                                {isCompany ? '기업 회원' : '개인 회원'}
                             </span>
                             {isAuthenticated ? (
                                 <button
@@ -110,7 +139,7 @@ export default function MainLayout({ children }: MainLayoutProps) {
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 md:grid-cols-3 gap-8">
                     <div>
                         <h3 className="text-lg font-bold mb-4">회사 소개</h3>
-                        <p className="text-gray-400">{userType === 'company' ? '기업' : '모두'}를 위한 맞춤형 프리미엄 쇼핑 경험을 제공합니다.</p>
+                        <p className="text-gray-400">{isCompany ? '기업' : '모두'}를 위한 맞춤형 프리미엄 쇼핑 경험을 제공합니다.</p>
                     </div>
                     <div>
                         <h3 className="text-lg font-bold mb-4">고객 센터</h3>
@@ -128,7 +157,7 @@ export default function MainLayout({ children }: MainLayoutProps) {
                     </div>
                 </div>
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-8 pt-8 border-t border-gray-800 text-center text-gray-500 text-sm">
-                    © 2024 {userType === 'company' ? 'BizMall Inc.' : 'LifeStyle Shop'}. All rights reserved.
+                    © 2024 {isCompany ? 'BizMall Inc.' : 'LifeStyle Shop'}. All rights reserved.
                 </div>
             </footer>
         </div>

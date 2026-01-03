@@ -108,6 +108,8 @@ export default function AdminAgents() {
                 title: field === 'title' ? value : '',
                 description: field === 'description' ? value : '',
                 maxSlots: field === 'maxSlots' ? Number(value) : 10,
+                pricePersonal: field === 'pricePersonal' ? Number(value) : undefined,
+                priceCompany: field === 'priceCompany' ? Number(value) : undefined,
                 currentSlots: 0
             };
             setFormSchedules([...formSchedules, newSchedule]);
@@ -301,6 +303,8 @@ export default function AdminAgents() {
                                                     <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-20">Time</th>
                                                     <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Title</th>
                                                     <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Description</th>
+                                                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-28">Personal Price</th>
+                                                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-28">Company Price</th>
                                                     <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-24">Max Slots</th>
                                                 </tr>
                                             </thead>
@@ -334,6 +338,24 @@ export default function AdminAgents() {
                                                                         value={schedule?.description || ''}
                                                                         onChange={(e) => handleSheetChange(time, subIndex, 'description', e.target.value)}
                                                                         placeholder="설명"
+                                                                        className="w-full border-gray-200 rounded text-sm focus:ring-blue-500 focus:border-blue-500 bg-transparent"
+                                                                    />
+                                                                </td>
+                                                                <td className="px-4 py-1">
+                                                                    <input
+                                                                        type="number"
+                                                                        value={schedule?.pricePersonal || ''}
+                                                                        onChange={(e) => handleSheetChange(time, subIndex, 'pricePersonal', e.target.value)}
+                                                                        placeholder="₩ (개인)"
+                                                                        className="w-full border-gray-200 rounded text-sm focus:ring-blue-500 focus:border-blue-500 bg-transparent"
+                                                                    />
+                                                                </td>
+                                                                <td className="px-4 py-1">
+                                                                    <input
+                                                                        type="number"
+                                                                        value={schedule?.priceCompany || ''}
+                                                                        onChange={(e) => handleSheetChange(time, subIndex, 'priceCompany', e.target.value)}
+                                                                        placeholder="₩ (기업)"
                                                                         className="w-full border-gray-200 rounded text-sm focus:ring-blue-500 focus:border-blue-500 bg-transparent"
                                                                     />
                                                                 </td>

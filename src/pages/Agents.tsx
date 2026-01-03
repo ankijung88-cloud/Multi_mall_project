@@ -2,27 +2,40 @@ import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { useAgents } from '../context/AgentContext';
 import { useAuthStore } from '../store/useAuthStore';
+import clsx from 'clsx';
 import MainLayout from '../layouts/MainLayout';
 
 export default function Agents() {
     const { agents } = useAgents();
     const navigate = useNavigate();
-    const { isAuthenticated } = useAuthStore();
+    const { isAuthenticated, userType } = useAuthStore();
 
     return (
         <MainLayout>
-            <div className="bg-gradient-to-b from-gray-900 via-purple-900 to-gray-900 text-white min-h-screen">
+            <div className={clsx(
+                "min-h-screen text-white transition-colors duration-500",
+                userType === 'company'
+                    ? "bg-gradient-to-b from-blue-900 via-indigo-900 to-gray-900"
+                    : "bg-gradient-to-b from-gray-900 via-purple-900 to-gray-900"
+            )}>
                 <div className="max-w-7xl mx-auto px-4 py-20">
                     <motion.div
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
                         className="text-center mb-16"
                     >
-                        <h1 className="text-5xl font-bold mb-6 bg-clip-text text-transparent bg-gradient-to-r from-purple-400 to-pink-400">
-                            Professional Agents
+                        <h1 className={clsx(
+                            "text-5xl font-bold mb-6 bg-clip-text text-transparent",
+                            userType === 'company'
+                                ? "bg-gradient-to-r from-blue-400 to-teal-300"
+                                : "bg-gradient-to-r from-purple-400 to-pink-400"
+                        )}>
+                            {userType === 'company' ? 'Corporate Agents' : 'Professional Agents'}
                         </h1>
-                        <p className="text-xl text-gray-300 max-w-2xl mx-auto">
-                            Meet our expert agents ready to assist slightly you with your journey.
+                        <p className={clsx("text-xl max-w-2xl mx-auto", userType === 'company' ? "text-blue-200" : "text-gray-300")}>
+                            {userType === 'company'
+                                ? '기업 컨설팅 및 전문 서비스를 제공하는 최정예 에이전트 그룹입니다.'
+                                : 'Meet our expert agents ready to assist you with your journey.'}
                         </p>
                     </motion.div>
 

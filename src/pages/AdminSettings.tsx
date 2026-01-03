@@ -1,11 +1,16 @@
 import { useState, useEffect } from 'react';
-import { Save, User, Lock, AlertCircle } from 'lucide-react';
+import { Save, User, Lock, AlertCircle, Key, Shield, RefreshCw, Trash2 } from 'lucide-react';
 import { useAuthStore } from '../store/useAuthStore';
+import { usePartners } from '../context/PartnerContext';
+import { useAgents } from '../context/AgentContext';
 
 export default function AdminSettings() {
     const [isLoading, setIsLoading] = useState(false);
-    const { logout } = useAuthStore();
+    const { logout, adminRole, adminTargetId } = useAuthStore();
+    const { partners, updatePartner } = usePartners();
+    const { agents, updateAgent } = useAgents();
 
+    // Super Admin Form State
     const [formData, setFormData] = useState({
         name: '',
         id: '',
@@ -14,34 +19,54 @@ export default function AdminSettings() {
         confirmPassword: ''
     });
 
+    // Partner/Agent Form State
+    const [myProfile, setMyProfile] = useState({
+        name: '',
+        username: '',
+        password: '',
+        confirmPassword: ''
+    });
+
+    // Load Data
     useEffect(() => {
-        const stored = localStorage.getItem('mall_admin_creds');
-        if (stored) {
-            const { name, id } = JSON.parse(stored);
-            setFormData(prev => ({ ...prev, name, id }));
+        if (adminRole === 'super') {
+            const stored = localStorage.getItem('mall_admin_creds');
+            if (stored) {
+                const { name, id } = JSON.parse(stored);
+                setFormData(prev => ({ ...prev, name, id }));
+            }
+        } else if (adminRole === 'partner' && adminTargetId) {
+            const p = partners.find(i => i.id === adminTargetId);
+            if (p && p.credentials) {
+                setMyProfile({
+                    name: p.name,
+                    username: p.credentials.username,
+                    password: p.credentials.password,
+                    confirmPassword: p.credentials.password
+                });
+            }
+        } else if (adminRole === 'agent' && adminTargetId) {
+            const a = agents.find(i => i.id === adminTargetId);
+            if (a && a.credentials) {
+                setMyProfile({
+                    name: a.name,
+                    username: a.credentials.username,
+                    password: a.credentials.password,
+                    confirmPassword: a.credentials.password
+                });
+            }
         }
-    }, []);
+    }, [adminRole, adminTargetId, partners, agents]);
 
-    const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const { name, value } = e.target;
-        setFormData(prev => ({ ...prev, [name]: value }));
-    };
-
-    const handleSave = async (e: React.FormEvent) => {
+    // Super Admin Update Handler
+    const handleSuperSave = async (e: React.FormEvent) => {
         e.preventDefault();
         setIsLoading(true);
 
-        // Validation
         const stored = localStorage.getItem('mall_admin_creds');
         const creds = stored ? JSON.parse(stored) : null;
 
-        if (!creds) {
-            alert('Error: Admin credentials not found.');
-            setIsLoading(false);
-            return;
-        }
-
-        if (formData.currentPassword !== creds.password) {
+        if (!creds || formData.currentPassword !== creds.password) {
             alert('Current password is incorrect.');
             setIsLoading(false);
             return;
@@ -53,141 +78,300 @@ export default function AdminSettings() {
                 setIsLoading(false);
                 return;
             }
-            if (formData.newPassword.length < 6) {
-                alert('Password must be at least 6 characters.');
+            if (formData.newPassword.length < 4) {
+                alert('Password too short.');
                 setIsLoading(false);
                 return;
             }
         }
 
-        // Simulate API delay
-        await new Promise(resolve => setTimeout(resolve, 800));
+        await new Promise(resolve => setTimeout(resolve, 500));
 
-        // Save
         const newCreds = {
             ...creds,
             name: formData.name,
-            // id: formData.id, // Allow ID change? User asked for "Admin Info" change, assuming ID too.
             id: formData.id,
             password: formData.newPassword || creds.password
         };
-
         localStorage.setItem('mall_admin_creds', JSON.stringify(newCreds));
-        alert('Information updated successfully.');
-
-        // Clear sensitive fields
-        setFormData(prev => ({
-            ...prev,
-            currentPassword: '',
-            newPassword: '',
-            confirmPassword: ''
-        }));
-
+        alert('Super Admin info updated.');
+        setFormData(prev => ({ ...prev, currentPassword: '', newPassword: '', confirmPassword: '' }));
         setIsLoading(false);
+    };
+
+    // Partner/Agent Update Handler
+    const handleMyProfileSave = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!adminTargetId) return;
+
+        if (myProfile.password !== myProfile.confirmPassword) {
+            alert("Passwords do not match.");
+            return;
+        }
+
+        setIsLoading(true);
+        await new Promise(resolve => setTimeout(resolve, 500));
+
+        const updates = {
+            name: myProfile.name,
+            credentials: {
+                username: myProfile.username,
+                password: myProfile.password
+            }
+        };
+
+        if (adminRole === 'partner') {
+            updatePartner(adminTargetId, updates);
+        } else if (adminRole === 'agent') {
+            updateAgent(adminTargetId, updates);
+        }
+
+        alert("Profile updated successfully.");
+        setIsLoading(false);
+    };
+
+    // Re-issue Password (Super Admin Only)
+    const handleResetPassword = (type: 'partner' | 'agent', entity: any) => {
+        if (!window.confirm(`Reset password for ${entity.name}? This will generate a new random password.`)) return;
+
+        const newPassword = Math.random().toString(36).slice(-8); // Random 8 chars
+        const updates = {
+            credentials: {
+                username: entity.credentials?.username || 'user',
+                password: newPassword
+            }
+        };
+
+        if (type === 'partner') {
+            updatePartner(entity.id, updates);
+        } else {
+            updateAgent(entity.id, updates);
+        }
+
+        alert(`Password for ${entity.name} has been reset to:\n\n${newPassword}\n\nPlease copy this password securely.`);
+    };
+
+    // Delete Credentials (Super Admin Only)
+    const handleDeleteCredentials = (type: 'partner' | 'agent', entity: any) => {
+        if (!window.confirm(`Are you sure you want to remove login access for ${entity.name}?\n\nThis will delete their ID and Password information.`)) return;
+
+        const updates = {
+            // @ts-ignore - Explicitly setting undefined to remove credentials
+            credentials: undefined
+        };
+
+        if (type === 'partner') {
+            updatePartner(entity.id, updates);
+        } else {
+            updateAgent(entity.id, updates);
+        }
+
+        alert(`Login access for ${entity.name} has been removed.`);
+    };
+
+    const handleFormChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const { name, value } = e.target;
+        setFormData(prev => ({ ...prev, [name]: value }));
     };
 
     return (
         <div className="max-w-4xl mx-auto">
-            <h2 className="text-2xl font-bold mb-6 text-gray-800">정보 수정 (Admin Profile)</h2>
+            <h2 className="text-2xl font-bold mb-6 text-gray-800">
+                {adminRole === 'super' ? '시스템 관리자 설정 (System Admin)' : '내 정보 관리 (My Profile)'}
+            </h2>
 
-            <form onSubmit={handleSave}>
-                <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden mb-6">
-                    <div className="p-6 border-b border-gray-200">
-                        <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
-                            <User size={20} className="text-red-500" />
-                            기본 정보 (Basic Info)
-                        </h3>
-                        <p className="text-sm text-gray-500 mt-1">관리자 표시 이름과 로그인 ID를 수정할 수 있습니다.</p>
-                    </div>
-                    <div className="p-6 text-sm text-gray-600 bg-gray-50 border-b border-gray-200">
-                        <div className="flex items-start gap-2">
-                            <AlertCircle size={16} className="mt-0.5 text-orange-500" />
-                            <p>ID를 변경할 경우, 다음 로그인부터 변경된 ID를 사용해야 합니다.</p>
+            {/* Super Admin Profile Form */}
+            {adminRole === 'super' && (
+                <form onSubmit={handleSuperSave} className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden mb-6 p-6 space-y-6">
+                    <h3 className="font-bold text-lg flex items-center gap-2 border-b pb-2"><User size={20} /> Super Admin Info</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label className="block text-sm font-medium mb-1">Name</label>
+                            <input type="text" name="name" value={formData.name} onChange={handleFormChange} className="w-full border rounded px-3 py-2" />
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium mb-1">Login ID</label>
+                            <input type="text" name="id" value={formData.id} onChange={handleFormChange} className="w-full border rounded px-3 py-2 bg-yellow-50" />
                         </div>
                     </div>
-                    <div className="p-6 space-y-6">
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="space-y-4 border-t pt-4">
+                        <input type="password" name="currentPassword" value={formData.currentPassword} onChange={handleFormChange} placeholder="Current Password *" required className="w-full border rounded px-3 py-2" />
+                        <div className="grid grid-cols-2 gap-4">
+                            <input type="password" name="newPassword" value={formData.newPassword} onChange={handleFormChange} placeholder="New Password" className="w-full border rounded px-3 py-2" />
+                            <input type="password" name="confirmPassword" value={formData.confirmPassword} onChange={handleFormChange} placeholder="Confirm New Password" className="w-full border rounded px-3 py-2" />
+                        </div>
+                    </div>
+                    <div className="flex justify-end">
+                        <button type="submit" disabled={isLoading} className="bg-red-600 text-white px-6 py-2 rounded-lg font-bold hover:bg-red-700">
+                            {isLoading ? 'Saving...' : 'Update Super Admin'}
+                        </button>
+                    </div>
+                </form>
+            )}
+
+            {/* Partner/Agent Personal Profile Form */}
+            {(adminRole === 'partner' || adminRole === 'agent') && (
+                <form onSubmit={handleMyProfileSave} className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden mb-6 p-6 space-y-6">
+                    <h3 className="font-bold text-lg flex items-center gap-2 border-b pb-2"><User size={20} /> Account Details</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label className="block text-sm font-medium mb-1">Display Name</label>
+                            <input
+                                type="text"
+                                value={myProfile.name}
+                                onChange={e => setMyProfile({ ...myProfile, name: e.target.value })}
+                                className="w-full border rounded px-3 py-2"
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium mb-1">Login ID</label>
+                            <input
+                                type="text"
+                                value={myProfile.username}
+                                onChange={e => setMyProfile({ ...myProfile, username: e.target.value })}
+                                className="w-full border rounded px-3 py-2 bg-yellow-50"
+                            />
+                        </div>
+                    </div>
+                    <div className="space-y-4 border-t pt-4">
+                        <div className="grid grid-cols-2 gap-4">
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Display Name</label>
+                                <label className="block text-sm font-medium mb-1">Password</label>
                                 <input
                                     type="text"
-                                    name="name"
-                                    value={formData.name}
-                                    onChange={handleChange}
-                                    className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none"
+                                    value={myProfile.password}
+                                    onChange={e => setMyProfile({ ...myProfile, password: e.target.value })}
+                                    className="w-full border rounded px-3 py-2"
                                 />
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Login ID</label>
+                                <label className="block text-sm font-medium mb-1">Confirm Password</label>
                                 <input
                                     type="text"
-                                    name="id"
-                                    value={formData.id}
-                                    onChange={handleChange}
-                                    className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none bg-yellow-50"
+                                    value={myProfile.confirmPassword}
+                                    onChange={e => setMyProfile({ ...myProfile, confirmPassword: e.target.value })}
+                                    className="w-full border rounded px-3 py-2"
                                 />
                             </div>
                         </div>
                     </div>
-                </div>
-
-                <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden mb-6">
-                    <div className="p-6 border-b border-gray-200">
-                        <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
-                            <Lock size={20} className="text-red-500" />
-                            보안 설정 (Security)
-                        </h3>
-                        <p className="text-sm text-gray-500 mt-1">비밀번호를 변경하려면 현재 비밀번호를 입력해야 합니다.</p>
+                    <div className="flex justify-end">
+                        <button type="submit" disabled={isLoading} className="bg-blue-600 text-white px-6 py-2 rounded-lg font-bold hover:bg-blue-700">
+                            {isLoading ? 'Saving...' : 'Update My Profile'}
+                        </button>
                     </div>
-                    <div className="p-6">
-                        <div className="space-y-4 max-w-md">
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Current Password (현재 비밀번호) *</label>
-                                <input
-                                    type="password"
-                                    name="currentPassword"
-                                    value={formData.currentPassword}
-                                    onChange={handleChange}
-                                    required
-                                    className="w-full border border-gray-300 rounded-lg px-4 py-2 outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500"
-                                />
-                            </div>
-                            <div className="pt-4 border-t border-gray-100 mt-4">
-                                <label className="block text-sm font-medium text-gray-700 mb-1">New Password (새 비밀번호)</label>
-                                <input
-                                    type="password"
-                                    name="newPassword"
-                                    value={formData.newPassword}
-                                    onChange={handleChange}
-                                    className="w-full border border-gray-300 rounded-lg px-4 py-2 outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500"
-                                    placeholder="Leave blank to keep current"
-                                />
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Confirm New Password (새 비밀번호 확인)</label>
-                                <input
-                                    type="password"
-                                    name="confirmPassword"
-                                    value={formData.confirmPassword}
-                                    onChange={handleChange}
-                                    className="w-full border border-gray-300 rounded-lg px-4 py-2 outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500"
-                                />
-                            </div>
+                </form>
+            )}
+
+            {/* Super Admin Only: Partner/Agent Account Management (Read Only + Reset) */}
+            {adminRole === 'super' && (
+                <div className="mt-12 border-t border-gray-200 pt-8">
+                    <h2 className="text-2xl font-bold mb-6 text-gray-800 flex items-center gap-2">
+                        <Shield size={24} className="text-blue-600" />
+                        제휴업체 및 에이전트 계정 관리 (재발행/삭제)
+                    </h2>
+
+                    {/* Partners */}
+                    <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden mb-8">
+                        <div className="p-6 border-b border-gray-200 bg-blue-50">
+                            <h3 className="text-lg font-bold text-gray-900">제휴 업체 (Partners)</h3>
+                        </div>
+                        <div className="p-6 overflow-x-auto">
+                            <table className="min-w-full divide-y divide-gray-200">
+                                <thead>
+                                    <tr>
+                                        <th className="px-4 py-3 text-left">업체명</th>
+                                        <th className="px-4 py-3 text-left">Login ID</th>
+                                        <th className="px-4 py-3 text-left">Password (Locked)</th>
+                                        <th className="px-4 py-3 text-right">Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-gray-200">
+                                    {partners.map(partner => (
+                                        <tr key={partner.id}>
+                                            <td className="px-4 py-3">{partner.name}</td>
+                                            <td className="px-4 py-3 bg-gray-50 text-gray-500">{partner.credentials?.username || '-'}</td>
+                                            <td className="px-4 py-3 bg-gray-50 text-gray-400">
+                                                {partner.credentials ? '********' : 'No Access'}
+                                            </td>
+                                            <td className="px-4 py-3 text-right">
+                                                <div className="flex items-center justify-end gap-2">
+                                                    <button
+                                                        onClick={() => handleResetPassword('partner', partner)}
+                                                        className="bg-orange-500 text-white px-3 py-1 rounded text-xs font-bold hover:bg-orange-600 flex items-center"
+                                                        title="비밀번호 재발행 (Reset Password)"
+                                                    >
+                                                        <RefreshCw size={14} className="mr-1" /> 재발행
+                                                    </button>
+                                                    {partner.credentials && (
+                                                        <button
+                                                            onClick={() => handleDeleteCredentials('partner', partner)}
+                                                            className="bg-red-500 text-white px-3 py-1 rounded text-xs font-bold hover:bg-red-600 flex items-center"
+                                                            title="로그인 권한 삭제 (Remove Access)"
+                                                        >
+                                                            <Trash2 size={14} className="mr-1" /> 삭제
+                                                        </button>
+                                                    )}
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    {/* Agents */}
+                    <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                        <div className="p-6 border-b border-gray-200 bg-purple-50">
+                            <h3 className="text-lg font-bold text-gray-900">에이전트 (Agents)</h3>
+                        </div>
+                        <div className="p-6 overflow-x-auto">
+                            <table className="min-w-full divide-y divide-gray-200">
+                                <thead>
+                                    <tr>
+                                        <th className="px-4 py-3 text-left">에이전트명</th>
+                                        <th className="px-4 py-3 text-left">Login ID</th>
+                                        <th className="px-4 py-3 text-left">Password (Locked)</th>
+                                        <th className="px-4 py-3 text-right">Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-gray-200">
+                                    {agents.map(agent => (
+                                        <tr key={agent.id}>
+                                            <td className="px-4 py-3">{agent.name}</td>
+                                            <td className="px-4 py-3 bg-gray-50 text-gray-500">{agent.credentials?.username || '-'}</td>
+                                            <td className="px-4 py-3 bg-gray-50 text-gray-400">
+                                                {agent.credentials ? '********' : 'No Access'}
+                                            </td>
+                                            <td className="px-4 py-3 text-right">
+                                                <div className="flex items-center justify-end gap-2">
+                                                    <button
+                                                        onClick={() => handleResetPassword('agent', agent)}
+                                                        className="bg-orange-500 text-white px-3 py-1 rounded text-xs font-bold hover:bg-orange-600 flex items-center"
+                                                        title="비밀번호 재발행 (Reset Password)"
+                                                    >
+                                                        <RefreshCw size={14} className="mr-1" /> 재발행
+                                                    </button>
+                                                    {agent.credentials && (
+                                                        <button
+                                                            onClick={() => handleDeleteCredentials('agent', agent)}
+                                                            className="bg-red-500 text-white px-3 py-1 rounded text-xs font-bold hover:bg-red-600 flex items-center"
+                                                            title="로그인 권한 삭제 (Remove Access)"
+                                                        >
+                                                            <Trash2 size={14} className="mr-1" /> 삭제
+                                                        </button>
+                                                    )}
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
                         </div>
                     </div>
                 </div>
-
-                <div className="flex justify-end">
-                    <button
-                        type="submit"
-                        disabled={isLoading}
-                        className="flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-6 rounded-lg shadow-lg shadow-red-500/30 transition-all disabled:opacity-70"
-                    >
-                        <Save size={18} />
-                        {isLoading ? 'Saving...' : 'Update Info'}
-                    </button>
-                </div>
-            </form>
+            )}
         </div>
     );
 }

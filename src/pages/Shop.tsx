@@ -66,10 +66,19 @@ export default function Shop() {
         <MainLayout>
             <div className="bg-gray-50 min-h-screen">
                 {/* Header Banner */}
-                <div className="bg-gray-900 text-white py-12 mb-8">
+                <div className={clsx(
+                    "text-white py-12 mb-8 transition-colors duration-300",
+                    userType === 'company' ? "bg-blue-900" : "bg-gray-900"
+                )}>
                     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                        <h1 className="text-4xl font-bold mb-4">Shop</h1>
-                        <p className="text-gray-400">모든 프리미엄 상품을 한곳에서 만나보세요.</p>
+                        <h1 className="text-4xl font-bold mb-4">
+                            {userType === 'company' ? 'B2B Corporate Mall' : 'Premium Shop'}
+                        </h1>
+                        <p className={clsx("text-lg", userType === 'company' ? "text-blue-200" : "text-gray-400")}>
+                            {userType === 'company'
+                                ? '기업 회원을 위한 전용 혜택과 합리적인 가격을 만나보세요.'
+                                : '당신의 라이프스타일을 완성하는 프리미엄 컬렉션'}
+                        </p>
                     </div>
                 </div>
 

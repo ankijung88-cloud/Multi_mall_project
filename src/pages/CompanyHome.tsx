@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useProducts } from '../context/ProductContext';
 import { usePartners } from '../context/PartnerContext';
@@ -14,7 +14,11 @@ export default function CompanyHome() {
     const { products } = useProducts();
     const { addToCart } = useCart();
     const navigate = useNavigate();
-    const { isAuthenticated } = useAuthStore();
+    const { isAuthenticated, setViewMode } = useAuthStore();
+
+    useEffect(() => {
+        setViewMode('company');
+    }, [setViewMode]);
     const [isFiltered, setIsFiltered] = useState(false);
 
     const displayedProducts = (isFiltered

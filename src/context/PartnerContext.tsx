@@ -9,6 +9,8 @@ export interface Schedule {
     description: string;
     maxSlots: number;
     currentSlots: number;
+    pricePersonal?: number;
+    priceCompany?: number;
 }
 
 export interface Partner {
@@ -32,8 +34,13 @@ export interface PartnerRequest {
     scheduleId: string;
     scheduleTitle: string;
     scheduleDate: string;
-    status: 'pending' | 'approved' | 'sent_to_partner';
+    status: 'pending' | 'approved' | 'sent_to_partner' | 'confirmation_sent';
     timestamp: string;
+    paymentStatus?: 'pending' | 'paid';
+    paymentAmount?: number;
+    paymentDate?: string;
+    paymentMethod?: string;
+    userType?: 'Personal' | 'Company';
 }
 
 interface PartnerContextType {
@@ -58,8 +65,8 @@ const initialPartners: Partner[] = [
         image: "https://images.unsplash.com/photo-1556910103-1c02745a30bf?auto=format&fit=crop&q=80&w=1000",
         description: "Experience authentic Korean cooking classes.",
         schedules: [
-            { id: 'S1', date: '2026-02-10', time: '10:00', title: 'Kimchi Making Class', description: 'Learn to make Kimchi', maxSlots: 10, currentSlots: 0 },
-            { id: 'S2', date: '2026-02-15', time: '14:00', title: 'Bibimbap Workshop', description: 'Healthy Bibimbap', maxSlots: 15, currentSlots: 2 }
+            { id: 'S1', date: '2026-02-10', time: '10:00', title: 'Kimchi Making Class', description: 'Learn to make Kimchi', maxSlots: 10, currentSlots: 0, pricePersonal: 50000, priceCompany: 80000 },
+            { id: 'S2', date: '2026-02-15', time: '14:00', title: 'Bibimbap Workshop', description: 'Healthy Bibimbap', maxSlots: 15, currentSlots: 2, pricePersonal: 30000, priceCompany: 50000 }
         ],
         credentials: { username: 'kfood', password: 'password' }
     },
@@ -83,7 +90,16 @@ export function PartnerProvider({ children }: { children: ReactNode }) {
             try {
                 const parsed = JSON.parse(storedPartners);
                 if (Array.isArray(parsed)) {
-                    setPartners(parsed);
+                    // Migration: Ensure pricing fields exist
+                    const migrated = parsed.map((p: Partner) => ({
+                        ...p,
+                        schedules: p.schedules.map((s: Schedule) => ({
+                            ...s,
+                            pricePersonal: s.pricePersonal !== undefined ? s.pricePersonal : 30000,
+                            priceCompany: s.priceCompany !== undefined ? s.priceCompany : 50000
+                        }))
+                    }));
+                    setPartners(migrated);
                 } else {
                     console.error("Invalid partners data in localStorage, resetting.");
                     setPartners(initialPartners);
