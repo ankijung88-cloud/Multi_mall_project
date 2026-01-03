@@ -1,3 +1,4 @@
+
 import type { ReactNode } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/useAuthStore';
@@ -9,7 +10,12 @@ import {
     RotateCcw,
     Users,
     Settings,
-    LogOut
+    LogOut,
+    Archive,
+    FileText,
+    Handshake,
+    Calendar,
+    Briefcase
 } from 'lucide-react';
 import clsx from 'clsx';
 
@@ -18,26 +24,48 @@ interface AdminLayoutProps {
 }
 
 export default function AdminLayout({ children }: AdminLayoutProps) {
-    const logout = useAuthStore((state) => state.logout);
+    const logout = useAuthStore(state => state.logout);
+    const adminRole = useAuthStore(state => state.adminRole);
     const navigate = useNavigate();
+
+
+    // Redirect logic removed to prevent infinite loops. 
+    // Role-based access control is handled by sidebar filtering and leaf-node checks.
 
     const handleLogout = () => {
         logout();
         navigate('/admin/login');
     };
 
-    const navItems = [
+    const allNavItems = [
         { path: '/admin', icon: LayoutDashboard, label: 'Dashboard', end: true },
+        { path: '/admin/products', icon: Archive, label: 'Products' },
         { path: '/admin/orders', icon: ShoppingCart, label: 'Orders' },
         { path: '/admin/shipping', icon: Package, label: 'Shipping' },
         { path: '/admin/payments', icon: CreditCard, label: 'Payments' },
+        { path: '/admin/invoices', icon: FileText, label: 'Invoices' },
+        { path: '/admin/partners', icon: Handshake, label: '제휴 업체 관리' },
+        { path: '/admin/partner-requests', icon: Calendar, label: '참여 요청 관리' }, // Replaced CalendarCheck
+        { path: '/admin/agents', icon: Briefcase, label: '에이전트 관리' },
+        { path: '/admin/agent-requests', icon: Calendar, label: '에이전트 신청 관리' }, // Replaced CalendarCheck
         { path: '/admin/returns', icon: RotateCcw, label: 'Returns' },
         { path: '/admin/members', icon: Users, label: 'Members' },
-        { path: '/admin/settings', icon: Settings, label: 'Settings' },
+        { path: '/admin/settings', icon: Settings, label: '정보수정' },
     ];
 
+    const navItems = allNavItems.filter(item => {
+        if (!adminRole) return false; // Safety fallback
+        if (adminRole === 'partner') {
+            return ['/admin/partner-requests', '/admin/partners'].includes(item.path);
+        }
+        if (adminRole === 'agent') {
+            return ['/admin/agent-requests', '/admin/agents'].includes(item.path);
+        }
+        return true;
+    });
+
     return (
-        <div className="min-h-screen bg-gray-100 flex">
+        <div className="h-screen bg-gray-100 flex overflow-hidden">
             {/* Sidebar */}
             <aside className="w-64 bg-gray-900 text-white flex flex-col fixed h-full z-30">
                 <div className="p-6 border-b border-gray-800">
@@ -77,7 +105,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
             </aside>
 
             {/* Main Content */}
-            <main className="flex-1 ml-64 p-8 overflow-y-auto">
+            <main className="flex-1 ml-64 p-8 overflow-y-auto h-full">
                 <div className="max-w-7xl mx-auto">
                     {children}
                 </div>

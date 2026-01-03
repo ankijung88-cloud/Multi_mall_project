@@ -25,10 +25,10 @@ export default function FindAccount() {
             <div className="bg-white py-8 px-4 shadow-2xl shadow-gray-200/50 sm:rounded-2xl sm:px-10 border border-gray-100">
                 <div className="sm:mx-auto sm:w-full sm:max-w-md mb-6">
                     <h2 className="mt-2 text-center text-3xl font-extrabold tracking-tight text-gray-900">
-                        Account Recovery
+                        계정 찾기
                     </h2>
                     <p className="mt-2 text-center text-sm text-gray-600">
-                        Find your ID or reset your password
+                        아이디를 찾거나 비밀번호를 재설정하세요
                     </p>
                 </div>
 
@@ -38,13 +38,13 @@ export default function FindAccount() {
                         className={`flex-1 py-4 px-1 text-center border-b-2 font-medium text-sm transition-colors ${activeTab === 'id' ? activeColor : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'}`}
                         onClick={() => { setActiveTab('id'); setIsSubmitted(false); }}
                     >
-                        Find ID
+                        아이디 찾기
                     </button>
                     <button
                         className={`flex-1 py-4 px-1 text-center border-b-2 font-medium text-sm transition-colors ${activeTab === 'password' ? activeColor : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'}`}
                         onClick={() => { setActiveTab('password'); setIsSubmitted(false); }}
                     >
-                        Reset Password
+                        비밀번호 재설정
                     </button>
                 </div>
 
@@ -52,7 +52,7 @@ export default function FindAccount() {
                     <form className="space-y-6" onSubmit={handleSubmit}>
                         <div>
                             <label htmlFor="email" className="block text-sm font-medium text-gray-700">
-                                Registration Email
+                                가입 이메일
                             </label>
                             <div className="mt-1 relative rounded-md shadow-sm">
                                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -71,7 +71,7 @@ export default function FindAccount() {
                         {activeTab === 'password' && (
                             <div>
                                 <label htmlFor="id" className="block text-sm font-medium text-gray-700">
-                                    User ID
+                                    사용자 아이디
                                 </label>
                                 <div className="mt-1 relative rounded-md shadow-sm">
                                     <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -94,25 +94,25 @@ export default function FindAccount() {
                             type="submit"
                             className={`w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white focus:outline-none focus:ring-2 focus:ring-offset-2 transition-all ${buttonColor}`}
                         >
-                            {activeTab === 'id' ? 'Find My ID' : 'Send Reset Link'}
+                            {activeTab === 'id' ? '아이디 찾기' : '재설정 링크 발송'}
                         </motion.button>
                     </form>
                 ) : (
                     <div className="text-center py-10">
                         <CheckCircle className="mx-auto h-12 w-12 text-green-500 mb-4" />
                         <h3 className="text-lg font-medium text-gray-900">
-                            {activeTab === 'id' ? 'ID Found!' : 'Check your email'}
+                            {activeTab === 'id' ? '아이디를 찾았습니다!' : '이메일을 확인하세요'}
                         </h3>
                         <p className="mt-2 text-sm text-gray-500 mb-8">
                             {activeTab === 'id'
-                                ? 'Your ID has been sent to your email address.'
-                                : 'We have sent a password reset link to your email.'}
+                                ? '회원님의 이메일로 아이디가 발송되었습니다.'
+                                : '회원님의 이메일로 비밀번호 재설정 링크가 발송되었습니다.'}
                         </p>
                         <button
                             onClick={() => setIsSubmitted(false)}
                             className="text-indigo-600 hover:text-indigo-500 font-medium"
                         >
-                            Try again
+                            다시 시도
                         </button>
                     </div>
                 )}
@@ -120,7 +120,7 @@ export default function FindAccount() {
                 <div className="mt-6 flex justify-center">
                     <Link to={`/login?type=${type}`} className="font-medium text-gray-600 hover:text-gray-900 inline-flex items-center text-sm">
                         <ArrowRight size={16} className="mr-1 rotate-180" />
-                        Back to Login
+                        로그인하기
                     </Link>
                 </div>
             </div>

@@ -6,6 +6,9 @@ export interface Product {
     personalPrice: number;
     companyPrice: number;
     category: string;
+    isRecommendedPersonal?: boolean;
+    isRecommendedCompany?: boolean;
+    detailImages?: string[];
 }
 
 export const products: Product[] = [
@@ -16,51 +19,63 @@ export const products: Product[] = [
         image: "https://images.unsplash.com/photo-1505843490538-5133c6c7d0e1?auto=format&fit=crop&q=80&w=800",
         personalPrice: 350,
         companyPrice: 280,
-        category: "Furniture"
+        category: "Furniture",
+        isRecommendedPersonal: true,
+        isRecommendedCompany: true
     },
     {
         id: 2,
-        name: "4K Ultra-Wide Monitor",
-        description: "Crystal clear display for multitasking professionals. 144Hz refresh rate.",
-        image: "https://images.unsplash.com/photo-1527443224154-c4a3942d3acf?auto=format&fit=crop&q=80&w=800",
-        personalPrice: 600,
-        companyPrice: 520,
-        category: "Electronics"
+        name: "Wireless Noise-Canceling Headphones",
+        description: "Industry-leading noise cancellation. 30-hour battery life and crystal clear calls.",
+        image: "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&q=80&w=800",
+        personalPrice: 299,
+        companyPrice: 240,
+        category: "Electronics",
+        isRecommendedPersonal: true,
+        isRecommendedCompany: false
     },
     {
         id: 3,
-        name: "Smart Standing Desk",
-        description: "Dual-motor electric standing desk with memory presets.",
-        image: "https://images.unsplash.com/photo-1595515106969-1ce29566ff1c?auto=format&fit=crop&q=80&w=800",
-        personalPrice: 450,
-        companyPrice: 380,
-        category: "Furniture"
+        name: "Minimalist Desk Lamp",
+        description: "Adjustable color temperature and brightness. Sleek design for modern workspaces.",
+        image: "https://images.unsplash.com/photo-1507473888900-52e1ad2d69b4?auto=format&fit=crop&q=80&w=800",
+        personalPrice: 89,
+        companyPrice: 65,
+        category: "Accessories",
+        isRecommendedPersonal: false,
+        isRecommendedCompany: true
     },
     {
         id: 4,
-        name: "Noise Cancelling Headphones",
-        description: "Industry-leading noise cancellation for focus in any environment.",
-        image: "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&q=80&w=800",
-        personalPrice: 250,
-        companyPrice: 200,
-        category: "Electronics"
+        name: "Smart Air Purifier",
+        description: "HEPA filter removes 99.9% of dust and allergens. Monitoring via mobile app.",
+        image: "https://images.unsplash.com/photo-1585771724684-38269d6639fd?auto=format&fit=crop&q=80&w=800",
+        personalPrice: 150,
+        companyPrice: 120,
+        category: "Appliances",
+        isRecommendedPersonal: true,
+        isRecommendedCompany: true
     },
     {
         id: 5,
         name: "Mechanical Keyboard",
-        description: "Tactile switches with customizable RGB lighting. Durable aluminum frame.",
-        image: "https://images.unsplash.com/photo-1587829741301-dc798b91a603?auto=format&fit=crop&q=80&w=800",
-        personalPrice: 150,
-        companyPrice: 120,
-        category: "Accessories"
+        description: "Tactile switches for satisfying typing experience. RGB custom backlighting.",
+        image: "https://images.unsplash.com/photo-1511467687858-23d96c32e4ae?auto=format&fit=crop&q=80&w=800",
+        personalPrice: 120,
+        companyPrice: 95,
+        category: "Electronics",
+        isRecommendedPersonal: true,
+        isRecommendedCompany: false
     },
     {
         id: 6,
-        name: "Office Coffee Machine",
-        description: "Bean-to-cup coffee machine for high-quality espresso at work.",
-        image: "https://images.unsplash.com/photo-1497935586351-b67a49e012bf?auto=format&fit=crop&q=80&w=800",
-        personalPrice: 800,
-        companyPrice: 650,
-        category: "Appliances"
+        name: "Executive Office Desk",
+        description: "Spacious L-shaped desk with built-in cable management. Scratch-resistant surface.",
+        image: "https://images.unsplash.com/photo-1518455027359-f3f8164ba6bd?auto=format&fit=crop&q=80&w=800",
+        personalPrice: 450,
+        companyPrice: 380,
+        category: "Furniture",
+        isRecommendedPersonal: false,
+        isRecommendedCompany: true
     }
 ];

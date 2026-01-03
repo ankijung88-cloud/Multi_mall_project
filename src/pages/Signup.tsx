@@ -37,7 +37,25 @@ export default function Signup() {
         setIsLoading(true);
 
         // Simulate API call
-        await new Promise(resolve => setTimeout(resolve, 1500));
+        await new Promise(resolve => setTimeout(resolve, 800));
+
+        // Create new member object
+        const newUser = {
+            id: Date.now(), // Simple unique ID
+            name: formData.name,
+            email: formData.email,
+            type: type === 'company' ? 'Company' : 'Personal',
+            status: 'Active',
+            date: new Date().toISOString().split('T')[0],
+            companyName: formData.companyName || undefined,
+            businessNumber: formData.businessNumber || undefined
+        };
+
+        // Save to localStorage
+        const storedMembers = localStorage.getItem('mall_members');
+        const members = storedMembers ? JSON.parse(storedMembers) : [];
+        members.push(newUser);
+        localStorage.setItem('mall_members', JSON.stringify(members));
 
         // Auto login after signup
         if (type) {
@@ -58,17 +76,17 @@ export default function Signup() {
             <div className="bg-white py-8 px-4 shadow-2xl shadow-gray-200/50 sm:rounded-2xl sm:px-10 border border-gray-100">
                 <div className="sm:mx-auto sm:w-full sm:max-w-md mb-6">
                     <h2 className={clsx("mt-2 text-center text-3xl font-extrabold tracking-tight", isCompany ? "text-blue-900" : "text-emerald-900")}>
-                        {isCompany ? 'Join as Partner' : 'Create Account'}
+                        {isCompany ? '파트너 회원가입' : '회원가입'}
                     </h2>
                     <p className="mt-2 text-center text-sm text-gray-600">
-                        Join our {isCompany ? 'business' : 'exclusive'} community today
+                        {isCompany ? '기업' : '개인'} 회원으로 가입하고 혜택을 누리세요
                     </p>
                 </div>
 
                 <form className="space-y-6" onSubmit={handleSubmit}>
                     <div>
                         <label htmlFor="name" className="block text-sm font-medium text-gray-700">
-                            Full Name
+                            성함
                         </label>
                         <div className="mt-1 relative rounded-md shadow-sm">
                             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -82,7 +100,7 @@ export default function Signup() {
                                 value={formData.name}
                                 onChange={handleChange}
                                 className={`block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 transition-all ${ringColor}`}
-                                placeholder="John Doe"
+                                placeholder="홍길동"
                             />
                         </div>
                     </div>
@@ -91,7 +109,7 @@ export default function Signup() {
                         <>
                             <div>
                                 <label htmlFor="companyName" className="block text-sm font-medium text-gray-700">
-                                    Company Name
+                                    회사명
                                 </label>
                                 <div className="mt-1 relative rounded-md shadow-sm">
                                     <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -105,13 +123,13 @@ export default function Signup() {
                                         value={formData.companyName}
                                         onChange={handleChange}
                                         className={`block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 transition-all ${ringColor}`}
-                                        placeholder="Acme Corp"
+                                        placeholder="(주)한국상사"
                                     />
                                 </div>
                             </div>
                             <div>
                                 <label htmlFor="businessNumber" className="block text-sm font-medium text-gray-700">
-                                    Business Registration Number
+                                    사업자등록번호
                                 </label>
                                 <div className="mt-1 relative rounded-md shadow-sm">
                                     <input
@@ -131,7 +149,7 @@ export default function Signup() {
 
                     <div>
                         <label htmlFor="email" className="block text-sm font-medium text-gray-700">
-                            Email address
+                            이메일 주소
                         </label>
                         <div className="mt-1 relative rounded-md shadow-sm">
                             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -153,7 +171,7 @@ export default function Signup() {
 
                     <div>
                         <label htmlFor="password" className="block text-sm font-medium text-gray-700">
-                            Password
+                            비밀번호
                         </label>
                         <div className="mt-1 relative rounded-md shadow-sm">
                             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -183,7 +201,7 @@ export default function Signup() {
                             {isLoading ? (
                                 <Loader2 className="animate-spin -ml-1 mr-2 h-5 w-5" />
                             ) : (
-                                'Create Account'
+                                '계정 생성'
                             )}
                         </motion.button>
                     </div>
@@ -196,14 +214,14 @@ export default function Signup() {
                         </div>
                         <div className="relative flex justify-center text-sm">
                             <span className="px-2 bg-white text-gray-500">
-                                Already have an account?
+                                이미 계정이 있으신가요?
                             </span>
                         </div>
                     </div>
 
                     <div className="mt-6 text-center">
                         <Link to={`/login?type=${type}`} className={`font-medium ${textColor} hover:underline inline-flex items-center`}>
-                            Sign in here
+                            로그인하기
                             <ArrowRight size={16} className="ml-1" />
                         </Link>
                     </div>

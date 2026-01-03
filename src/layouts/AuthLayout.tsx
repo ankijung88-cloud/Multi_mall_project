@@ -8,7 +8,7 @@ interface AuthLayoutProps {
 
 export default function AuthLayout({ children }: AuthLayoutProps) {
     return (
-        <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8 relative overflow-hidden">
+        <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8 relative">
             {/* Background Patterns */}
             <div className="absolute top-0 left-0 w-full h-full overflow-hidden z-0 pointer-events-none">
                 <div className="absolute -top-40 -left-40 w-80 h-80 bg-purple-300 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob"></div>
@@ -19,7 +19,7 @@ export default function AuthLayout({ children }: AuthLayoutProps) {
             <div className="sm:mx-auto sm:w-full sm:max-w-md z-10">
                 <Link to="/" className="inline-flex items-center text-gray-500 hover:text-gray-900 mb-8 transition-colors">
                     <ArrowLeft className="mr-2" size={20} />
-                    Back to Home
+                    홈으로 돌아가기
                 </Link>
                 {children}
             </div>
