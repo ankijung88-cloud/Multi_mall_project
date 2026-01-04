@@ -56,29 +56,70 @@ export default function MainLayout({ children }: MainLayoutProps) {
                         </div>
 
                         {/* Centered Navigation Menu */}
-                        <div className="hidden md:flex absolute left-1/2 transform -translate-x-1/2 space-x-8">
+                        <div className="hidden md:flex absolute left-1/2 transform -translate-x-1/2 space-x-8 whitespace-nowrap">
                             {[
-                                { name: '홈', path: isCompany ? '/company' : '/personal' },
-                                { name: '쇼핑', path: '/shop' },
-                                { name: 'K-Culture', path: '/partners' },
-                                { name: '에이전트', path: '/agents' },
-                                { name: 'Personal', path: '/contents' },
-                                { name: '커뮤니티', path: '#' },
+                                {
+                                    name: '홈',
+                                    path: isCompany ? '/company' : '/personal',
+                                    subMenus: ['소개', '공지사항', '이벤트', '뉴스', '채용']
+                                },
+                                {
+                                    name: '쇼핑',
+                                    path: '/shop',
+                                    subMenus: ['베스트', '신상품', '기획전', '브랜드', '세일']
+                                },
+                                {
+                                    name: 'K-Culture',
+                                    path: '/partners',
+                                    subMenus: ['파트너 소개', '제휴 문의', '파트너 뉴스', '성공 사례', '가이드']
+                                },
+                                {
+                                    name: '에이전트',
+                                    path: '/agents',
+                                    subMenus: ['에이전트 찾기', '이용 가이드', '수수료 안내', '매칭 서비스', '후기']
+                                },
+                                {
+                                    name: 'Personal',
+                                    path: '/contents',
+                                    subMenus: ['나의 컨텐츠', '관심 컨텐츠', '컨텐츠 등록', '활동 내역', '설정']
+                                },
+                                {
+                                    name: '커뮤니티',
+                                    path: '#',
+                                    subMenus: ['맞춤형 일정추천', '예약 및 일정서포트\n(추가 fee 발생)', '정보공유', '항공사링크', '호텔링크', '교통링크', '고객센터']
+                                },
                             ].map((item) => (
-                                <Link
-                                    key={item.name}
-                                    to={item.path}
-                                    className={clsx(
-                                        "text-base font-medium transition-colors",
-                                        "text-gray-600 hover:text-gray-900",
-                                        isCompany
-                                            ? "hover:text-blue-600"
-                                            : "hover:text-emerald-500",
-                                        item.name === 'Personal' && (isCompany ? "text-blue-600" : "text-emerald-500")
-                                    )}
-                                >
-                                    {item.name}
-                                </Link>
+                                <div key={item.name} className="relative group p-4">
+                                    <Link
+                                        to={item.path}
+                                        className={clsx(
+                                            "text-base font-medium transition-colors border-b-2 border-transparent pb-1 block h-full flex items-center",
+                                            "text-gray-600 hover:text-gray-900",
+                                            isCompany
+                                                ? "group-hover:text-blue-600 group-hover:border-blue-600"
+                                                : "group-hover:text-emerald-500 group-hover:border-emerald-500",
+                                            item.name === 'Personal' && (isCompany ? "text-blue-600" : "text-emerald-500")
+                                        )}
+                                    >
+                                        {item.name}
+                                    </Link>
+
+                                    {/* Dropdown Menu */}
+                                    <div className="absolute left-1/2 transform -translate-x-1/2 mt-0 w-48 bg-white border border-gray-100 shadow-xl rounded-lg overflow-hidden opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50 top-full">
+                                        <div className={clsx("h-1 w-full", isCompany ? "bg-blue-600" : "bg-emerald-500")}></div>
+                                        <div className="py-2">
+                                            {item.subMenus.map((subItem) => (
+                                                <Link
+                                                    key={subItem}
+                                                    to="#"
+                                                    className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-gray-900 whitespace-pre-line text-left leading-normal"
+                                                >
+                                                    {subItem}
+                                                </Link>
+                                            ))}
+                                        </div>
+                                    </div>
+                                </div>
                             ))}
                         </div>
 
