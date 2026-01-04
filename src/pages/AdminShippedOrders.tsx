@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Search, RotateCcw, Truck } from 'lucide-react';
+import { Search, RotateCcw, Truck, Trash2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 export default function AdminShippedOrders() {
@@ -24,6 +24,17 @@ export default function AdminShippedOrders() {
             const updated = allOrders.map((o: any) =>
                 o.id === orderId ? { ...o, status: 'Pending' } : o
             );
+            localStorage.setItem('mall_orders', JSON.stringify(updated));
+
+            // Update local state
+            setOrders(updated.filter((o: any) => o.status === 'Shipped' || o.status === 'Delivered').sort((a: any, b: any) => new Date(b.date).getTime() - new Date(a.date).getTime()));
+        }
+    };
+
+    const handleDeleteOrder = (orderId: string) => {
+        if (window.confirm('Are you sure you want to permanently delete this order? This action cannot be undone.')) {
+            const allOrders = JSON.parse(localStorage.getItem('mall_orders') || '[]');
+            const updated = allOrders.filter((o: any) => o.id !== orderId);
             localStorage.setItem('mall_orders', JSON.stringify(updated));
 
             // Update local state
@@ -91,13 +102,20 @@ export default function AdminShippedOrders() {
                                             {order.status}
                                         </span>
                                     </td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium flex justify-end gap-2">
                                         <button
                                             onClick={() => handleRevertStatus(order.id)}
-                                            className="text-orange-600 hover:text-orange-900 flex items-center justify-end gap-1 w-full"
+                                            className="text-orange-600 hover:text-orange-900 flex items-center gap-1"
                                             title="Mark as Unshipped"
                                         >
                                             <RotateCcw size={16} /> Revert
+                                        </button>
+                                        <button
+                                            onClick={() => handleDeleteOrder(order.id)}
+                                            className="text-red-600 hover:text-red-900 flex items-center gap-1"
+                                            title="Delete Permanently"
+                                        >
+                                            <Trash2 size={16} /> Delete
                                         </button>
                                     </td>
                                 </tr>

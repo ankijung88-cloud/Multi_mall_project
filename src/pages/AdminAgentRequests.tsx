@@ -4,12 +4,14 @@ import { Send, CheckCircle, Trash, Edit, X, Save, FileCheck } from 'lucide-react
 import clsx from 'clsx';
 import { useState } from 'react';
 import type { AgentRequest } from '../context/AgentContext';
+import UserDetailModal from '../components/UserDetailModal';
 
 export default function AdminAgentRequests() {
     const { requests, updateRequestStatus, deleteRequest, updateRequest } = useAgents();
     const adminRole = useAuthStore(state => state.adminRole);
     const adminTargetId = useAuthStore(state => state.adminTargetId);
     const [editingRequest, setEditingRequest] = useState<AgentRequest | null>(null);
+    const [detailUser, setDetailUser] = useState<{ id: string, type: string } | null>(null);
 
     // Filter displayed requests
     const filteredRequests = Array.isArray(requests) && (adminRole === 'agent' && adminTargetId)
@@ -56,6 +58,12 @@ export default function AdminAgentRequests() {
         }
     };
 
+    const handleUserClick = (userId: string, userType: any) => {
+        if (adminRole === 'super') {
+            setDetailUser({ id: userId, type: userType });
+        }
+    };
+
     return (
         <div className="p-6">
             <h2 className="text-2xl font-bold text-gray-800 mb-6">에이전트 참여 요청 관리</h2>
@@ -88,7 +96,19 @@ export default function AdminAgentRequests() {
                                         {new Date(request.timestamp).toLocaleDateString()}
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap">
-                                        <div className="text-sm font-medium text-gray-900">{request.userName}</div>
+                                        <div className="text-sm font-medium text-gray-900">
+                                            {adminRole === 'super' ? (
+                                                <button
+                                                    onClick={() => handleUserClick(request.userId, request.userType)}
+                                                    className="font-bold text-blue-600 hover:text-blue-800 hover:underline"
+                                                    title="클릭하여 상세정보 확인"
+                                                >
+                                                    {request.userName}
+                                                </button>
+                                            ) : (
+                                                request.userName
+                                            )}
+                                        </div>
                                         <div className="text-sm text-gray-500">{request.userId}</div>
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap text-center">
@@ -225,12 +245,6 @@ export default function AdminAgentRequests() {
                                     </select>
                                 </div>
                             </div>
-
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">상태 (Status)</label>
-                                {/* Duplicate simplified for quick fix, assume user wants robust file */}
-                            </div>
-
                         </div>
                         <div className="p-6 border-t bg-gray-50 flex justify-end space-x-3">
                             <button
@@ -249,6 +263,16 @@ export default function AdminAgentRequests() {
                         </div>
                     </div>
                 </div>
+            )}
+
+            {/* User Detail Modal */}
+            {detailUser && (
+                <UserDetailModal
+                    isOpen={!!detailUser}
+                    onClose={() => setDetailUser(null)}
+                    userId={detailUser.id}
+                    userType={detailUser.type as any}
+                />
             )}
         </div>
     );

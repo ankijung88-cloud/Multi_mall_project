@@ -1,4 +1,4 @@
-import React, { Component, ErrorInfo, ReactNode } from 'react';
+import { Component, type ErrorInfo, type ReactNode } from 'react';
 import { AlertTriangle } from 'lucide-react';
 
 interface Props {
@@ -64,4 +64,5 @@ class ErrorBoundary extends Component<Props, State> {
     }
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
 export default ErrorBoundary;

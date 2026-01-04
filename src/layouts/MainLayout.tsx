@@ -62,6 +62,7 @@ export default function MainLayout({ children }: MainLayoutProps) {
                                 { name: '쇼핑', path: '/shop' },
                                 { name: 'K-Culture', path: '/partners' },
                                 { name: '에이전트', path: '/agents' },
+                                { name: 'Personal', path: '/contents' },
                                 { name: '커뮤니티', path: '#' },
                             ].map((item) => (
                                 <Link
@@ -72,7 +73,8 @@ export default function MainLayout({ children }: MainLayoutProps) {
                                         "text-gray-600 hover:text-gray-900",
                                         isCompany
                                             ? "hover:text-blue-600"
-                                            : "hover:text-emerald-500"
+                                            : "hover:text-emerald-500",
+                                        item.name === 'Personal' && (isCompany ? "text-blue-600" : "text-emerald-500")
                                     )}
                                 >
                                     {item.name}

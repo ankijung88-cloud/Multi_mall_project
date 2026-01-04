@@ -2,7 +2,7 @@ import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 
 type UserType = 'personal' | 'company' | 'admin' | null;
-type AdminRole = 'super' | 'partner' | 'agent' | null;
+type AdminRole = 'super' | 'partner' | 'agent' | 'freelancer' | null;
 
 interface AuthState {
   viewMode: 'personal' | 'company';
@@ -32,7 +32,7 @@ export const useAuthStore = create<AuthState>()(
         viewMode: type === 'company' ? 'company' : 'personal', // Sync viewMode on login
         user: userData || null,
         adminRole: adminRole || (type === 'admin' ? 'super' : null),
-        adminTargetId: adminTargetId ?? (userData?.id && (adminRole === 'partner' || adminRole === 'agent') ? Number(userData.id) : null)
+        adminTargetId: adminTargetId ?? (userData?.id && (adminRole === 'partner' || adminRole === 'agent' || adminRole === 'freelancer') ? (typeof userData.id === 'string' && userData.id.startsWith('f') ? userData.id : Number(userData.id)) : null)
       }),
       logout: () => set(state => ({
         isAuthenticated: false,

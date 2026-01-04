@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/useAuthStore';
 import { usePartners } from '../context/PartnerContext';
 import { useAgents } from '../context/AgentContext';
+import { useFreelancers } from '../context/FreelancerContext';
 import { motion } from 'framer-motion';
 import { Lock, Shield, Loader2 } from 'lucide-react';
 import clsx from 'clsx';
@@ -12,6 +13,7 @@ export default function AdminLogin() {
     const login = useAuthStore((state) => state.login);
     const { partners, addPartner } = usePartners();
     const { agents, addAgent } = useAgents();
+    const { freelancers, addFreelancer } = useFreelancers();
     const [isLoading, setIsLoading] = useState(false);
 
     // Login State
@@ -20,7 +22,7 @@ export default function AdminLogin() {
 
     // Register State
     const [isRegistering, setIsRegistering] = useState(false);
-    const [regType, setRegType] = useState<'partner' | 'agent'>('partner');
+    const [regType, setRegType] = useState<'partner' | 'agent' | 'freelancer'>('partner');
     const [regName, setRegName] = useState('');
     const [regId, setRegId] = useState('');
     const [regPw, setRegPw] = useState('');
@@ -78,6 +80,18 @@ export default function AdminLogin() {
             }
         }
 
+        // 4. Check Freelancers
+        if (Array.isArray(freelancers)) {
+            const freelancer = freelancers.find(f => f.credentials?.username === username && f.credentials?.password === password);
+            if (freelancer) {
+                // Pass ID as is (string)
+                login('admin', { name: freelancer.name, id: freelancer.id }, 'freelancer', freelancer.id as any);
+                navigate('/admin/content-requests');
+                setIsLoading(false);
+                return;
+            }
+        }
+
         alert('관리자 정보가 올바르지 않습니다');
         setIsLoading(false);
     };
@@ -97,6 +111,7 @@ export default function AdminLogin() {
         const idExists =
             (partners.some(p => p.credentials?.username === regId)) ||
             (agents.some(a => a.credentials?.username === regId)) ||
+            (freelancers.some(f => f.credentials?.username === regId)) ||
             (regId === 'admin');
 
         if (idExists) {
@@ -117,12 +132,21 @@ export default function AdminLogin() {
                 schedules: [],
                 credentials: newCreds
             });
-        } else {
+        } else if (regType === 'agent') {
             addAgent({
                 name: regName,
                 image: "https://via.placeholder.com/150",
                 description: "New Agent",
                 schedules: [],
+                credentials: newCreds
+            });
+        } else {
+            addFreelancer({
+                name: regName,
+                title: "New Freelancer",
+                image: "https://via.placeholder.com/150",
+                description: "New Freelancer Description",
+                portfolioImages: [],
                 credentials: newCreds
             });
         }
@@ -221,6 +245,15 @@ export default function AdminLogin() {
                                     className="text-red-500 focus:ring-red-500"
                                 />
                                 <span>에이전트</span>
+                            </label>
+                            <label className="flex items-center space-x-2 text-gray-300 cursor-pointer">
+                                <input
+                                    type="radio"
+                                    checked={regType === 'freelancer'}
+                                    onChange={() => setRegType('freelancer')}
+                                    className="text-red-500 focus:ring-red-500"
+                                />
+                                <span>프리랜서</span>
                             </label>
                         </div>
 

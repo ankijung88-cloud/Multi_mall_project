@@ -3,10 +3,11 @@ import { motion } from 'framer-motion';
 import { useProducts } from '../context/ProductContext';
 import { usePartners } from '../context/PartnerContext';
 import { useAgents } from '../context/AgentContext';
+import { useFreelancers } from '../context/FreelancerContext';
 import { PriceDisplay } from '../components/PriceDisplay';
 import MainLayout from '../layouts/MainLayout';
 import { ShoppingBag, TrendingDown, ShieldCheck } from 'lucide-react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
 import { useAuthStore } from '../store/useAuthStore';
 
@@ -16,9 +17,16 @@ export default function CompanyHome() {
     const navigate = useNavigate();
     const { isAuthenticated, setViewMode } = useAuthStore();
 
+    const location = useLocation();
+
     useEffect(() => {
         setViewMode('company');
-    }, [setViewMode]);
+        if (location.state?.scrollTo === 'personal-contents') {
+            setTimeout(() => {
+                document.getElementById('personal-contents')?.scrollIntoView({ behavior: 'smooth' });
+            }, 100);
+        }
+    }, [setViewMode, location]);
     const [isFiltered, setIsFiltered] = useState(false);
 
     const displayedProducts = (isFiltered
@@ -199,6 +207,58 @@ export default function CompanyHome() {
                                         </h3>
                                     </motion.div>
                                 </div>
+                            ))}
+                        </div>
+                    </div>
+                </section>
+
+                {/* Personal Contents Section */}
+                <section id="personal-contents" className="bg-gray-50 py-20 border-b border-gray-200">
+                    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                        <div className="flex items-center justify-between mb-12">
+                            <h2 className="text-3xl font-bold text-gray-900 border-l-4 border-orange-500 pl-4">
+                                Personal Contents
+                            </h2>
+                            <button
+                                onClick={() => navigate('/contents')}
+                                className="text-gray-500 hover:text-orange-600 text-sm font-medium transition-colors"
+                            >
+                                전체 컨텐츠 보기 (View All)
+                            </button>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                            {useFreelancers().freelancers.slice(0, 8).map((freelancer) => (
+                                <motion.div
+                                    key={freelancer.id}
+                                    whileHover={{ y: -5 }}
+                                    className="bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-all cursor-pointer group"
+                                    onClick={() => navigate(`/contents/${freelancer.id}`)}
+                                >
+                                    <div className="relative h-48 overflow-hidden">
+                                        <img
+                                            src={freelancer.image}
+                                            alt={freelancer.name}
+                                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                                        />
+                                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+                                        <div className="absolute bottom-4 left-4 text-white">
+                                            <p className="text-xs font-medium text-orange-200 mb-1">{freelancer.title}</p>
+                                            <h3 className="font-bold text-lg">{freelancer.name}</h3>
+                                        </div>
+                                    </div>
+                                    <div className="p-4">
+                                        <p className="text-gray-600 text-sm line-clamp-2 mb-3">
+                                            {freelancer.description}
+                                        </p>
+                                        <div className="flex items-center text-xs text-orange-500 font-medium">
+                                            <span>상세보기</span>
+                                            <svg className="w-4 h-4 ml-1 group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                                            </svg>
+                                        </div>
+                                    </div>
+                                </motion.div>
                             ))}
                         </div>
                     </div>

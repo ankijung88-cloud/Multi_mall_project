@@ -3,12 +3,14 @@ import { Save, User, Lock, AlertCircle, Key, Shield, RefreshCw, Trash2 } from 'l
 import { useAuthStore } from '../store/useAuthStore';
 import { usePartners } from '../context/PartnerContext';
 import { useAgents } from '../context/AgentContext';
+import { useFreelancers } from '../context/FreelancerContext';
 
 export default function AdminSettings() {
     const [isLoading, setIsLoading] = useState(false);
     const { logout, adminRole, adminTargetId } = useAuthStore();
     const { partners, updatePartner } = usePartners();
     const { agents, updateAgent } = useAgents();
+    const { freelancers, updateFreelancer } = useFreelancers();
 
     // Super Admin Form State
     const [formData, setFormData] = useState({
@@ -19,7 +21,7 @@ export default function AdminSettings() {
         confirmPassword: ''
     });
 
-    // Partner/Agent Form State
+    // Partner/Agent/Freelancer Form State
     const [myProfile, setMyProfile] = useState({
         name: '',
         username: '',
@@ -55,8 +57,18 @@ export default function AdminSettings() {
                     confirmPassword: a.credentials.password
                 });
             }
+        } else if (adminRole === 'freelancer' && adminTargetId) {
+            const f = freelancers.find(i => i.id === adminTargetId);
+            if (f && f.credentials) {
+                setMyProfile({
+                    name: f.name,
+                    username: f.credentials.username,
+                    password: f.credentials.password,
+                    confirmPassword: f.credentials.password
+                });
+            }
         }
-    }, [adminRole, adminTargetId, partners, agents]);
+    }, [adminRole, adminTargetId, partners, agents, freelancers]);
 
     // Super Admin Update Handler
     const handleSuperSave = async (e: React.FormEvent) => {
@@ -99,7 +111,7 @@ export default function AdminSettings() {
         setIsLoading(false);
     };
 
-    // Partner/Agent Update Handler
+    // Partner/Agent/Freelancer Update Handler
     const handleMyProfileSave = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!adminTargetId) return;
@@ -124,6 +136,8 @@ export default function AdminSettings() {
             updatePartner(adminTargetId, updates);
         } else if (adminRole === 'agent') {
             updateAgent(adminTargetId, updates);
+        } else if (adminRole === 'freelancer') {
+            updateFreelancer(String(adminTargetId), updates);
         }
 
         alert("Profile updated successfully.");
@@ -131,7 +145,7 @@ export default function AdminSettings() {
     };
 
     // Re-issue Password (Super Admin Only)
-    const handleResetPassword = (type: 'partner' | 'agent', entity: any) => {
+    const handleResetPassword = (type: 'partner' | 'agent' | 'freelancer', entity: any) => {
         if (!window.confirm(`Reset password for ${entity.name}? This will generate a new random password.`)) return;
 
         const newPassword = Math.random().toString(36).slice(-8); // Random 8 chars
@@ -144,15 +158,17 @@ export default function AdminSettings() {
 
         if (type === 'partner') {
             updatePartner(entity.id, updates);
-        } else {
+        } else if (type === 'agent') {
             updateAgent(entity.id, updates);
+        } else {
+            updateFreelancer(entity.id, updates);
         }
 
         alert(`Password for ${entity.name} has been reset to:\n\n${newPassword}\n\nPlease copy this password securely.`);
     };
 
     // Delete Credentials (Super Admin Only)
-    const handleDeleteCredentials = (type: 'partner' | 'agent', entity: any) => {
+    const handleDeleteCredentials = (type: 'partner' | 'agent' | 'freelancer', entity: any) => {
         if (!window.confirm(`Are you sure you want to remove login access for ${entity.name}?\n\nThis will delete their ID and Password information.`)) return;
 
         const updates = {
@@ -162,8 +178,10 @@ export default function AdminSettings() {
 
         if (type === 'partner') {
             updatePartner(entity.id, updates);
-        } else {
+        } else if (type === 'agent') {
             updateAgent(entity.id, updates);
+        } else {
+            updateFreelancer(entity.id, updates);
         }
 
         alert(`Login access for ${entity.name} has been removed.`);
@@ -209,10 +227,10 @@ export default function AdminSettings() {
                 </form>
             )}
 
-            {/* Partner/Agent Personal Profile Form */}
-            {(adminRole === 'partner' || adminRole === 'agent') && (
+            {/* Partner/Agent/Freelancer Personal Profile Form */}
+            {(adminRole === 'partner' || adminRole === 'agent' || adminRole === 'freelancer') && (
                 <form onSubmit={handleMyProfileSave} className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden mb-6 p-6 space-y-6">
-                    <h3 className="font-bold text-lg flex items-center gap-2 border-b pb-2"><User size={20} /> Account Details</h3>
+                    <h3 className="font-bold text-lg flex items-center gap-2 border-b pb-2"><User size={20} /> Account Details ({adminRole?.toUpperCase()})</h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div>
                             <label className="block text-sm font-medium mb-1">Display Name</label>
@@ -263,12 +281,12 @@ export default function AdminSettings() {
                 </form>
             )}
 
-            {/* Super Admin Only: Partner/Agent Account Management (Read Only + Reset) */}
+            {/* Super Admin Only: Partner/Agent/Freelancer Account Management (Read Only + Reset) */}
             {adminRole === 'super' && (
                 <div className="mt-12 border-t border-gray-200 pt-8">
                     <h2 className="text-2xl font-bold mb-6 text-gray-800 flex items-center gap-2">
                         <Shield size={24} className="text-blue-600" />
-                        제휴업체 및 에이전트 계정 관리 (재발행/삭제)
+                        제휴업체 및 에이전트/프리랜서 계정 관리
                     </h2>
 
                     {/* Partners */}
@@ -322,7 +340,7 @@ export default function AdminSettings() {
                     </div>
 
                     {/* Agents */}
-                    <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                    <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden mb-8">
                         <div className="p-6 border-b border-gray-200 bg-purple-50">
                             <h3 className="text-lg font-bold text-gray-900">에이전트 (Agents)</h3>
                         </div>
@@ -356,6 +374,56 @@ export default function AdminSettings() {
                                                     {agent.credentials && (
                                                         <button
                                                             onClick={() => handleDeleteCredentials('agent', agent)}
+                                                            className="bg-red-500 text-white px-3 py-1 rounded text-xs font-bold hover:bg-red-600 flex items-center"
+                                                            title="로그인 권한 삭제 (Remove Access)"
+                                                        >
+                                                            <Trash2 size={14} className="mr-1" /> 삭제
+                                                        </button>
+                                                    )}
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    {/* Freelancers - Added below Agents */}
+                    <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                        <div className="p-6 border-b border-gray-200 bg-orange-50">
+                            <h3 className="text-lg font-bold text-gray-900">프리랜서 (Freelancers)</h3>
+                        </div>
+                        <div className="p-6 overflow-x-auto">
+                            <table className="min-w-full divide-y divide-gray-200">
+                                <thead>
+                                    <tr>
+                                        <th className="px-4 py-3 text-left">이름</th>
+                                        <th className="px-4 py-3 text-left">Login ID</th>
+                                        <th className="px-4 py-3 text-left">Password (Locked)</th>
+                                        <th className="px-4 py-3 text-right">Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-gray-200">
+                                    {freelancers.map(freelancer => (
+                                        <tr key={freelancer.id}>
+                                            <td className="px-4 py-3">{freelancer.name}</td>
+                                            <td className="px-4 py-3 bg-gray-50 text-gray-500">{freelancer.credentials?.username || '-'}</td>
+                                            <td className="px-4 py-3 bg-gray-50 text-gray-400">
+                                                {freelancer.credentials ? '********' : 'No Access'}
+                                            </td>
+                                            <td className="px-4 py-3 text-right">
+                                                <div className="flex items-center justify-end gap-2">
+                                                    <button
+                                                        onClick={() => handleResetPassword('freelancer', freelancer)}
+                                                        className="bg-orange-500 text-white px-3 py-1 rounded text-xs font-bold hover:bg-orange-600 flex items-center"
+                                                        title="비밀번호 재발행 (Reset Password)"
+                                                    >
+                                                        <RefreshCw size={14} className="mr-1" /> 재발행
+                                                    </button>
+                                                    {freelancer.credentials && (
+                                                        <button
+                                                            onClick={() => handleDeleteCredentials('freelancer', freelancer)}
                                                             className="bg-red-500 text-white px-3 py-1 rounded text-xs font-bold hover:bg-red-600 flex items-center"
                                                             title="로그인 권한 삭제 (Remove Access)"
                                                         >

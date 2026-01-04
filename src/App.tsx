@@ -34,9 +34,13 @@ import AdminInvoices from './pages/AdminInvoices';
 import AdminAgents from './pages/AdminAgents';
 import AdminAgentRequests from './pages/AdminAgentRequests';
 import AgentDetail from './pages/AgentDetail';
+import AdminContentRequests from './pages/AdminContentRequests';
+import PersonalContentDetail from './pages/PersonalContentDetail';
+import AllPersonalContents from './pages/AllPersonalContents';
 
 import { useAuthStore } from './store/useAuthStore';
 import { AgentProvider } from './context/AgentContext';
+import { FreelancerProvider } from './context/FreelancerContext';
 
 // Protected Route Component
 const ProtectedRoute = ({ children, allowedType }: { children: ReactNode, allowedType?: 'personal' | 'company' | 'admin' }) => {
@@ -72,143 +76,158 @@ export default function App() {
         <ProductProvider>
           <PartnerProvider>
             <AgentProvider>
-              <Routes>
-                {/* Public Routes */}
-                <Route path="/" element={<Welcome />} />
-                <Route path="/login" element={<Login />} />
-                <Route path="/signup" element={<Signup />} />
-                <Route path="/shop" element={<Shop />} />
-                <Route path="/partners" element={<Partners />} />
-                <Route path="/partners/:id" element={<PartnerDetail />} />
-                <Route path="/agents" element={<Agents />} />
-                <Route path="/agents/:id" element={<AgentDetail />} />
-                <Route path="/find-account" element={<FindAccount />} />
+              <FreelancerProvider>
+                <Routes>
+                  {/* Public Routes */}
+                  <Route path="/" element={<Welcome />} />
+                  <Route path="/login" element={<Login />} />
+                  <Route path="/signup" element={<Signup />} />
+                  <Route path="/shop" element={<Shop />} />
+                  <Route path="/partners" element={<Partners />} />
+                  <Route path="/partners/:id" element={<PartnerDetail />} />
+                  <Route path="/agents" element={<Agents />} />
+                  <Route path="/agents/:id" element={<AgentDetail />} />
+                  <Route path="/find-account" element={<FindAccount />} />
 
-                {/* Admin Public Route */}
-                <Route path="/admin/login" element={<AdminLogin />} />
+                  {/* Admin Public Route */}
+                  <Route path="/admin/login" element={<AdminLogin />} />
 
-                {/* Protected Routes */}
-                <Route path="/personal" element={<PersonalHome />} />
-                <Route path="/company" element={<CompanyHome />} />
+                  import AllPersonalContents from './pages/AllPersonalContents'; // Add this at top if not auto-imported, but here we just add route
 
-                <Route
-                  path="/product/:id"
-                  element={<ProductDetail />}
-                />
+                  // ... (existing imports)
 
-                <Route path="/order-history" element={
-                  <ProtectedRoute>
-                    <OrderHistory />
-                  </ProtectedRoute>
-                } />
+                  {/* Protected Routes */}
+                  <Route path="/personal" element={<PersonalHome />} />
+                  <Route path="/company" element={<CompanyHome />} />
+                  <Route path="/contents" element={<AllPersonalContents />} />
+                  <Route path="/contents/:id" element={<PersonalContentDetail />} />
 
-                {/* Admin Routes */}
-                <Route path="/admin" element={
-                  <ProtectedRoute allowedType="admin">
-                    <AdminLayout>
-                      <AdminDashboard />
-                    </AdminLayout>
-                  </ProtectedRoute>
-                } />
-                <Route path="/admin/products" element={
-                  <ProtectedRoute allowedType="admin">
-                    <AdminLayout>
-                      <AdminProducts />
-                    </AdminLayout>
-                  </ProtectedRoute>
-                } />
-                <Route path="/admin/members" element={
-                  <ProtectedRoute allowedType="admin">
-                    <AdminLayout>
-                      <AdminMembers />
-                    </AdminLayout>
-                  </ProtectedRoute>
-                } />
-                <Route path="/admin/settings" element={
-                  <ProtectedRoute allowedType="admin">
-                    <AdminLayout>
-                      <AdminSettings />
-                    </AdminLayout>
-                  </ProtectedRoute>
-                } />
-                <Route path="/admin/orders" element={
-                  <ProtectedRoute allowedType="admin">
-                    <AdminLayout>
-                      <AdminOrders />
-                    </AdminLayout>
-                  </ProtectedRoute>
-                } />
-                <Route path="/admin/shipped" element={
-                  <ProtectedRoute allowedType="admin">
-                    <AdminLayout>
-                      <AdminShippedOrders />
-                    </AdminLayout>
-                  </ProtectedRoute>
-                } />
-                <Route path="/admin/shipping" element={
-                  <ProtectedRoute allowedType="admin">
-                    <AdminLayout>
-                      <AdminShipping />
-                    </AdminLayout>
-                  </ProtectedRoute>
-                } />
-                <Route path="/admin/payments" element={
-                  <ProtectedRoute allowedType="admin">
-                    <AdminLayout>
-                      <AdminPayments />
-                    </AdminLayout>
-                  </ProtectedRoute>
-                } />
-                <Route path="/admin/returns" element={
-                  <ProtectedRoute allowedType="admin">
-                    <AdminLayout>
-                      <AdminReturns />
-                    </AdminLayout>
-                  </ProtectedRoute>
-                } />
-                <Route path="/admin/partners" element={
-                  <ProtectedRoute allowedType="admin">
-                    <AdminLayout>
-                      <AdminPartners />
-                    </AdminLayout>
-                  </ProtectedRoute>
-                } />
-                <Route path="/admin/partner-requests" element={
-                  <ProtectedRoute allowedType="admin">
-                    <AdminLayout>
-                      <AdminPartnerRequests />
-                    </AdminLayout>
-                  </ProtectedRoute>
-                } />
-                <Route path="/admin/agents" element={
-                  <ProtectedRoute allowedType="admin">
-                    <AdminLayout>
-                      <AdminAgents />
-                    </AdminLayout>
-                  </ProtectedRoute>
-                } />
-                <Route path="/admin/agent-requests" element={
-                  <ProtectedRoute allowedType="admin">
-                    <AdminLayout>
-                      <AdminAgentRequests />
-                    </AdminLayout>
-                  </ProtectedRoute>
-                } />
-                <Route path="/admin/invoices" element={
-                  <ProtectedRoute allowedType="admin">
-                    <AdminLayout>
-                      <AdminInvoices />
-                    </AdminLayout>
-                  </ProtectedRoute>
-                } />
+                  <Route
+                    path="/product/:id"
+                    element={<ProductDetail />}
+                  />
 
-                {/* Catch all redirect */}
-                <Route path="*" element={<Navigate to="/" replace />} />
-              </Routes>
+                  <Route path="/order-history" element={
+                    <ProtectedRoute>
+                      <OrderHistory />
+                    </ProtectedRoute>
+                  } />
+
+                  {/* Admin Routes */}
+                  <Route path="/admin" element={
+                    <ProtectedRoute allowedType="admin">
+                      <AdminLayout>
+                        <AdminDashboard />
+                      </AdminLayout>
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/admin/products" element={
+                    <ProtectedRoute allowedType="admin">
+                      <AdminLayout>
+                        <AdminProducts />
+                      </AdminLayout>
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/admin/members" element={
+                    <ProtectedRoute allowedType="admin">
+                      <AdminLayout>
+                        <AdminMembers />
+                      </AdminLayout>
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/admin/settings" element={
+                    <ProtectedRoute allowedType="admin">
+                      <AdminLayout>
+                        <AdminSettings />
+                      </AdminLayout>
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/admin/orders" element={
+                    <ProtectedRoute allowedType="admin">
+                      <AdminLayout>
+                        <AdminOrders />
+                      </AdminLayout>
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/admin/shipped" element={
+                    <ProtectedRoute allowedType="admin">
+                      <AdminLayout>
+                        <AdminShippedOrders />
+                      </AdminLayout>
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/admin/shipping" element={
+                    <ProtectedRoute allowedType="admin">
+                      <AdminLayout>
+                        <AdminShipping />
+                      </AdminLayout>
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/admin/payments" element={
+                    <ProtectedRoute allowedType="admin">
+                      <AdminLayout>
+                        <AdminPayments />
+                      </AdminLayout>
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/admin/returns" element={
+                    <ProtectedRoute allowedType="admin">
+                      <AdminLayout>
+                        <AdminReturns />
+                      </AdminLayout>
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/admin/partners" element={
+                    <ProtectedRoute allowedType="admin">
+                      <AdminLayout>
+                        <AdminPartners />
+                      </AdminLayout>
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/admin/partner-requests" element={
+                    <ProtectedRoute allowedType="admin">
+                      <AdminLayout>
+                        <AdminPartnerRequests />
+                      </AdminLayout>
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/admin/agents" element={
+                    <ProtectedRoute allowedType="admin">
+                      <AdminLayout>
+                        <AdminAgents />
+                      </AdminLayout>
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/admin/agent-requests" element={
+                    <ProtectedRoute allowedType="admin">
+                      <AdminLayout>
+                        <AdminAgentRequests />
+                      </AdminLayout>
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/admin/invoices" element={
+                    <ProtectedRoute allowedType="admin">
+                      <AdminLayout>
+                        <AdminInvoices />
+                      </AdminLayout>
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/admin/content-requests" element={
+                    <ProtectedRoute allowedType="admin">
+                      <AdminLayout>
+                        <AdminContentRequests />
+                      </AdminLayout>
+                    </ProtectedRoute>
+                  } />
+
+                  {/* Catch all redirect */}
+                  <Route path="*" element={<Navigate to="/" replace />} />
+                </Routes>
+              </FreelancerProvider>
             </AgentProvider>
           </PartnerProvider>
         </ProductProvider>
       </CartProvider>
-    </BrowserRouter>
+    </BrowserRouter >
   );
 }
