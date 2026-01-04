@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { ShoppingBag, LogOut, ShoppingCart, LogIn, ClipboardList } from 'lucide-react';
 import clsx from 'clsx';
 import { useAuthStore } from '../store/useAuthStore';
@@ -17,7 +17,8 @@ export default function MainLayout({ children }: MainLayoutProps) {
 
     // Determine current view mode: prioritize userType (if logged in), otherwise viewMode (set by Landing Pages)
     // Default to 'personal' if neither is set
-    const activeType = userType || viewMode || 'personal';
+    const location = useLocation();
+    const activeType = location.pathname === '/company' ? 'company' : (userType || viewMode || 'personal');
     const isCompany = activeType === 'company';
 
     const handleLogout = () => {
@@ -81,7 +82,9 @@ export default function MainLayout({ children }: MainLayoutProps) {
                                 {
                                     name: 'Personal',
                                     path: '/contents',
-                                    subMenus: ['나의 컨텐츠', '관심 컨텐츠', '컨텐츠 등록', '활동 내역', '설정']
+                                    subMenus: isCompany
+                                        ? ['등록컨텐츠', '설정']
+                                        : ['나의 컨텐츠', '관심 컨텐츠', '컨텐츠 등록', '활동 내역', '설정']
                                 },
                                 {
                                     name: '커뮤니티',
