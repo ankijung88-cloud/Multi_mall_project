@@ -74,9 +74,12 @@ const ProtectedRoute = ({ children, allowedType }: { children: ReactNode, allowe
   return children;
 };
 
+import ScrollToTop from './components/ScrollToTop';
+
 export default function App() {
   return (
     <BrowserRouter>
+      <ScrollToTop />
       <CartProvider>
         <ProductProvider>
           <PartnerProvider>
