@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { Save, User, Lock, AlertCircle, Key, Shield, RefreshCw, Trash2 } from 'lucide-react';
+import { useState, useEffect, type FormEvent, type ChangeEvent } from 'react';
+import { User, Shield, RefreshCw, Trash2 } from 'lucide-react';
 import { useAuthStore } from '../store/useAuthStore';
 import { usePartners } from '../context/PartnerContext';
 import { useAgents } from '../context/AgentContext';
@@ -7,7 +7,7 @@ import { useFreelancers } from '../context/FreelancerContext';
 
 export default function AdminSettings() {
     const [isLoading, setIsLoading] = useState(false);
-    const { logout, adminRole, adminTargetId } = useAuthStore();
+    const { adminRole, adminTargetId } = useAuthStore();
     const { partners, updatePartner, deletePartner } = usePartners();
     const { agents, updateAgent, deleteAgent } = useAgents();
     const { freelancers, updateFreelancer, deleteFreelancer } = useFreelancers();
@@ -72,7 +72,7 @@ export default function AdminSettings() {
                 });
             }
         } else if (adminRole === 'freelancer' && adminTargetId) {
-            const f = freelancers.find(i => i.id === adminTargetId);
+            const f = freelancers.find(i => i.id === String(adminTargetId));
             if (f && f.credentials) {
                 setMyProfile({
                     name: f.name,
@@ -85,7 +85,7 @@ export default function AdminSettings() {
     }, [adminRole, adminTargetId, partners, agents, freelancers]);
 
     // Super Admin Update Handler
-    const handleSuperSave = async (e: React.FormEvent) => {
+    const handleSuperSave = async (e: FormEvent) => {
         e.preventDefault();
         setIsLoading(true);
 
@@ -126,7 +126,7 @@ export default function AdminSettings() {
     };
 
     // Partner/Agent/Freelancer Update Handler
-    const handleMyProfileSave = async (e: React.FormEvent) => {
+    const handleMyProfileSave = async (e: FormEvent) => {
         e.preventDefault();
         if (!adminTargetId) return;
 
@@ -183,7 +183,7 @@ export default function AdminSettings() {
 
 
 
-    const handleFormChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const handleFormChange = (e: ChangeEvent<HTMLInputElement>) => {
         const { name, value } = e.target;
         setFormData(prev => ({ ...prev, [name]: value }));
     };
