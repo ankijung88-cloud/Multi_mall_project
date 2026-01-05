@@ -1,15 +1,19 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useProducts } from '../context/ProductContext';
-import { usePartners } from '../context/PartnerContext';
 import { useAgents } from '../context/AgentContext';
 import { useFreelancers } from '../context/FreelancerContext';
 import { PriceDisplay } from '../components/PriceDisplay';
 import MainLayout from '../layouts/MainLayout';
 import { ShoppingBag, TrendingDown, ShieldCheck } from 'lucide-react';
-import { useNavigate, Link, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
 import { useAuthStore } from '../store/useAuthStore';
+import KBeautySection from '../components/sections/KBeautySection';
+import KPerformanceSection from '../components/sections/KPerformanceSection';
+import KAuditionSection from '../components/sections/KAuditionSection';
+import KFashionSection from '../components/sections/KFashionSection';
+import KCourseSection from '../components/sections/KCourseSection';
 
 export default function CompanyHome() {
     const { products } = useProducts();
@@ -123,46 +127,19 @@ export default function CompanyHome() {
                 </section>
 
                 {/* K-Culture Course Partners Section */}
-                <section className="bg-white py-20 border-b border-gray-200">
-                    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                        <div className="flex items-center justify-between mb-12">
-                            <h2 className="text-3xl font-bold text-gray-900 border-l-4 border-blue-600 pl-4">
-                                K-Culture Course
-                            </h2>
-                            <button
-                                onClick={() => navigate('/partners')}
-                                className="text-gray-500 hover:text-blue-600 text-sm font-medium transition-colors"
-                            >
-                                전체 제휴업체 보기
-                            </button>
-                        </div>
+                <KCourseSection />
 
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-                            {usePartners().partners.slice(0, 16).map((partner) => (
-                                <Link
-                                    key={partner.id}
-                                    to={`/partners/${partner.id}`}
-                                    className="block cursor-pointer group text-center"
-                                >
-                                    <motion.div
-                                        whileHover={{ y: -5 }}
-                                    >
-                                        <div className="w-full aspect-[4/3] rounded-2xl overflow-hidden border border-gray-100 group-hover:border-blue-500 transition-all mb-3 shadow-sm">
-                                            <img
-                                                src={partner.image}
-                                                alt={partner.name}
-                                                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                                            />
-                                        </div>
-                                        <h3 className="font-bold text-lg text-gray-800 group-hover:text-blue-600 truncate px-1">
-                                            {partner.name}
-                                        </h3>
-                                    </motion.div>
-                                </Link>
-                            ))}
-                        </div>
-                    </div>
-                </section>
+                {/* K-Beauty & Plastic Surgery Section */}
+                <KBeautySection />
+
+                {/* K-Performance & Exhibition Section */}
+                <KPerformanceSection />
+
+                {/* K-Audition Section */}
+                <KAuditionSection />
+
+                {/* K-Fashion Section */}
+                <KFashionSection />
 
                 {/* Choose Agent Section */}
                 <section className="bg-white py-20 border-b border-gray-200">

@@ -14,6 +14,11 @@ import OrderHistory from './pages/OrderHistory';
 import Shop from './pages/Shop';
 import Partners from './pages/Partners';
 import PartnerDetail from './pages/PartnerDetail';
+import BeautyPartners from './pages/BeautyPartners';
+import CoursePartners from './pages/CoursePartners';
+import PerformancePartners from './pages/PerformancePartners';
+import AuditionPartners from './pages/AuditionPartners';
+import FashionPartners from './pages/FashionPartners';
 import Agents from './pages/Agents';
 
 // Admin Imports
@@ -84,6 +89,11 @@ export default function App() {
                   <Route path="/signup" element={<Signup />} />
                   <Route path="/shop" element={<Shop />} />
                   <Route path="/partners" element={<Partners />} />
+                  <Route path="/partners/course" element={<CoursePartners />} />
+                  <Route path="/partners/beauty" element={<BeautyPartners />} />
+                  <Route path="/partners/performance" element={<PerformancePartners />} />
+                  <Route path="/partners/audition" element={<AuditionPartners />} />
+                  <Route path="/partners/fashion" element={<FashionPartners />} />
                   <Route path="/partners/:id" element={<PartnerDetail />} />
                   <Route path="/agents" element={<Agents />} />
                   <Route path="/agents/:id" element={<AgentDetail />} />
@@ -177,14 +187,16 @@ export default function App() {
                       </AdminLayout>
                     </ProtectedRoute>
                   } />
-                  <Route path="/admin/partners" element={
+                  <Route path="/admin/partners" element={<Navigate to="/admin/partners/course" replace />} />
+                  <Route path="/admin/partners/:category" element={
                     <ProtectedRoute allowedType="admin">
                       <AdminLayout>
                         <AdminPartners />
                       </AdminLayout>
                     </ProtectedRoute>
                   } />
-                  <Route path="/admin/partner-requests" element={
+                  <Route path="/admin/partner-requests" element={<Navigate to="/admin/partner-requests/course" replace />} />
+                  <Route path="/admin/partner-requests/:category" element={
                     <ProtectedRoute allowedType="admin">
                       <AdminLayout>
                         <AdminPartnerRequests />

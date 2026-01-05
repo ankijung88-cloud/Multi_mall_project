@@ -72,7 +72,21 @@ export default function MainLayout({ children }: MainLayoutProps) {
                                 {
                                     name: 'K-Culture',
                                     path: '/partners',
-                                    subMenus: ['파트너 소개', '제휴 문의', '파트너 뉴스', '성공 사례', '가이드']
+                                    subMenus: [
+                                        {
+                                            title: '파트너 소개',
+                                            items: [
+                                                { name: 'K-코스', path: '/partners/course' },
+                                                { name: '뷰티 & 병원', path: '/partners/beauty' },
+                                                { name: '공연 & 전시', path: '/partners/performance' },
+                                                { name: '오디션', path: '/partners/audition' },
+                                                { name: '패션', path: '/partners/fashion' },
+                                                { name: '여행', path: '/partners?category=여행' },
+                                                { name: '음식', path: '/partners?category=음식' }
+                                            ]
+                                        },
+                                        '제휴 문의', '파트너 뉴스', '성공 사례', '가이드'
+                                    ]
                                 },
                                 {
                                     name: '에이전트',
@@ -108,18 +122,48 @@ export default function MainLayout({ children }: MainLayoutProps) {
                                     </Link>
 
                                     {/* Dropdown Menu */}
-                                    <div className="absolute left-1/2 transform -translate-x-1/2 mt-0 w-48 bg-white border border-gray-100 shadow-xl rounded-lg overflow-hidden opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50 top-full">
-                                        <div className={clsx("h-1 w-full", isCompany ? "bg-blue-600" : "bg-emerald-500")}></div>
+                                    <div className="absolute left-1/2 transform -translate-x-1/2 mt-0 w-48 bg-white border border-gray-100 shadow-xl rounded-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50 top-full">
+                                        <div className={clsx("h-1 w-full rounded-t-lg", isCompany ? "bg-blue-600" : "bg-emerald-500")}></div>
                                         <div className="py-2">
-                                            {item.subMenus.map((subItem) => (
-                                                <Link
-                                                    key={subItem}
-                                                    to="#"
-                                                    className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-gray-900 whitespace-pre-line text-left leading-normal"
-                                                >
-                                                    {subItem}
-                                                </Link>
-                                            ))}
+                                            {item.subMenus.map((subItem, idx) => {
+                                                if (typeof subItem === 'string') {
+                                                    return (
+                                                        <Link
+                                                            key={idx}
+                                                            to="#"
+                                                            className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-gray-900 whitespace-pre-line text-left leading-normal"
+                                                        >
+                                                            {subItem}
+                                                        </Link>
+                                                    );
+                                                } else {
+                                                    // Nested Menu Item
+                                                    return (
+                                                        <div key={idx} className="relative group/nested">
+                                                            <button
+                                                                className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-gray-900 flex justify-between items-center"
+                                                            >
+                                                                {subItem.title}
+                                                                <span className="text-gray-400 text-xs">▶</span>
+                                                            </button>
+                                                            {/* Nested Dropdown */}
+                                                            <div className="absolute left-full top-0 w-40 bg-white border border-gray-100 shadow-xl rounded-lg overflow-hidden opacity-0 invisible group-hover/nested:opacity-100 group-hover/nested:visible transition-all duration-200 -ml-1">
+                                                                <div className="py-1">
+                                                                    {subItem.items.map((nestedItem, nIdx) => (
+                                                                        <Link
+                                                                            key={nIdx}
+                                                                            to={typeof nestedItem === 'string' ? '#' : nestedItem.path}
+                                                                            className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-gray-900"
+                                                                        >
+                                                                            {typeof nestedItem === 'string' ? nestedItem : nestedItem.name}
+                                                                        </Link>
+                                                                    ))}
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    );
+                                                }
+                                            })}
                                         </div>
                                     </div>
                                 </div>

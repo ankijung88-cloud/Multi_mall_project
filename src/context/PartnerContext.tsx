@@ -18,6 +18,7 @@ export interface Partner {
     name: string;
     image: string;
     description: string;
+    category?: string;
     schedules: Schedule[];
     credentials?: {
         username: string;
@@ -58,27 +59,7 @@ interface PartnerContextType {
 
 const PartnerContext = createContext<PartnerContextType | undefined>(undefined);
 
-const initialPartners: Partner[] = [
-    {
-        id: 1,
-        name: "K-Food Academy",
-        image: "https://images.unsplash.com/photo-1556910103-1c02745a30bf?auto=format&fit=crop&q=80&w=1000",
-        description: "Experience authentic Korean cooking classes.",
-        schedules: [
-            { id: 'S1', date: '2026-02-10', time: '10:00', title: 'Kimchi Making Class', description: 'Learn to make Kimchi', maxSlots: 10, currentSlots: 0, pricePersonal: 50000, priceCompany: 80000 },
-            { id: 'S2', date: '2026-02-15', time: '14:00', title: 'Bibimbap Workshop', description: 'Healthy Bibimbap', maxSlots: 15, currentSlots: 2, pricePersonal: 30000, priceCompany: 50000 }
-        ],
-        credentials: { username: 'kfood', password: 'password' }
-    },
-    {
-        id: 2,
-        name: "Hanbok Studio",
-        image: "https://images.unsplash.com/photo-1610660471578-8ba943513db3?auto=format&fit=crop&q=80&w=1000",
-        description: "Traditional Korean clothing experience and photoshoot.",
-        schedules: [],
-        credentials: { username: 'hanbok', password: 'password' }
-    }
-];
+const initialPartners: Partner[] = [];
 
 export function PartnerProvider({ children }: { children: ReactNode }) {
     const [partners, setPartners] = useState<Partner[]>([]);
@@ -86,34 +67,60 @@ export function PartnerProvider({ children }: { children: ReactNode }) {
 
     useEffect(() => {
         const storedPartners = localStorage.getItem('mall_partners');
+        let currentPartners: Partner[] = [];
+
         if (storedPartners) {
             try {
                 const parsed = JSON.parse(storedPartners);
                 if (Array.isArray(parsed)) {
-                    // Migration: Ensure pricing fields exist
-                    const migrated = parsed.map((p: Partner) => ({
-                        ...p,
-                        schedules: p.schedules.map((s: Schedule) => ({
-                            ...s,
-                            pricePersonal: s.pricePersonal !== undefined ? s.pricePersonal : 30000,
-                            priceCompany: s.priceCompany !== undefined ? s.priceCompany : 50000
-                        }))
-                    }));
-                    setPartners(migrated);
-                } else {
-                    console.error("Invalid partners data in localStorage, resetting.");
-                    setPartners(initialPartners);
-                    localStorage.setItem('mall_partners', JSON.stringify(initialPartners));
+                    currentPartners = parsed;
                 }
             } catch (e) {
-                console.error("Failed to parse partners data, resetting.", e);
-                setPartners(initialPartners);
-                localStorage.setItem('mall_partners', JSON.stringify(initialPartners));
+                console.error("Failed to parse partners, resetting.");
             }
-        } else {
-            setPartners(initialPartners);
-            localStorage.setItem('mall_partners', JSON.stringify(initialPartners));
         }
+
+        // Merge logic: ensure initialPartners exist and have up-to-date static data (like category)
+        const updatedPartners = [...currentPartners];
+        let hasChanges = false;
+
+        initialPartners.forEach(initP => {
+            const index = updatedPartners.findIndex(p => p.id === initP.id);
+            if (index !== -1) {
+                // Partner exists, check if category is missing or different
+                if (updatedPartners[index].category !== initP.category) {
+                    updatedPartners[index] = { ...updatedPartners[index], category: initP.category };
+                    hasChanges = true;
+                }
+            } else {
+                // Partner missing, add it
+                updatedPartners.push(initP);
+                hasChanges = true;
+            }
+        });
+
+        // Ensure pricing fields migration and category trimming
+        const migrated = updatedPartners.map((p: Partner) => ({
+            ...p,
+            category: p.category ? p.category.trim() : undefined,
+            schedules: p.schedules.map((s: Schedule) => ({
+                ...s,
+                pricePersonal: s.pricePersonal !== undefined ? s.pricePersonal : 30000,
+                priceCompany: s.priceCompany !== undefined ? s.priceCompany : 50000
+            }))
+        }));
+
+        if (JSON.stringify(migrated) !== JSON.stringify(updatedPartners)) {
+            hasChanges = true;
+        }
+
+        if (currentPartners.length === 0 || hasChanges) {
+            setPartners(migrated);
+            localStorage.setItem('mall_partners', JSON.stringify(migrated));
+        } else {
+            setPartners(currentPartners);
+        }
+
 
         const storedRequests = localStorage.getItem('mall_partner_requests');
         if (storedRequests) {

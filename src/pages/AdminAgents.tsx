@@ -24,6 +24,7 @@ export default function AdminAgents() {
     const [formImage, setFormImage] = useState('');
     const [formDescription, setFormDescription] = useState('');
     const [formSchedules, setFormSchedules] = useState<AgentSchedule[]>([]);
+    const [formCredentials, setFormCredentials] = useState<{ username: string, password: string }>({ username: '', password: '' });
     const [bulkDate, setBulkDate] = useState('');
 
 
@@ -34,12 +35,14 @@ export default function AdminAgents() {
             setFormImage(agent.image);
             setFormDescription(agent.description);
             setFormSchedules(agent.schedules);
+            setFormCredentials(agent.credentials || { username: '', password: '' });
         } else {
             setEditingAgent(null);
             setFormName('');
             setFormImage('');
             setFormDescription('');
             setFormSchedules([]);
+            setFormCredentials({ username: '', password: '' });
         }
         setIsModalOpen(true);
     };
@@ -59,7 +62,8 @@ export default function AdminAgents() {
             name: formName,
             image: formImage,
             description: formDescription,
-            schedules: formSchedules
+            schedules: formSchedules,
+            credentials: (formCredentials.username && formCredentials.password) ? formCredentials : undefined
         };
 
         if (editingAgent) {
@@ -279,6 +283,38 @@ export default function AdminAgents() {
                                     className="w-full border rounded-lg px-3 py-2 h-24"
                                 />
                             </div>
+
+                            {/* Credentials Section for Super Admin */}
+                            {adminRole === 'super' && (
+                                <div className="bg-yellow-50 p-4 rounded-lg border border-yellow-200">
+                                    <h4 className="font-bold text-yellow-800 mb-2">관리자 계정 설정 (Admin Credentials)</h4>
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700 mb-1">Username (ID)</label>
+                                            <input
+                                                type="text"
+                                                value={formCredentials.username}
+                                                onChange={e => setFormCredentials({ ...formCredentials, username: e.target.value })}
+                                                className="w-full border rounded-lg px-3 py-2"
+                                                placeholder="admin_id"
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700 mb-1">Password</label>
+                                            <input
+                                                type="text"
+                                                value={formCredentials.password}
+                                                onChange={e => setFormCredentials({ ...formCredentials, password: e.target.value })}
+                                                className="w-full border rounded-lg px-3 py-2"
+                                                placeholder="password"
+                                            />
+                                        </div>
+                                    </div>
+                                    <p className="text-xs text-yellow-600 mt-2">
+                                        * 이 계정으로 해당 에이전트 관리자 페이지에 로그인할 수 있습니다.
+                                    </p>
+                                </div>
+                            )}
 
                             {/* Schedule Section */}
                             <div className="border-t pt-4">

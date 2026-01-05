@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import type { ReactNode } from 'react';
 import { useNavigate, useLocation, NavLink } from 'react-router-dom';
 import { useAuthStore } from '../store/useAuthStore';
@@ -16,26 +17,42 @@ import {
     Calendar,
     Briefcase,
     ExternalLink,
-    Truck,
-    ShoppingBag,
+    ChevronDown,
+    ChevronRight,
     MessageCircle
 } from 'lucide-react';
 import clsx from 'clsx';
 
 export default function AdminLayout({ children }: { children: ReactNode }) {
-    const { logout, adminRole, user } = useAuthStore();
+    const { logout, adminRole } = useAuthStore();
     const navigate = useNavigate();
     const location = useLocation();
-    const currentPath = location.pathname;
-
-
-    // Redirect logic removed to prevent infinite loops. 
-    // Role-based access control is handled by sidebar filtering and leaf-node checks.
 
     const handleLogout = () => {
         logout();
         navigate('/admin/login');
     };
+
+    // Sub-menu structure definition
+    const partnerSubItems = [
+        { path: '/admin/partners/course', label: 'Course (코스)' },
+        { path: '/admin/partners/beauty', label: 'Beauty (뷰티/성형)' },
+        { path: '/admin/partners/performance', label: 'Performance (공연/전시)' },
+        { path: '/admin/partners/audition', label: 'Audition (오디션)' },
+        { path: '/admin/partners/fashion', label: 'Fashion (패션)' },
+    ];
+
+    const requestSubItems = [
+        { path: '/admin/partner-requests/course', label: 'Course Requests' },
+        { path: '/admin/partner-requests/beauty', label: 'Beauty Requests' },
+        { path: '/admin/partner-requests/performance', label: 'Performance Requests' },
+        { path: '/admin/partner-requests/audition', label: 'Audition Requests' },
+        { path: '/admin/partner-requests/fashion', label: 'Fashion Requests' },
+    ];
+
+    // State for toggling menus
+    const [isPartnersOpen, setIsPartnersOpen] = useState(true);
+    const [isRequestsOpen, setIsRequestsOpen] = useState(true);
 
     const allNavItems = [
         { path: '/admin', icon: LayoutDashboard, label: 'Dashboard', end: true },
@@ -44,8 +61,29 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
         { path: '/admin/shipping', icon: Package, label: 'Shipping' },
         { path: '/admin/payments', icon: CreditCard, label: 'Payments' },
         { path: '/admin/invoices', icon: FileText, label: 'Invoices' },
-        { path: '/admin/partners', icon: Handshake, label: '제휴 업체 관리' },
-        { path: '/admin/partner-requests', icon: Calendar, label: '참여 요청 관리' },
+
+        // Partner Management with Sub-menu
+        {
+            key: 'partners',
+            icon: Handshake,
+            label: '제휴 업체 관리',
+            isSubMenu: true,
+            isOpen: isPartnersOpen,
+            toggle: () => setIsPartnersOpen(!isPartnersOpen),
+            subItems: partnerSubItems
+        },
+
+        // Request Management with Sub-menu
+        {
+            key: 'requests',
+            icon: Calendar,
+            label: '참여 요청 관리',
+            isSubMenu: true,
+            isOpen: isRequestsOpen,
+            toggle: () => setIsRequestsOpen(!isRequestsOpen),
+            subItems: requestSubItems
+        },
+
         { path: '/admin/agents', icon: Briefcase, label: '에이전트 관리' },
         { path: '/admin/agent-requests', icon: Calendar, label: '에이전트 신청 관리' },
 
@@ -54,7 +92,6 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
 
         { path: '/admin/returns', icon: RotateCcw, label: 'Returns' },
         { path: '/admin/members', icon: Users, label: 'Members' },
-
         { path: '/admin/settings', icon: Settings, label: '정보수정' },
     ];
 
@@ -70,18 +107,16 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
 
     const navItems = allNavItems.filter(item => {
         if (!adminRole) return false;
-
-        // Super Admin sees everything logic
         if (adminRole === 'super') return true;
-
         if (adminRole === 'partner') {
-            return ['/admin/partner-requests', '/admin/partners', '/admin/settings'].includes(item.path);
+            if (item.key === 'partners' || item.key === 'requests') return true;
+            return ['/admin/settings'].includes(item.path || '');
         }
         if (adminRole === 'agent') {
-            return ['/admin/agent-requests', '/admin/agents', '/admin/settings'].includes(item.path);
+            return ['/admin/agent-requests', '/admin/agents', '/admin/settings'].includes(item.path || '');
         }
         if (adminRole === 'freelancer') {
-            return ['/admin/content-requests', '/admin/settings'].includes(item.path);
+            return ['/admin/content-requests', '/admin/settings'].includes(item.path || '');
         }
         return false;
     });
@@ -97,34 +132,68 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
                 </div>
 
                 <nav className="flex-1 overflow-y-auto py-6 px-3 space-y-1">
-                    {navItems.map((item, index) => {
-                        const showSectionTitle = item.section && (index === 0 || navItems[index - 1].section !== item.section);
+                    {navItems.map((item: any, index: number) => {
+                        const showSectionTitle = item.section && (index === 0 || (navItems[index - 1] as any).section !== item.section);
 
                         return (
-                            <div key={item.path}>
+                            <div key={item.path || item.key}>
                                 {showSectionTitle && (
                                     <p className="px-4 mt-6 mb-2 text-xs font-semibold text-gray-500 uppercase tracking-wider">
                                         {item.section}
                                     </p>
                                 )}
-                                <NavLink
-                                    to={item.path}
-                                    end={item.end}
-                                    className={({ isActive }) => clsx(
-                                        "flex items-center gap-3 px-4 py-3 rounded-lg transition-colors font-medium text-sm",
-                                        isActive
-                                            ? "bg-red-600 text-white shadow-lg shadow-red-900/20"
-                                            : "text-gray-400 hover:bg-gray-800 hover:text-white"
-                                    )}
-                                >
-                                    <item.icon size={20} />
-                                    {item.label}
-                                </NavLink>
+
+                                {item.isSubMenu ? (
+                                    <div className="mb-2">
+                                        <button
+                                            onClick={item.toggle}
+                                            className="w-full flex items-center justify-between px-4 py-3 rounded-lg text-gray-400 hover:bg-gray-800 hover:text-white transition-colors font-medium text-sm"
+                                        >
+                                            <div className="flex items-center gap-3">
+                                                <item.icon size={20} />
+                                                <span>{item.label}</span>
+                                            </div>
+                                            {item.isOpen ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
+                                        </button>
+
+                                        {item.isOpen && (
+                                            <div className="ml-8 mt-1 space-y-1 border-l border-gray-800 pl-2">
+                                                {item.subItems.map((sub: any) => (
+                                                    <NavLink
+                                                        key={sub.path}
+                                                        to={sub.path}
+                                                        className={({ isActive }) => clsx(
+                                                            "block px-4 py-2 rounded-lg transition-colors text-sm",
+                                                            isActive
+                                                                ? "text-white font-semibold bg-gray-800"
+                                                                : "text-gray-500 hover:text-gray-300"
+                                                        )}
+                                                    >
+                                                        {sub.label}
+                                                    </NavLink>
+                                                ))}
+                                            </div>
+                                        )}
+                                    </div>
+                                ) : (
+                                    <NavLink
+                                        to={item.path}
+                                        end={item.end}
+                                        className={({ isActive }) => clsx(
+                                            "flex items-center gap-3 px-4 py-3 rounded-lg transition-colors font-medium text-sm",
+                                            isActive
+                                                ? "bg-red-600 text-white shadow-lg shadow-red-900/20"
+                                                : "text-gray-400 hover:bg-gray-800 hover:text-white"
+                                        )}
+                                    >
+                                        <item.icon size={20} />
+                                        {item.label}
+                                    </NavLink>
+                                )}
                             </div>
                         );
                     })}
 
-                    {/* Always visible Site Shortcuts */}
                     <div className="pt-6 mt-6 border-t border-gray-800">
                         <p className="px-4 text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
                             Site Shortcuts

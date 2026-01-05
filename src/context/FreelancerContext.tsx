@@ -33,6 +33,7 @@ interface FreelancerContextType {
     updateRequestStatus: (id: string, status: 'Approved' | 'Rejected') => void;
     deleteRequest: (id: string) => void;
     updateFreelancer: (id: string, updates: Partial<Freelancer>) => void;
+    deleteFreelancer: (id: string) => void;
 }
 
 const FreelancerContext = createContext<FreelancerContextType | undefined>(undefined);
@@ -149,8 +150,14 @@ export function FreelancerProvider({ children }: { children: ReactNode }) {
         localStorage.setItem('mall_freelancers', JSON.stringify(updated));
     };
 
+    const deleteFreelancer = (id: string) => {
+        const updated = freelancers.filter(f => f.id !== id);
+        setFreelancers(updated);
+        localStorage.setItem('mall_freelancers', JSON.stringify(updated));
+    };
+
     return (
-        <FreelancerContext.Provider value={{ freelancers, addFreelancer, requests, addRequest, updateRequestStatus, deleteRequest, updateFreelancer }}>
+        <FreelancerContext.Provider value={{ freelancers, addFreelancer, requests, addRequest, updateRequestStatus, deleteRequest, updateFreelancer, deleteFreelancer }}>
             {children}
         </FreelancerContext.Provider>
     );

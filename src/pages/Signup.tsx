@@ -35,9 +35,11 @@ export default function Signup() {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
 
-        // Validation: Password Length
-        if (formData.password.length < 8 || formData.password.length > 12) {
-            alert('비밀번호는 8자 이상 12자 이하로 입력해주세요.');
+        // Validation: Password Policy (8-12 chars, letter + number, special chars allowed)
+        // Relaxed: Allow uppercase and common special characters
+        const passwordRegex = /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d@$!%*#?&.\-_]{8,12}$/;
+        if (!passwordRegex.test(formData.password)) {
+            alert('비밀번호는 8~12자의 영문, 숫자, 특수문자(@$!%*#?&.-_)를 포함하여 입력해주세요.');
             return;
         }
 
@@ -232,7 +234,28 @@ export default function Signup() {
                                 value={formData.password}
                                 onChange={handleChange}
                                 className={`block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 transition-all ${ringColor}`}
-                                placeholder="••••••••"
+                                placeholder="8~12자 영문/숫자/특수문자"
+                            />
+                        </div>
+                    </div>
+
+                    <div>
+                        <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700">
+                            비밀번호 확인
+                        </label>
+                        <div className="mt-1 relative rounded-md shadow-sm">
+                            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                <Lock className="h-5 w-5 text-gray-400" />
+                            </div>
+                            <input
+                                id="confirmPassword"
+                                name="confirmPassword"
+                                type="password"
+                                required
+                                value={formData.confirmPassword}
+                                onChange={handleChange}
+                                className={`block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 transition-all ${ringColor}`}
+                                placeholder="비밀번호 재입력"
                             />
                         </div>
                     </div>

@@ -2,22 +2,60 @@ import { usePartners } from '../context/PartnerContext';
 import { useAuthStore } from '../store/useAuthStore';
 import { Send, CheckCircle, Trash, Edit, X, Save, FileCheck } from 'lucide-react';
 import clsx from 'clsx';
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
+import { useParams } from 'react-router-dom';
 import type { PartnerRequest } from '../context/PartnerContext';
 import UserDetailModal from '../components/UserDetailModal';
 
+const CATEGORY_MAP: Record<string, string> = {
+    course: '코스',
+    beauty: '뷰티 & 성형',
+    performance: '공연 & 전시',
+    audition: '오디션',
+    fashion: '패션'
+};
+
+const REVERSE_CATEGORY_MAP: Record<string, string> = {
+    '코스': 'Course',
+    '뷰티 & 성형': 'Beauty & Plastic Surgery',
+    '공연 & 전시': 'Performance & Exhibition',
+    '오디션': 'Audition',
+    '패션': 'Fashion'
+};
+
 export default function AdminPartnerRequests() {
-    const { requests, updateRequestStatus, deleteRequest, updateRequest } = usePartners();
+    const { partners, requests, updateRequestStatus, deleteRequest, updateRequest } = usePartners();
     const adminRole = useAuthStore(state => state.adminRole);
     const adminTargetId = useAuthStore(state => state.adminTargetId);
+    const { category } = useParams<{ category: string }>();
+    const currentCategoryName = category ? CATEGORY_MAP[category] : undefined;
+
     const [editingRequest, setEditingRequest] = useState<PartnerRequest | null>(null);
 
     // User Detail Modal State
     const [detailUser, setDetailUser] = useState<{ id: string, type: string } | null>(null);
 
-    const displayedRequests = Array.isArray(requests) && (adminRole === 'partner' && adminTargetId)
-        ? requests.filter(r => r.partnerId === adminTargetId)
-        : Array.isArray(requests) ? requests : [];
+    const displayedRequests = useMemo(() => {
+        if (!currentCategoryName) return [];
+
+        // 1. Filter partners by category
+        const categoryPartnerIds = partners
+            .filter(p => {
+                if (!p.category) return false;
+                return p.category.trim() === currentCategoryName.trim();
+            })
+            .map(p => p.id);
+
+        // 2. Filter requests belonging to those partners
+        let filtered = requests.filter(r => categoryPartnerIds.includes(r.partnerId));
+
+        // 3. Apply Role Filtering (if Partner Admin)
+        if (adminRole === 'partner' && adminTargetId) {
+            filtered = filtered.filter(r => r.partnerId === adminTargetId);
+        }
+
+        return filtered;
+    }, [requests, partners, currentCategoryName, adminRole, adminTargetId]);
 
     const handleSendToPartner = (id: string, partnerName: string) => {
         if (window.confirm(`Send this request detailed to ${partnerName}?`)) {
@@ -61,9 +99,14 @@ export default function AdminPartnerRequests() {
         }
     };
 
+    if (!currentCategoryName) {
+        return <div className="p-6">Invalid Category</div>;
+    }
+
     return (
         <div className="p-6">
-            <h2 className="text-2xl font-bold text-gray-800 mb-6">제휴 업체 참여 요청 관리</h2>
+            <h2 className="text-2xl font-bold text-gray-800 mb-1">제휴 업체 참여 요청 관리</h2>
+            <p className="text-gray-500 mb-6">{REVERSE_CATEGORY_MAP[currentCategoryName] || currentCategoryName}</p>
 
             <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
                 <table className="min-w-full divide-y divide-gray-200">
@@ -83,7 +126,7 @@ export default function AdminPartnerRequests() {
                         {displayedRequests.length === 0 ? (
                             <tr>
                                 <td colSpan={8} className="px-6 py-12 text-center text-gray-500">
-                                    {Array.isArray(requests) ? "No participation requests found." : "Loading or Error..."}
+                                    이 카테고리의 참여 요청 내역이 없습니다.
                                 </td>
                             </tr>
                         ) : (

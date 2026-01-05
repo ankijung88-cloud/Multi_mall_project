@@ -4,7 +4,7 @@ import type { Schedule } from '../context/PartnerContext';
 import { useAuthStore } from '../store/useAuthStore';
 import MainLayout from '../layouts/MainLayout';
 import { Calendar, Users, Clock, CheckCircle } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import clsx from 'clsx';
 
 export default function PartnerDetail() {
@@ -22,6 +22,25 @@ export default function PartnerDetail() {
     const [cardNumber, setCardNumber] = useState('');
     const [cardExpiry, setCardExpiry] = useState('');
     const [cardCVC, setCardCVC] = useState('');
+
+
+    const handleCloseModal = () => {
+        setApplicationStep('idle');
+        setSelectedSchedule(null);
+        // Navigate to landing page
+        if (isCompany) navigate('/company');
+        else navigate('/personal');
+    };
+
+    // Auto-redirect on success
+    useEffect(() => {
+        if (applicationStep === 'success') {
+            const timer = setTimeout(() => {
+                handleCloseModal();
+            }, 2000);
+            return () => clearTimeout(timer);
+        }
+    }, [applicationStep]);
 
     if (!partner) {
         return (
@@ -42,7 +61,8 @@ export default function PartnerDetail() {
         e.preventDefault();
         e.stopPropagation();
 
-        if (!isAuthenticated || !user) {
+        if (!isAuthenticated) {
+            alert('로그인이 필요한 서비스입니다.\n(로그인 페이지로 이동합니다)');
             const redirectType = viewMode === 'company' ? 'company' : 'personal';
             navigate(`/login?type=${redirectType}`, { state: { from: location.pathname } });
             return;
@@ -91,23 +111,33 @@ export default function PartnerDetail() {
     };
 
     const handleCompleteBooking = (amout: number) => {
-        if (!selectedSchedule || !user) return;
+        if (!selectedSchedule || !user) {
+            alert('오류가 발생했습니다: 사용자 정보가 없거나 일정이 선택되지 않았습니다.\n다시 시도해 주세요.');
+            setApplicationStep('idle');
+            return;
+        }
 
-        addRequest({
-            partnerId: partner.id,
-            partnerName: partner.name,
-            userId: user.id,
-            userName: user.name || user.id,
-            scheduleId: selectedSchedule.id,
-            scheduleTitle: selectedSchedule.title,
-            scheduleDate: selectedSchedule.date,
-            paymentStatus: amout > 0 ? 'paid' : 'pending',
-            paymentAmount: amout,
-            paymentDate: new Date().toISOString(),
-            paymentMethod: amout > 0 ? 'Credit Card' : 'Free',
-            userType: isCompany ? 'Company' : 'Personal'
-        });
-        setApplicationStep('success');
+        try {
+            addRequest({
+                partnerId: partner.id,
+                partnerName: partner.name,
+                userId: user.id,
+                userName: user.name || user.id,
+                scheduleId: selectedSchedule.id,
+                scheduleTitle: selectedSchedule.title,
+                scheduleDate: selectedSchedule.date,
+                paymentStatus: amout > 0 ? 'paid' : 'pending',
+                paymentAmount: amout,
+                paymentDate: new Date().toISOString(),
+                paymentMethod: amout > 0 ? 'Credit Card' : 'Free',
+                userType: isCompany ? 'Company' : 'Personal'
+            });
+            setApplicationStep('success');
+        } catch (error) {
+            console.error("Booking Error:", error);
+            alert('신청 처리 중 오류가 발생했습니다. 관리자에게 문의하세요.');
+            setApplicationStep('idle');
+        }
     };
 
     const handleCancel = (e: React.MouseEvent) => {
@@ -121,10 +151,7 @@ export default function PartnerDetail() {
         }
     };
 
-    const handleCloseModal = () => {
-        setApplicationStep('idle');
-        setSelectedSchedule(null);
-    };
+
 
     // Sort schedules by date
     const sortedSchedules = [...partner.schedules].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());

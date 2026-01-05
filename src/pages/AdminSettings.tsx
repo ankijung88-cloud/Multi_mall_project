@@ -8,9 +8,23 @@ import { useFreelancers } from '../context/FreelancerContext';
 export default function AdminSettings() {
     const [isLoading, setIsLoading] = useState(false);
     const { logout, adminRole, adminTargetId } = useAuthStore();
-    const { partners, updatePartner } = usePartners();
-    const { agents, updateAgent } = useAgents();
-    const { freelancers, updateFreelancer } = useFreelancers();
+    const { partners, updatePartner, deletePartner } = usePartners();
+    const { agents, updateAgent, deleteAgent } = useAgents();
+    const { freelancers, updateFreelancer, deleteFreelancer } = useFreelancers();
+
+    const handleDeleteEntity = (type: 'partner' | 'agent' | 'freelancer', id: any, name: string) => {
+        if (!window.confirm(`정말로 '${name}' 계정을 영구 삭제하시겠습니까?\n\n이 작업은 되돌릴 수 없습니다.`)) return;
+
+        if (type === 'partner') {
+            deletePartner(id); // id is number
+        } else if (type === 'agent') {
+            deleteAgent(id); // id is number
+        } else {
+            deleteFreelancer(id); // id is string
+        }
+        alert('삭제되었습니다.');
+    };
+
 
     // Super Admin Form State
     const [formData, setFormData] = useState({
@@ -167,25 +181,7 @@ export default function AdminSettings() {
         alert(`Password for ${entity.name} has been reset to:\n\n${newPassword}\n\nPlease copy this password securely.`);
     };
 
-    // Delete Credentials (Super Admin Only)
-    const handleDeleteCredentials = (type: 'partner' | 'agent' | 'freelancer', entity: any) => {
-        if (!window.confirm(`Are you sure you want to remove login access for ${entity.name}?\n\nThis will delete their ID and Password information.`)) return;
 
-        const updates = {
-            // @ts-ignore - Explicitly setting undefined to remove credentials
-            credentials: undefined
-        };
-
-        if (type === 'partner') {
-            updatePartner(entity.id, updates);
-        } else if (type === 'agent') {
-            updateAgent(entity.id, updates);
-        } else {
-            updateFreelancer(entity.id, updates);
-        }
-
-        alert(`Login access for ${entity.name} has been removed.`);
-    };
 
     const handleFormChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const { name, value } = e.target;
@@ -317,19 +313,17 @@ export default function AdminSettings() {
                                                     <button
                                                         onClick={() => handleResetPassword('partner', partner)}
                                                         className="bg-orange-500 text-white px-3 py-1 rounded text-xs font-bold hover:bg-orange-600 flex items-center"
-                                                        title="비밀번호 재발행 (Reset Password)"
+                                                        title="비밀번호 재발행"
                                                     >
                                                         <RefreshCw size={14} className="mr-1" /> 재발행
                                                     </button>
-                                                    {partner.credentials && (
-                                                        <button
-                                                            onClick={() => handleDeleteCredentials('partner', partner)}
-                                                            className="bg-red-500 text-white px-3 py-1 rounded text-xs font-bold hover:bg-red-600 flex items-center"
-                                                            title="로그인 권한 삭제 (Remove Access)"
-                                                        >
-                                                            <Trash2 size={14} className="mr-1" /> 삭제
-                                                        </button>
-                                                    )}
+                                                    <button
+                                                        onClick={() => handleDeleteEntity('partner', partner.id, partner.name)}
+                                                        className="bg-red-500 text-white px-3 py-1 rounded text-xs font-bold hover:bg-red-600 flex items-center"
+                                                        title="계정 영구 삭제 (Delete Account)"
+                                                    >
+                                                        <Trash2 size={14} className="mr-1" /> 삭제
+                                                    </button>
                                                 </div>
                                             </td>
                                         </tr>
@@ -367,19 +361,17 @@ export default function AdminSettings() {
                                                     <button
                                                         onClick={() => handleResetPassword('agent', agent)}
                                                         className="bg-orange-500 text-white px-3 py-1 rounded text-xs font-bold hover:bg-orange-600 flex items-center"
-                                                        title="비밀번호 재발행 (Reset Password)"
+                                                        title="비밀번호 재발행"
                                                     >
                                                         <RefreshCw size={14} className="mr-1" /> 재발행
                                                     </button>
-                                                    {agent.credentials && (
-                                                        <button
-                                                            onClick={() => handleDeleteCredentials('agent', agent)}
-                                                            className="bg-red-500 text-white px-3 py-1 rounded text-xs font-bold hover:bg-red-600 flex items-center"
-                                                            title="로그인 권한 삭제 (Remove Access)"
-                                                        >
-                                                            <Trash2 size={14} className="mr-1" /> 삭제
-                                                        </button>
-                                                    )}
+                                                    <button
+                                                        onClick={() => handleDeleteEntity('agent', agent.id, agent.name)}
+                                                        className="bg-red-500 text-white px-3 py-1 rounded text-xs font-bold hover:bg-red-600 flex items-center"
+                                                        title="계정 영구 삭제 (Delete Account)"
+                                                    >
+                                                        <Trash2 size={14} className="mr-1" /> 삭제
+                                                    </button>
                                                 </div>
                                             </td>
                                         </tr>
@@ -417,19 +409,17 @@ export default function AdminSettings() {
                                                     <button
                                                         onClick={() => handleResetPassword('freelancer', freelancer)}
                                                         className="bg-orange-500 text-white px-3 py-1 rounded text-xs font-bold hover:bg-orange-600 flex items-center"
-                                                        title="비밀번호 재발행 (Reset Password)"
+                                                        title="비밀번호 재발행"
                                                     >
                                                         <RefreshCw size={14} className="mr-1" /> 재발행
                                                     </button>
-                                                    {freelancer.credentials && (
-                                                        <button
-                                                            onClick={() => handleDeleteCredentials('freelancer', freelancer)}
-                                                            className="bg-red-500 text-white px-3 py-1 rounded text-xs font-bold hover:bg-red-600 flex items-center"
-                                                            title="로그인 권한 삭제 (Remove Access)"
-                                                        >
-                                                            <Trash2 size={14} className="mr-1" /> 삭제
-                                                        </button>
-                                                    )}
+                                                    <button
+                                                        onClick={() => handleDeleteEntity('freelancer', freelancer.id, freelancer.name)}
+                                                        className="bg-red-500 text-white px-3 py-1 rounded text-xs font-bold hover:bg-red-600 flex items-center"
+                                                        title="계정 영구 삭제 (Delete Account)"
+                                                    >
+                                                        <Trash2 size={14} className="mr-1" /> 삭제
+                                                    </button>
                                                 </div>
                                             </td>
                                         </tr>

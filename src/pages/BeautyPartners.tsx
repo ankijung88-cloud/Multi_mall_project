@@ -1,20 +1,20 @@
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { usePartners } from '../context/PartnerContext';
 import { useAuthStore } from '../store/useAuthStore';
 import MainLayout from '../layouts/MainLayout';
 import { motion } from 'framer-motion';
 import clsx from 'clsx';
 
-export default function Partners() {
+export default function BeautyPartners() {
     const { partners } = usePartners();
     const navigate = useNavigate();
     const { userType } = useAuthStore();
-    const [searchParams] = useSearchParams();
-    const category = searchParams.get('category');
 
-    const displayedPartners = category
-        ? partners.filter(p => p.category === category || (category === '뷰티 & 병원' && p.category === '뷰티&병원'))
-        : partners;
+    // Specific category filter
+    // Specific category filter
+    const displayedPartners = partners
+        .filter(p => p.category?.trim() === '뷰티 & 성형')
+        .sort((a, b) => b.id - a.id);
 
     return (
         <MainLayout>
@@ -26,14 +26,10 @@ export default function Partners() {
                 )}>
                     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
                         <h1 className="text-4xl md:text-5xl font-bold mb-4">
-                            {category ? category : (userType === 'company' ? 'Corporate Partnership' : 'K-Culture Partners')}
+                            K-Beauty & Plastic Surgery
                         </h1>
                         <p className={clsx("text-xl max-w-2xl mx-auto", userType === 'company' ? "text-blue-200" : "text-gray-300")}>
-                            {category
-                                ? `${category} 관련 최고의 파트너사를 소개합니다.`
-                                : (userType === 'company'
-                                    ? '기업의 성장을 돕는 전문 파트너사와 교육 프로그램을 확인하세요.'
-                                    : '대한민국 최고의 문화 체험 및 교육 프로그램을 제공하는 파트너사를 소개합니다.')}
+                            대한민국 최고의 뷰티 및 의료 서비스를 제공하는 파트너사를 소개합니다.
                         </p>
                     </div>
                 </div>
@@ -55,11 +51,11 @@ export default function Partners() {
                                     />
                                 </div>
                                 <div className="p-6">
-                                    <h3 className="font-bold text-xl mb-2 group-hover:text-blue-600 transition-colors">{partner.name}</h3>
+                                    <h3 className="font-bold text-xl mb-2 group-hover:text-pink-600 transition-colors">{partner.name}</h3>
                                     <p className="text-gray-500 text-sm line-clamp-3 mb-4">{partner.description}</p>
                                     <div className="border-t pt-4 flex justify-between items-center text-sm">
                                         <span className="text-gray-500">진행중인 과정</span>
-                                        <span className="font-semibold text-blue-600">{partner.schedules.length}개</span>
+                                        <span className="font-semibold text-pink-600">{partner.schedules.length}개</span>
                                     </div>
                                 </div>
                             </motion.div>
@@ -68,7 +64,7 @@ export default function Partners() {
 
                     {displayedPartners.length === 0 && (
                         <div className="text-center py-20 bg-white rounded-xl shadow-sm">
-                            <p className="text-gray-500">등록된 제휴 업체가 없습니다.</p>
+                            <p className="text-gray-500">등록된 뷰티/병원 파트너가 없습니다.</p>
                         </div>
                     )}
                 </div>
