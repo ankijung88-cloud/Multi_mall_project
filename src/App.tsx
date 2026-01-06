@@ -20,6 +20,11 @@ import PerformancePartners from './pages/PerformancePartners';
 import AuditionPartners from './pages/AuditionPartners';
 import FashionPartners from './pages/FashionPartners';
 import Agents from './pages/Agents';
+import Intro from './pages/Intro';
+import Notice from './pages/Notice';
+import Event from './pages/Event';
+import News from './pages/News';
+import Recruit from './pages/Recruit';
 
 // Admin Imports
 import AdminLogin from './pages/AdminLogin';
@@ -100,6 +105,15 @@ export default function App() {
                   <Route path="/partners/:id" element={<PartnerDetail />} />
                   <Route path="/agents" element={<Agents />} />
                   <Route path="/agents/:id" element={<AgentDetail />} />
+
+
+                  {/* Home Submenus */}
+                  <Route path="/intro" element={<Intro />} />
+                  <Route path="/notice" element={<Notice />} />
+                  <Route path="/event" element={<Event />} />
+                  <Route path="/news" element={<News />} />
+                  <Route path="/recruit" element={<Recruit />} />
+
                   <Route path="/find-account" element={<FindAccount />} />
 
                   {/* Admin Public Route */}

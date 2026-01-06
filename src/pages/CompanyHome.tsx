@@ -257,7 +257,7 @@ export default function CompanyHome() {
                                 </button>
                             )}
                             <button
-                                onClick={() => navigate('/shop')}
+                                onClick={() => navigate('/shop?type=company')}
                                 className="text-blue-600 font-semibold hover:text-blue-800 transition-colors"
                             >
                                 상품보기

@@ -8,6 +8,12 @@ export interface Product {
     category: string;
     isRecommendedPersonal?: boolean;
     isRecommendedCompany?: boolean;
+    isNewPersonal?: boolean;
+    isNewCompany?: boolean;
+    isBrandPersonal?: boolean;
+    isBrandCompany?: boolean;
+    isSalePersonal?: boolean;
+    isSaleCompany?: boolean;
     detailImages?: string[];
 }
 

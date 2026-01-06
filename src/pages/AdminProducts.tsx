@@ -83,7 +83,7 @@ export default function AdminProducts() {
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                 {activeTab === 'personal' ? 'Personal Price' : 'Corporate Price'}
                             </th>
-                            <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Recommended</th>
+                            <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Display Status</th>
                             <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                         </tr>
                     </thead>
@@ -128,12 +128,34 @@ export default function AdminProducts() {
                                     )}
                                 </td>
                                 <td className="px-6 py-4 whitespace-nowrap text-center">
-                                    <input
-                                        type="checkbox"
-                                        checked={activeTab === 'personal' ? !!product.isRecommendedPersonal : !!product.isRecommendedCompany}
-                                        onChange={() => toggleRecommendation(product.id, activeTab)}
-                                        className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded cursor-pointer"
-                                    />
+                                    <div className="flex flex-wrap justify-center gap-1 max-w-[200px] mx-auto">
+                                        {(activeTab === 'personal' ? product.isRecommendedPersonal : product.isRecommendedCompany) && (
+                                            <span className="px-2 py-0.5 text-[10px] font-bold rounded bg-blue-100 text-blue-800 border border-blue-200">
+                                                Rec
+                                            </span>
+                                        )}
+                                        {(activeTab === 'personal' ? product.isNewPersonal : product.isNewCompany) && (
+                                            <span className="px-2 py-0.5 text-[10px] font-bold rounded bg-green-100 text-green-800 border border-green-200">
+                                                New
+                                            </span>
+                                        )}
+                                        {(activeTab === 'personal' ? product.isBrandPersonal : product.isBrandCompany) && (
+                                            <span className="px-2 py-0.5 text-[10px] font-bold rounded bg-purple-100 text-purple-800 border border-purple-200">
+                                                Brand
+                                            </span>
+                                        )}
+                                        {(activeTab === 'personal' ? product.isSalePersonal : product.isSaleCompany) && (
+                                            <span className="px-2 py-0.5 text-[10px] font-bold rounded bg-red-100 text-red-800 border border-red-200">
+                                                Sale
+                                            </span>
+                                        )}
+                                        {!((activeTab === 'personal' ? product.isRecommendedPersonal : product.isRecommendedCompany) ||
+                                            (activeTab === 'personal' ? product.isNewPersonal : product.isNewCompany) ||
+                                            (activeTab === 'personal' ? product.isBrandPersonal : product.isBrandCompany) ||
+                                            (activeTab === 'personal' ? product.isSalePersonal : product.isSaleCompany)) && (
+                                                <span className="text-gray-300 text-xs">-</span>
+                                            )}
+                                    </div>
                                 </td>
                                 <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                     <button
@@ -190,7 +212,15 @@ function ProductForm({ product, onSubmit, onCancel }: { product: Product | null,
         personalPrice: product?.personalPrice || 0,
         companyPrice: product?.companyPrice || 0,
         category: product?.category || 'General',
-        detailImages: product?.detailImages || []
+        detailImages: product?.detailImages || [],
+        isRecommendedPersonal: product?.isRecommendedPersonal || false,
+        isRecommendedCompany: product?.isRecommendedCompany || false,
+        isNewPersonal: product?.isNewPersonal || false,
+        isNewCompany: product?.isNewCompany || false,
+        isBrandPersonal: product?.isBrandPersonal || false,
+        isBrandCompany: product?.isBrandCompany || false,
+        isSalePersonal: product?.isSalePersonal || false,
+        isSaleCompany: product?.isSaleCompany || false
     });
 
     // Local state for KRW input
@@ -276,16 +306,6 @@ function ProductForm({ product, onSubmit, onCancel }: { product: Product | null,
             </div>
 
             <div className="grid grid-cols-2 gap-4">
-                <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Category</label>
-                    <select
-                        value={formData.category}
-                        onChange={e => setFormData({ ...formData, category: e.target.value })}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
-                    >
-                        {categories.map(c => <option key={c} value={c}>{c}</option>)}
-                    </select>
-                </div>
                 <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Main Image</label>
                     <div className="flex flex-col gap-2">
@@ -407,6 +427,98 @@ function ProductForm({ product, onSubmit, onCancel }: { product: Product | null,
                         <p className="text-xs text-gray-500 text-right">
                             Converted: ${formData.companyPrice.toLocaleString()} (USD)
                         </p>
+                    </div>
+                </div>
+            </div>
+            <div className="border-t border-gray-100 pt-4">
+                <h4 className="font-medium text-gray-900 mb-3">Market Display Settings</h4>
+                <div className="grid grid-cols-2 gap-6">
+                    <div className="bg-emerald-50/50 p-4 rounded-lg border border-emerald-100">
+                        <h5 className="text-sm font-semibold text-emerald-800 mb-3 flex items-center">
+                            Personal Market
+                        </h5>
+                        <div className="space-y-2">
+                            <label className="flex items-center space-x-2 text-sm text-gray-700 cursor-pointer">
+                                <input
+                                    type="checkbox"
+                                    checked={!!formData.isRecommendedPersonal}
+                                    onChange={e => setFormData({ ...formData, isRecommendedPersonal: e.target.checked })}
+                                    className="rounded border-gray-300 text-emerald-600 focus:ring-emerald-500"
+                                />
+                                <span>Recommended (추천)</span>
+                            </label>
+                            <label className="flex items-center space-x-2 text-sm text-gray-700 cursor-pointer">
+                                <input
+                                    type="checkbox"
+                                    checked={!!formData.isNewPersonal}
+                                    onChange={e => setFormData({ ...formData, isNewPersonal: e.target.checked })}
+                                    className="rounded border-gray-300 text-emerald-600 focus:ring-emerald-500"
+                                />
+                                <span>New Arrival (신상품)</span>
+                            </label>
+                            <label className="flex items-center space-x-2 text-sm text-gray-700 cursor-pointer">
+                                <input
+                                    type="checkbox"
+                                    checked={!!formData.isBrandPersonal}
+                                    onChange={e => setFormData({ ...formData, isBrandPersonal: e.target.checked })}
+                                    className="rounded border-gray-300 text-emerald-600 focus:ring-emerald-500"
+                                />
+                                <span>Brand Collection (브랜드)</span>
+                            </label>
+                            <label className="flex items-center space-x-2 text-sm text-gray-700 cursor-pointer">
+                                <input
+                                    type="checkbox"
+                                    checked={!!formData.isSalePersonal}
+                                    onChange={e => setFormData({ ...formData, isSalePersonal: e.target.checked })}
+                                    className="rounded border-gray-300 text-emerald-600 focus:ring-emerald-500"
+                                />
+                                <span>Sale & Deal (세일)</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div className="bg-blue-50/50 p-4 rounded-lg border border-blue-100">
+                        <h5 className="text-sm font-semibold text-blue-800 mb-3 flex items-center">
+                            Corporate Market
+                        </h5>
+                        <div className="space-y-2">
+                            <label className="flex items-center space-x-2 text-sm text-gray-700 cursor-pointer">
+                                <input
+                                    type="checkbox"
+                                    checked={!!formData.isRecommendedCompany}
+                                    onChange={e => setFormData({ ...formData, isRecommendedCompany: e.target.checked })}
+                                    className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                                />
+                                <span>Recommended (추천)</span>
+                            </label>
+                            <label className="flex items-center space-x-2 text-sm text-gray-700 cursor-pointer">
+                                <input
+                                    type="checkbox"
+                                    checked={!!formData.isNewCompany}
+                                    onChange={e => setFormData({ ...formData, isNewCompany: e.target.checked })}
+                                    className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                                />
+                                <span>New Arrival (신상품)</span>
+                            </label>
+                            <label className="flex items-center space-x-2 text-sm text-gray-700 cursor-pointer">
+                                <input
+                                    type="checkbox"
+                                    checked={!!formData.isBrandCompany}
+                                    onChange={e => setFormData({ ...formData, isBrandCompany: e.target.checked })}
+                                    className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                                />
+                                <span>Brand Collection (브랜드)</span>
+                            </label>
+                            <label className="flex items-center space-x-2 text-sm text-gray-700 cursor-pointer">
+                                <input
+                                    type="checkbox"
+                                    checked={!!formData.isSaleCompany}
+                                    onChange={e => setFormData({ ...formData, isSaleCompany: e.target.checked })}
+                                    className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                                />
+                                <span>Sale & Deal (세일)</span>
+                            </label>
+                        </div>
                     </div>
                 </div>
             </div>

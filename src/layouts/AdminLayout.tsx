@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import type { ReactNode } from 'react';
-import { useNavigate, useLocation, NavLink } from 'react-router-dom';
+import { useNavigate, useLocation, NavLink, Link } from 'react-router-dom';
 import { useAuthStore } from '../store/useAuthStore';
 import {
     LayoutDashboard,
@@ -199,16 +199,14 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
                             Site Shortcuts
                         </p>
                         {siteShortcuts.map((item) => (
-                            <a
+                            <Link
                                 key={item.path}
-                                href={item.path}
-                                target="_blank"
-                                rel="noopener noreferrer"
+                                to={item.path}
                                 className="flex items-center gap-3 px-4 py-2 text-gray-400 hover:bg-gray-800 hover:text-white rounded-lg transition-colors text-sm"
                             >
                                 <ExternalLink size={16} />
                                 {item.label}
-                            </a>
+                            </Link>
                         ))}
                     </div>
                 </nav>

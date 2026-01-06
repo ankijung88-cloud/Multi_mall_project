@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { ShoppingBag, LogOut, ShoppingCart, LogIn, ClipboardList } from 'lucide-react';
+import { ShoppingBag, LogOut, ShoppingCart, LogIn, ClipboardList, LayoutDashboard } from 'lucide-react';
 import clsx from 'clsx';
 import { useAuthStore } from '../store/useAuthStore';
 import { useCart } from '../context/CartContext';
@@ -18,7 +18,12 @@ export default function MainLayout({ children }: MainLayoutProps) {
     // Determine current view mode: prioritize userType (if logged in), otherwise viewMode (set by Landing Pages)
     // Default to 'personal' if neither is set
     const location = useLocation();
-    const activeType = location.pathname === '/company' ? 'company' : (userType || viewMode || 'personal');
+    const searchParams = new URLSearchParams(location.search);
+    const queryType = searchParams.get('type');
+
+    const activeType = (location.pathname === '/company' || queryType === 'company')
+        ? 'company'
+        : (userType || viewMode || 'personal');
     const isCompany = activeType === 'company';
 
     const handleLogout = () => {
@@ -62,12 +67,36 @@ export default function MainLayout({ children }: MainLayoutProps) {
                                 {
                                     name: '홈',
                                     path: isCompany ? '/company' : '/personal',
-                                    subMenus: ['소개', '공지사항', '이벤트', '뉴스', '채용']
+                                    subMenus: isCompany
+                                        ? [
+                                            { name: '소개', path: '/intro?type=company' },
+                                            { name: '공지사항', path: '/notice?type=company' },
+                                            { name: '이벤트', path: '/event?type=company' }
+                                        ]
+                                        : [
+                                            { name: '소개', path: '/intro' },
+                                            { name: '공지사항', path: '/notice' },
+                                            { name: '이벤트', path: '/event' },
+                                            { name: '뉴스', path: '/news' },
+                                            { name: '채용', path: '/recruit' }
+                                        ]
                                 },
                                 {
                                     name: '쇼핑',
-                                    path: '/shop',
-                                    subMenus: ['베스트', '신상품', '기획전', '브랜드', '세일']
+                                    path: isCompany ? '/shop?type=company' : '/shop',
+                                    subMenus: isCompany
+                                        ? [
+                                            { name: '추천', path: '/shop?type=company#recommended' },
+                                            { name: '신상품', path: '/shop?type=company#new' },
+                                            { name: '브랜드', path: '/shop?type=company#brand' },
+                                            { name: '세일', path: '/shop?type=company#sale' }
+                                        ]
+                                        : [
+                                            { name: '추천', path: '/shop#recommended' },
+                                            { name: '신상품', path: '/shop#new' },
+                                            { name: '브랜드', path: '/shop#brand' },
+                                            { name: '세일', path: '/shop#sale' }
+                                        ]
                                 },
                                 {
                                     name: 'K-Culture',
@@ -136,6 +165,21 @@ export default function MainLayout({ children }: MainLayoutProps) {
                                                             {subItem}
                                                         </Link>
                                                     );
+                                                } else if ('path' in subItem && 'name' in subItem) {
+                                                    // Direct Link Object { name, path }
+                                                    // We need to cast or just trust TS inference which might struggle if we don't define the type clearly in the array above
+                                                    // But for JS runtime it works.
+                                                    // Ideally we should fix the array type definition but here we just render.
+                                                    const linkItem = subItem as { name: string; path: string };
+                                                    return (
+                                                        <Link
+                                                            key={idx}
+                                                            to={linkItem.path}
+                                                            className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-gray-900 whitespace-pre-line text-left leading-normal"
+                                                        >
+                                                            {linkItem.name}
+                                                        </Link>
+                                                    );
                                                 } else {
                                                     // Nested Menu Item
                                                     return (
@@ -171,6 +215,8 @@ export default function MainLayout({ children }: MainLayoutProps) {
                         </div>
 
                         <div className="flex items-center space-x-3">
+
+
                             <button
                                 onClick={() => handleAuthAction(() => navigate('/order-history'))}
                                 className="p-2 text-gray-600 hover:text-gray-900 transition-colors"
@@ -195,7 +241,7 @@ export default function MainLayout({ children }: MainLayoutProps) {
                             </button>
 
                             <span className="text-sm font-medium text-gray-500">
-                                {isCompany ? '기업 회원' : '개인 회원'}
+                                {userType === 'admin' ? '슈퍼 관리자' : (isCompany ? '기업 회원' : '개인 회원')}
                             </span>
                             {isAuthenticated ? (
                                 <button
@@ -214,10 +260,22 @@ export default function MainLayout({ children }: MainLayoutProps) {
                                     <span>로그인</span>
                                 </Link>
                             )}
+
                         </div>
                     </div>
                 </div>
             </nav>
+
+            {userType === 'admin' && (
+                <button
+                    onClick={() => navigate('/admin')}
+                    className="fixed top-4 right-4 z-[100] px-4 py-2 bg-red-600 text-white rounded-full shadow-xl flex items-center space-x-2 hover:bg-red-700 transition-all hover:scale-105 border-2 border-white ring-2 ring-red-200"
+                    title="Return to Admin Dashboard"
+                >
+                    <LayoutDashboard size={20} />
+                    <span className="font-bold">관리자 페이지</span>
+                </button>
+            )}
 
             <CartModal />
 
