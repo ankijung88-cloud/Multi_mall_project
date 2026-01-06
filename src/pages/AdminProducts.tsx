@@ -28,16 +28,7 @@ export default function AdminProducts() {
         }
     };
 
-    const toggleRecommendation = (id: number, type: 'personal' | 'company') => {
-        const product = products.find(p => p.id === id);
-        if (!product) return;
 
-        const updates = type === 'personal'
-            ? { isRecommendedPersonal: !product.isRecommendedPersonal }
-            : { isRecommendedCompany: !product.isRecommendedCompany };
-
-        updateProduct(id, updates);
-    };
 
     return (
         <div className="p-6">
@@ -243,7 +234,7 @@ function ProductForm({ product, onSubmit, onCancel }: { product: Product | null,
 
 
 
-    const categories = ['Furniture', 'Electronics', 'Accessories', 'Appliances', 'Other'];
+
 
     const handleMainImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
