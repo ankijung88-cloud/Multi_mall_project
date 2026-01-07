@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Search, Mail, Shield, Trash2, AlertCircle } from 'lucide-react';
+import { Search, Mail, Shield, Trash2 } from 'lucide-react';
 import clsx from 'clsx';
 
 interface Member {

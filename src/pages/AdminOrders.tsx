@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Search, ShoppingBag, Eye, Calendar, DollarSign, User, FileSpreadsheet, Truck, CheckSquare, Square, ArrowRight, RotateCcw } from 'lucide-react';
+import { ShoppingBag, Calendar, FileSpreadsheet, Truck, CheckSquare, Square, RotateCcw } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 interface OrderItem {
@@ -23,7 +23,7 @@ export default function AdminOrders() {
     const [orders, setOrders] = useState<Order[]>([]);
     const [dailyBatch, setDailyBatch] = useState<Order[]>([]);
     const [unshippedBacklog, setUnshippedBacklog] = useState<Order[]>([]);
-    const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+
 
     // Refresh Data
     const loadOrders = () => {

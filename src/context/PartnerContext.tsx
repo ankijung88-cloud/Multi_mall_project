@@ -165,7 +165,7 @@ export function PartnerProvider({ children }: { children: ReactNode }) {
     const addRequest = (requestData: Omit<PartnerRequest, 'id' | 'timestamp' | 'status'>) => {
         const newRequest: PartnerRequest = {
             ...requestData,
-            id: crypto.randomUUID(),
+            id: Date.now().toString(36) + Math.random().toString(36).substr(2),
             timestamp: new Date().toISOString(),
             status: 'pending'
         };

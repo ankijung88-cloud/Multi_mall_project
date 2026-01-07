@@ -100,21 +100,24 @@ export default function MainLayout({ children }: MainLayoutProps) {
                                 },
                                 {
                                     name: 'K-Culture',
-                                    path: '/partners',
+                                    path: isCompany ? '/partners?type=company' : '/partners',
                                     subMenus: [
                                         {
                                             title: '파트너 소개',
                                             items: [
-                                                { name: 'K-코스', path: '/partners/course' },
-                                                { name: '뷰티 & 병원', path: '/partners/beauty' },
-                                                { name: '공연 & 전시', path: '/partners/performance' },
-                                                { name: '오디션', path: '/partners/audition' },
-                                                { name: '패션', path: '/partners/fashion' },
+                                                { name: 'K-코스', path: isCompany ? '/partners/course?type=company' : '/partners/course' },
+                                                { name: '뷰티 & 병원', path: isCompany ? '/partners/beauty?type=company' : '/partners/beauty' },
+                                                { name: '공연 & 전시', path: isCompany ? '/partners/performance?type=company' : '/partners/performance' },
+                                                { name: '오디션', path: isCompany ? '/partners/audition?type=company' : '/partners/audition' },
+                                                { name: '패션', path: isCompany ? '/partners/fashion?type=company' : '/partners/fashion' },
                                                 { name: '여행', path: isCompany ? '/partners/travel?type=company' : '/partners/travel' },
                                                 { name: '음식', path: isCompany ? '/partners/food?type=company' : '/partners/food' }
                                             ]
                                         },
-                                        '제휴 문의', '파트너 뉴스', '성공 사례', '가이드'
+                                        { name: '제휴 문의', path: isCompany ? '/partners/inquiry?type=company' : '/partners/inquiry' },
+                                        { name: '파트너 뉴스', path: isCompany ? '/partners/news?type=company' : '/partners/news' },
+                                        { name: '성공 사례', path: isCompany ? '/partners/success?type=company' : '/partners/success' },
+                                        { name: '가이드', path: isCompany ? '/partners/guide?type=company' : '/partners/guide' }
                                     ]
                                 },
                                 {

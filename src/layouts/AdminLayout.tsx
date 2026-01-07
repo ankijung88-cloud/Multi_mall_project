@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import type { ReactNode } from 'react';
-import { useNavigate, useLocation, NavLink, Link } from 'react-router-dom';
+import { useNavigate, NavLink, Link } from 'react-router-dom';
 import { useAuthStore } from '../store/useAuthStore';
 import {
     LayoutDashboard,
@@ -26,7 +26,7 @@ import clsx from 'clsx';
 export default function AdminLayout({ children }: { children: ReactNode }) {
     const { logout, adminRole } = useAuthStore();
     const navigate = useNavigate();
-    const location = useLocation();
+
 
     const handleLogout = () => {
         logout();

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { RotateCcw, CheckCircle, Truck, PackageOpen } from 'lucide-react';
+import { RotateCcw, CheckCircle, Truck } from 'lucide-react';
 
 interface Order {
     id: string;

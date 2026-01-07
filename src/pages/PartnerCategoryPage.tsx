@@ -5,7 +5,7 @@ import { useAuthStore } from '../store/useAuthStore';
 import MainLayout from '../layouts/MainLayout';
 import { motion } from 'framer-motion';
 import clsx from 'clsx';
-import { Plus, Trash, Edit, Save, X, Calendar, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Plus, Trash, Edit, Save, X } from 'lucide-react';
 import type { Partner, Schedule } from '../context/PartnerContext';
 
 interface PartnerCategoryPageProps {
@@ -40,8 +40,7 @@ export default function PartnerCategoryPage({ categoryName, title, description, 
     const [formCredentials, setFormCredentials] = useState<{ username: string, password: string }>({ username: '', password: '' });
 
     // Calendar/Sheet State
-    const [bulkDate, setBulkDate] = useState('');
-    const [browseDate, setBrowseDate] = useState(new Date());
+
 
     const openModal = (partner?: Partner) => {
         if (partner) {
@@ -102,34 +101,7 @@ export default function PartnerCategoryPage({ categoryName, title, description, 
         openModal(partner);
     };
 
-    // Schedule Sheet Logic (Simplified copy from AdminPartners)
-    const handleSheetChange = (time: string, subIndex: number, field: keyof Schedule, value: any) => {
-        if (!bulkDate) return;
-        const schedulesAtTime = formSchedules.filter(s => s.date === bulkDate && s.time === time);
-        const targetSchedule = schedulesAtTime[subIndex];
 
-        if (targetSchedule) {
-            const realIndex = formSchedules.findIndex(s => s.id === targetSchedule.id);
-            if (realIndex >= 0) {
-                const updated = [...formSchedules];
-                updated[realIndex] = { ...updated[realIndex], [field]: value };
-                setFormSchedules(updated);
-            }
-        } else {
-            const newSchedule: Schedule = {
-                id: crypto.randomUUID(),
-                date: bulkDate,
-                time: time,
-                title: field === 'title' ? value : '',
-                description: field === 'description' ? value : '',
-                maxSlots: field === 'maxSlots' ? Number(value) : 10,
-                pricePersonal: field === 'pricePersonal' ? Number(value) : undefined,
-                priceCompany: field === 'priceCompany' ? Number(value) : undefined,
-                currentSlots: 0
-            };
-            setFormSchedules([...formSchedules, newSchedule]);
-        }
-    };
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];

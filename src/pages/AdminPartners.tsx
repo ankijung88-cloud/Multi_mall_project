@@ -147,7 +147,7 @@ export default function AdminPartners() {
         } else {
             // Create new schedule
             const newSchedule: Schedule = {
-                id: crypto.randomUUID(),
+                id: Date.now().toString(36) + Math.random().toString(36).substr(2),
                 date: bulkDate,
                 time: time,
                 title: field === 'title' ? value : '',

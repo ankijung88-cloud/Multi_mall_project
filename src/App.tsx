@@ -3,6 +3,10 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { CartProvider } from './context/CartContext';
 import { ProductProvider } from './context/ProductContext';
 import { PartnerProvider } from './context/PartnerContext';
+import { BoardProvider } from './context/BoardContext';
+import { AgentProvider } from './context/AgentContext';
+import { FreelancerProvider } from './context/FreelancerContext';
+
 import Welcome from './pages/Welcome';
 import Login from './pages/Login';
 import Signup from './pages/Signup';
@@ -22,11 +26,16 @@ import FashionPartners from './pages/FashionPartners';
 import Travel from './pages/Travel';
 import Food from './pages/Food';
 import Agents from './pages/Agents';
+import AgentDetail from './pages/AgentDetail';
 import Intro from './pages/Intro';
 import Notice from './pages/Notice';
 import Event from './pages/Event';
 import News from './pages/News';
 import Recruit from './pages/Recruit';
+
+// Board Pages
+import BoardPage from './pages/BoardPage';
+import InquiryBoard from './pages/InquiryBoard';
 
 // Admin Imports
 import AdminLogin from './pages/AdminLogin';
@@ -45,14 +54,14 @@ import AdminShippedOrders from './pages/AdminShippedOrders';
 import AdminInvoices from './pages/AdminInvoices';
 import AdminAgents from './pages/AdminAgents';
 import AdminAgentRequests from './pages/AdminAgentRequests';
-import AgentDetail from './pages/AgentDetail';
 import AdminContentRequests from './pages/AdminContentRequests';
+
 import PersonalContentDetail from './pages/PersonalContentDetail';
 import AllPersonalContents from './pages/AllPersonalContents';
 
+// ... (imports)
 import { useAuthStore } from './store/useAuthStore';
-import { AgentProvider } from './context/AgentContext';
-import { FreelancerProvider } from './context/FreelancerContext';
+import ScrollToTop from './components/ScrollToTop';
 
 // Protected Route Component
 const ProtectedRoute = ({ children, allowedType }: { children: ReactNode, allowedType?: 'personal' | 'company' | 'admin' }) => {
@@ -81,181 +90,185 @@ const ProtectedRoute = ({ children, allowedType }: { children: ReactNode, allowe
   return children;
 };
 
-import ScrollToTop from './components/ScrollToTop';
-
 export default function App() {
   return (
-    <BrowserRouter>
+    <BrowserRouter basename="/multiserver">
       <ScrollToTop />
       <CartProvider>
         <ProductProvider>
           <PartnerProvider>
             <AgentProvider>
               <FreelancerProvider>
-                <Routes>
-                  {/* Public Routes */}
-                  <Route path="/" element={<Welcome />} />
-                  <Route path="/login" element={<Login />} />
-                  <Route path="/signup" element={<Signup />} />
-                  <Route path="/shop" element={<Shop />} />
-                  <Route path="/partners" element={<Partners />} />
-                  <Route path="/partners/course" element={<CoursePartners />} />
-                  <Route path="/partners/beauty" element={<BeautyPartners />} />
-                  <Route path="/partners/performance" element={<PerformancePartners />} />
-                  <Route path="/partners/audition" element={<AuditionPartners />} />
-                  <Route path="/partners/fashion" element={<FashionPartners />} />
-                  <Route path="/partners/travel" element={<Travel />} />
-                  <Route path="/partners/food" element={<Food />} />
-                  <Route path="/partners/:id" element={<PartnerDetail />} />
-                  <Route path="/agents" element={<Agents />} />
-                  <Route path="/agents/:id" element={<AgentDetail />} />
+                <BoardProvider>
+                  <Routes>
+                    {/* Public Routes */}
+                    <Route path="/" element={<Welcome />} />
+                    {/* ... (existing public routes) ... */}
+                    <Route path="/login" element={<Login />} />
+                    <Route path="/signup" element={<Signup />} />
+                    <Route path="/shop" element={<Shop />} />
+                    <Route path="/partners" element={<Partners />} />
+
+                    {/* K-Culture Board Routes */}
+                    <Route path="/partners/inquiry" element={<InquiryBoard />} />
+                    <Route path="/partners/news" element={<BoardPage type="news" title="파트너 뉴스" subtitle="K-Culture 파트너들의 최신 소식을 전해드립니다." />} />
+                    <Route path="/partners/success" element={<BoardPage type="success" title="성공 사례" subtitle="함께 만들어낸 성공적인 비즈니스 사례를 소개합니다." />} />
+                    <Route path="/partners/guide" element={<BoardPage type="guide" title="가이드" subtitle="파트너십 이용을 위한 상세 가이드입니다." />} />
+
+                    <Route path="/partners/course" element={<CoursePartners />} />
+                    <Route path="/partners/beauty" element={<BeautyPartners />} />
+                    <Route path="/partners/performance" element={<PerformancePartners />} />
+                    <Route path="/partners/audition" element={<AuditionPartners />} />
+                    <Route path="/partners/fashion" element={<FashionPartners />} />
+                    <Route path="/partners/travel" element={<Travel />} />
+                    <Route path="/partners/food" element={<Food />} />
+                    <Route path="/partners/:id" element={<PartnerDetail />} />
+                    <Route path="/agents" element={<Agents />} />
+                    <Route path="/agents/:id" element={<AgentDetail />} />
 
 
-                  {/* Home Submenus */}
-                  <Route path="/intro" element={<Intro />} />
-                  <Route path="/notice" element={<Notice />} />
-                  <Route path="/event" element={<Event />} />
-                  <Route path="/news" element={<News />} />
-                  <Route path="/recruit" element={<Recruit />} />
+                    {/* Home Submenus */}
+                    <Route path="/intro" element={<Intro />} />
+                    <Route path="/notice" element={<Notice />} />
+                    <Route path="/event" element={<Event />} />
+                    <Route path="/news" element={<News />} />
+                    <Route path="/recruit" element={<Recruit />} />
 
-                  <Route path="/find-account" element={<FindAccount />} />
+                    <Route path="/find-account" element={<FindAccount />} />
 
-                  {/* Admin Public Route */}
-                  <Route path="/admin/login" element={<AdminLogin />} />
+                    {/* Admin Public Route */}
+                    <Route path="/admin/login" element={<AdminLogin />} />
 
-                  import AllPersonalContents from './pages/AllPersonalContents'; // Add this at top if not auto-imported, but here we just add route
+                    {/* Protected Routes */}
+                    <Route path="/personal" element={<PersonalHome />} />
+                    <Route path="/company" element={<CompanyHome />} />
+                    <Route path="/contents" element={<AllPersonalContents />} />
+                    <Route path="/contents/:id" element={<PersonalContentDetail />} />
 
-                  // ... (existing imports)
+                    <Route
+                      path="/product/:id"
+                      element={<ProductDetail />}
+                    />
 
-                  {/* Protected Routes */}
-                  <Route path="/personal" element={<PersonalHome />} />
-                  <Route path="/company" element={<CompanyHome />} />
-                  <Route path="/contents" element={<AllPersonalContents />} />
-                  <Route path="/contents/:id" element={<PersonalContentDetail />} />
+                    <Route path="/order-history" element={
+                      <ProtectedRoute>
+                        <OrderHistory />
+                      </ProtectedRoute>
+                    } />
 
-                  <Route
-                    path="/product/:id"
-                    element={<ProductDetail />}
-                  />
+                    {/* Admin Routes */}
+                    <Route path="/admin" element={
+                      <ProtectedRoute allowedType="admin">
+                        <AdminLayout>
+                          <AdminDashboard />
+                        </AdminLayout>
+                      </ProtectedRoute>
+                    } />
+                    <Route path="/admin/products" element={
+                      <ProtectedRoute allowedType="admin">
+                        <AdminLayout>
+                          <AdminProducts />
+                        </AdminLayout>
+                      </ProtectedRoute>
+                    } />
+                    <Route path="/admin/members" element={
+                      <ProtectedRoute allowedType="admin">
+                        <AdminLayout>
+                          <AdminMembers />
+                        </AdminLayout>
+                      </ProtectedRoute>
+                    } />
+                    <Route path="/admin/settings" element={
+                      <ProtectedRoute allowedType="admin">
+                        <AdminLayout>
+                          <AdminSettings />
+                        </AdminLayout>
+                      </ProtectedRoute>
+                    } />
+                    <Route path="/admin/orders" element={
+                      <ProtectedRoute allowedType="admin">
+                        <AdminLayout>
+                          <AdminOrders />
+                        </AdminLayout>
+                      </ProtectedRoute>
+                    } />
+                    <Route path="/admin/shipped" element={
+                      <ProtectedRoute allowedType="admin">
+                        <AdminLayout>
+                          <AdminShippedOrders />
+                        </AdminLayout>
+                      </ProtectedRoute>
+                    } />
+                    <Route path="/admin/shipping" element={
+                      <ProtectedRoute allowedType="admin">
+                        <AdminLayout>
+                          <AdminShipping />
+                        </AdminLayout>
+                      </ProtectedRoute>
+                    } />
+                    <Route path="/admin/payments" element={
+                      <ProtectedRoute allowedType="admin">
+                        <AdminLayout>
+                          <AdminPayments />
+                        </AdminLayout>
+                      </ProtectedRoute>
+                    } />
+                    <Route path="/admin/returns" element={
+                      <ProtectedRoute allowedType="admin">
+                        <AdminLayout>
+                          <AdminReturns />
+                        </AdminLayout>
+                      </ProtectedRoute>
+                    } />
+                    <Route path="/admin/partners" element={<Navigate to="/admin/partners/course" replace />} />
+                    <Route path="/admin/partners/:category" element={
+                      <ProtectedRoute allowedType="admin">
+                        <AdminLayout>
+                          <AdminPartners />
+                        </AdminLayout>
+                      </ProtectedRoute>
+                    } />
+                    <Route path="/admin/partner-requests" element={<Navigate to="/admin/partner-requests/course" replace />} />
+                    <Route path="/admin/partner-requests/:category" element={
+                      <ProtectedRoute allowedType="admin">
+                        <AdminLayout>
+                          <AdminPartnerRequests />
+                        </AdminLayout>
+                      </ProtectedRoute>
+                    } />
+                    <Route path="/admin/agents" element={
+                      <ProtectedRoute allowedType="admin">
+                        <AdminLayout>
+                          <AdminAgents />
+                        </AdminLayout>
+                      </ProtectedRoute>
+                    } />
+                    <Route path="/admin/agent-requests" element={
+                      <ProtectedRoute allowedType="admin">
+                        <AdminLayout>
+                          <AdminAgentRequests />
+                        </AdminLayout>
+                      </ProtectedRoute>
+                    } />
+                    <Route path="/admin/invoices" element={
+                      <ProtectedRoute allowedType="admin">
+                        <AdminLayout>
+                          <AdminInvoices />
+                        </AdminLayout>
+                      </ProtectedRoute>
+                    } />
+                    <Route path="/admin/content-requests" element={
+                      <ProtectedRoute allowedType="admin">
+                        <AdminLayout>
+                          <AdminContentRequests />
+                        </AdminLayout>
+                      </ProtectedRoute>
+                    } />
 
-                  <Route path="/order-history" element={
-                    <ProtectedRoute>
-                      <OrderHistory />
-                    </ProtectedRoute>
-                  } />
-
-                  {/* Admin Routes */}
-                  <Route path="/admin" element={
-                    <ProtectedRoute allowedType="admin">
-                      <AdminLayout>
-                        <AdminDashboard />
-                      </AdminLayout>
-                    </ProtectedRoute>
-                  } />
-                  <Route path="/admin/products" element={
-                    <ProtectedRoute allowedType="admin">
-                      <AdminLayout>
-                        <AdminProducts />
-                      </AdminLayout>
-                    </ProtectedRoute>
-                  } />
-                  <Route path="/admin/members" element={
-                    <ProtectedRoute allowedType="admin">
-                      <AdminLayout>
-                        <AdminMembers />
-                      </AdminLayout>
-                    </ProtectedRoute>
-                  } />
-                  <Route path="/admin/settings" element={
-                    <ProtectedRoute allowedType="admin">
-                      <AdminLayout>
-                        <AdminSettings />
-                      </AdminLayout>
-                    </ProtectedRoute>
-                  } />
-                  <Route path="/admin/orders" element={
-                    <ProtectedRoute allowedType="admin">
-                      <AdminLayout>
-                        <AdminOrders />
-                      </AdminLayout>
-                    </ProtectedRoute>
-                  } />
-                  <Route path="/admin/shipped" element={
-                    <ProtectedRoute allowedType="admin">
-                      <AdminLayout>
-                        <AdminShippedOrders />
-                      </AdminLayout>
-                    </ProtectedRoute>
-                  } />
-                  <Route path="/admin/shipping" element={
-                    <ProtectedRoute allowedType="admin">
-                      <AdminLayout>
-                        <AdminShipping />
-                      </AdminLayout>
-                    </ProtectedRoute>
-                  } />
-                  <Route path="/admin/payments" element={
-                    <ProtectedRoute allowedType="admin">
-                      <AdminLayout>
-                        <AdminPayments />
-                      </AdminLayout>
-                    </ProtectedRoute>
-                  } />
-                  <Route path="/admin/returns" element={
-                    <ProtectedRoute allowedType="admin">
-                      <AdminLayout>
-                        <AdminReturns />
-                      </AdminLayout>
-                    </ProtectedRoute>
-                  } />
-                  <Route path="/admin/partners" element={<Navigate to="/admin/partners/course" replace />} />
-                  <Route path="/admin/partners/:category" element={
-                    <ProtectedRoute allowedType="admin">
-                      <AdminLayout>
-                        <AdminPartners />
-                      </AdminLayout>
-                    </ProtectedRoute>
-                  } />
-                  <Route path="/admin/partner-requests" element={<Navigate to="/admin/partner-requests/course" replace />} />
-                  <Route path="/admin/partner-requests/:category" element={
-                    <ProtectedRoute allowedType="admin">
-                      <AdminLayout>
-                        <AdminPartnerRequests />
-                      </AdminLayout>
-                    </ProtectedRoute>
-                  } />
-                  <Route path="/admin/agents" element={
-                    <ProtectedRoute allowedType="admin">
-                      <AdminLayout>
-                        <AdminAgents />
-                      </AdminLayout>
-                    </ProtectedRoute>
-                  } />
-                  <Route path="/admin/agent-requests" element={
-                    <ProtectedRoute allowedType="admin">
-                      <AdminLayout>
-                        <AdminAgentRequests />
-                      </AdminLayout>
-                    </ProtectedRoute>
-                  } />
-                  <Route path="/admin/invoices" element={
-                    <ProtectedRoute allowedType="admin">
-                      <AdminLayout>
-                        <AdminInvoices />
-                      </AdminLayout>
-                    </ProtectedRoute>
-                  } />
-                  <Route path="/admin/content-requests" element={
-                    <ProtectedRoute allowedType="admin">
-                      <AdminLayout>
-                        <AdminContentRequests />
-                      </AdminLayout>
-                    </ProtectedRoute>
-                  } />
-
-                  {/* Catch all redirect */}
-                  <Route path="*" element={<Navigate to="/" replace />} />
-                </Routes>
+                    {/* Catch all redirect */}
+                    <Route path="*" element={<Navigate to="/" replace />} />
+                  </Routes>
+                </BoardProvider>
               </FreelancerProvider>
             </AgentProvider>
           </PartnerProvider>

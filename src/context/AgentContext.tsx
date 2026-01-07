@@ -149,7 +149,7 @@ export function AgentProvider({ children }: { children: ReactNode }) {
     const addRequest = (requestData: Omit<AgentRequest, 'id' | 'timestamp' | 'status'>) => {
         const newRequest: AgentRequest = {
             ...requestData,
-            id: crypto.randomUUID(),
+            id: Date.now().toString(36) + Math.random().toString(36).substr(2),
             timestamp: new Date().toISOString(),
             status: 'pending'
         };

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Package, Truck, Search, Save, ExternalLink, CheckCircle, Trash2 } from 'lucide-react';
+import { Package, Truck, Search, Save, CheckCircle, Trash2 } from 'lucide-react';
 
 interface OrderItem {
     id: number;

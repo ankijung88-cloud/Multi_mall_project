@@ -1,4 +1,4 @@
-import { X, User, Phone, Mail, MapPin, Calendar, Building2 } from 'lucide-react';
+import { X, User, Phone, Mail, MapPin, Building2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
 interface UserDetailModalProps {

@@ -22,6 +22,23 @@ export default function AgentDetail() {
     const [cardNumber, setCardNumber] = useState('');
     const [cardExpiry, setCardExpiry] = useState('');
     const [cardCVC, setCardCVC] = useState('');
+    const [paymentMethod, setPaymentMethod] = useState<'card' | 'account' | 'cash'>('card');
+
+    const handleCardNumberChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const value = e.target.value.replace(/\D/g, '');
+        const formatted = value.replace(/(\d{4})(?=\d)/g, '$1-').substr(0, 19);
+        setCardNumber(formatted);
+    };
+
+    const handleExpiryChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const value = e.target.value.replace(/\D/g, '');
+        if (value.length >= 2) {
+            const formatted = value.replace(/(\d{2})(?=\d)/g, '$1/').substr(0, 5);
+            setCardExpiry(formatted);
+        } else {
+            setCardExpiry(value);
+        }
+    };
 
     if (!agent) {
         return (
@@ -99,7 +116,7 @@ export default function AgentDetail() {
             paymentStatus: amout > 0 ? 'paid' : 'pending',
             paymentAmount: amout,
             paymentDate: new Date().toISOString(),
-            paymentMethod: amout > 0 ? 'Credit Card' : 'Free',
+            paymentMethod: amout > 0 ? (paymentMethod === 'card' ? 'Credit Card' : paymentMethod === 'account' ? 'Bank Transfer' : 'On-site Payment') : 'Free',
             userType: isCompany ? 'Company' : 'Personal'
         });
         setApplicationStep('success');
@@ -298,43 +315,109 @@ export default function AgentDetail() {
                                         </div>
                                     </div>
 
-                                    <div className="space-y-3 mb-6">
-                                        <div>
-                                            <label className="block text-xs font-semibold text-gray-500 mb-1">카드 번호</label>
-                                            <input
-                                                type="text"
-                                                placeholder="0000 0000 0000 0000"
-                                                className="w-full border border-gray-300 rounded p-2 text-sm"
-                                                value={cardNumber}
-                                                onChange={(e) => setCardNumber(e.target.value)}
-                                                required
-                                            />
-                                        </div>
-                                        <div className="flex gap-3">
-                                            <div className="flex-1">
-                                                <label className="block text-xs font-semibold text-gray-500 mb-1">유효기간</label>
-                                                <input
-                                                    type="text"
-                                                    placeholder="MM/YY"
-                                                    className="w-full border border-gray-300 rounded p-2 text-sm"
-                                                    value={cardExpiry}
-                                                    onChange={(e) => setCardExpiry(e.target.value)}
-                                                    required
-                                                />
-                                            </div>
-                                            <div className="w-1/3">
-                                                <label className="block text-xs font-semibold text-gray-500 mb-1">CVC</label>
-                                                <input
-                                                    type="text"
-                                                    placeholder="123"
-                                                    className="w-full border border-gray-300 rounded p-2 text-sm"
-                                                    value={cardCVC}
-                                                    onChange={(e) => setCardCVC(e.target.value)}
-                                                    required
-                                                />
-                                            </div>
-                                        </div>
+                                    {/* Payment Method Selection */}
+                                    <div className="flex gap-2 mb-6">
+                                        <button
+                                            type="button"
+                                            onClick={() => setPaymentMethod('card')}
+                                            className={clsx(
+                                                "flex-1 py-2 text-sm font-medium rounded-lg border transition-all",
+                                                paymentMethod === 'card'
+                                                    ? "bg-blue-50 border-blue-500 text-blue-700"
+                                                    : "bg-white border-gray-300 text-gray-600 hover:bg-gray-50"
+                                            )}
+                                        >
+                                            카드 결제
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => setPaymentMethod('account')}
+                                            className={clsx(
+                                                "flex-1 py-2 text-sm font-medium rounded-lg border transition-all",
+                                                paymentMethod === 'account'
+                                                    ? "bg-blue-50 border-blue-500 text-blue-700"
+                                                    : "bg-white border-gray-300 text-gray-600 hover:bg-gray-50"
+                                            )}
+                                        >
+                                            무통장 입금
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => setPaymentMethod('cash')}
+                                            className={clsx(
+                                                "flex-1 py-2 text-sm font-medium rounded-lg border transition-all",
+                                                paymentMethod === 'cash'
+                                                    ? "bg-blue-50 border-blue-500 text-blue-700"
+                                                    : "bg-white border-gray-300 text-gray-600 hover:bg-gray-50"
+                                            )}
+                                        >
+                                            현장 결제
+                                        </button>
                                     </div>
+
+                                    {paymentMethod === 'card' && (
+                                        <div className="space-y-3 mb-6">
+                                            <div>
+                                                <label className="block text-xs font-semibold text-gray-500 mb-1">카드 번호</label>
+                                                <input
+                                                    type="text"
+                                                    placeholder="0000-0000-0000-0000"
+                                                    className="w-full border border-gray-300 rounded p-2 text-sm"
+                                                    value={cardNumber}
+                                                    onChange={handleCardNumberChange}
+                                                    maxLength={19}
+                                                    required
+                                                />
+                                            </div>
+                                            <div className="flex gap-3">
+                                                <div className="flex-1">
+                                                    <label className="block text-xs font-semibold text-gray-500 mb-1">유효기간</label>
+                                                    <input
+                                                        type="text"
+                                                        placeholder="MM/YY"
+                                                        className="w-full border border-gray-300 rounded p-2 text-sm"
+                                                        value={cardExpiry}
+                                                        onChange={handleExpiryChange}
+                                                        maxLength={5}
+                                                        required
+                                                    />
+                                                </div>
+                                                <div className="w-1/3">
+                                                    <label className="block text-xs font-semibold text-gray-500 mb-1">CVC</label>
+                                                    <input
+                                                        type="text"
+                                                        placeholder="123"
+                                                        className="w-full border border-gray-300 rounded p-2 text-sm"
+                                                        value={cardCVC}
+                                                        onChange={(e) => setCardCVC(e.target.value.replace(/\D/g, '').substr(0, 3))}
+                                                        maxLength={3}
+                                                        required
+                                                    />
+                                                </div>
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {paymentMethod === 'account' && (
+                                        <div className="bg-gray-50 p-4 rounded-lg border border-gray-200 mb-6 text-sm">
+                                            <p className="font-bold text-gray-800 mb-1">입금 계좌 안내</p>
+                                            <p className="text-gray-600">기업은행 123-456-789012</p>
+                                            <p className="text-gray-600">예금주: (주)멀티몰</p>
+                                            <div className="mt-3 text-xs text-blue-600 bg-blue-50 p-2 rounded">
+                                                * 입금자명과 신청자명이 동일해야 확인이 가능합니다.
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {paymentMethod === 'cash' && (
+                                        <div className="bg-gray-50 p-4 rounded-lg border border-gray-200 mb-6 text-sm">
+                                            <p className="font-bold text-gray-800 mb-1">현장 결제 안내</p>
+                                            <p className="text-gray-600">상담 당일 현장에서 카드 또는 현금으로 결제해 주세요.</p>
+                                            <div className="mt-3 text-xs text-blue-600 bg-blue-50 p-2 rounded">
+                                                * 노쇼 방지를 위해 사전 연락 없이 불참 시 추후 신청이 제한될 수 있습니다.
+                                            </div>
+                                        </div>
+                                    )}
 
                                     <div className="flex gap-3">
                                         <button
@@ -348,7 +431,7 @@ export default function AgentDetail() {
                                             type="submit"
                                             className="flex-1 bg-blue-600 text-white py-3 rounded-lg font-bold hover:bg-blue-700 transition-colors"
                                         >
-                                            결제하기
+                                            {paymentMethod === 'card' ? '결제하기' : '신청하기'}
                                         </button>
                                     </div>
                                 </form>

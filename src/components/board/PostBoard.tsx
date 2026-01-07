@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react';
 import { useAuthStore } from '../../store/useAuthStore';
 import { Plus, Pencil, Trash2, X, Search } from 'lucide-react';
 import MainLayout from '../../layouts/MainLayout';
+import { useLocation } from 'react-router-dom';
+import clsx from 'clsx';
 
 interface Post {
     id: number;
@@ -21,6 +23,10 @@ export default function PostBoard({ title, storageKey }: PostBoardProps) {
     const { userType, user, adminRole } = useAuthStore();
     // Admin check: userType 'admin' AND role 'super'
     const isAdmin = userType === 'admin' && adminRole === 'super';
+
+    const location = useLocation();
+    const searchParams = new URLSearchParams(location.search);
+    const isCompany = searchParams.get('type') === 'company';
 
     const [posts, setPosts] = useState<Post[]>([]);
     const [view, setView] = useState<'list' | 'detail' | 'form'>('list');
@@ -151,11 +157,25 @@ export default function PostBoard({ title, storageKey }: PostBoardProps) {
 
     return (
         <MainLayout>
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-                <div className="flex justify-between items-center mb-8">
-                    <h1 className="text-3xl font-bold text-gray-900">{title}</h1>
+            <div className="bg-gray-50 min-h-screen pb-20">
+                {/* Hero Section */}
+                <div className={clsx(
+                    "py-16 mb-12 transition-colors duration-300",
+                    isCompany ? "bg-blue-900 text-white" : "bg-gray-900 text-white"
+                )}>
+                    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+                        <h1 className="text-4xl md:text-5xl font-bold mb-4">{title}</h1>
+                        {/* Subtitle placeholder - could act as description */}
+                        <p className={clsx("text-xl max-w-2xl mx-auto", isCompany ? "text-blue-200" : "text-gray-300")}>
+                            {isCompany ? '기업 고객님을 위한 소식과 정보를 확인하세요.' : '새로운 소식과 다양한 혜택을 확인하세요.'}
+                        </p>
+                    </div>
+                </div>
+
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                    {/* Admin Controls - Moved from header to here */}
                     {isAdmin && view === 'list' && (
-                        <div className="flex space-x-2">
+                        <div className="flex justify-end mb-6 space-x-2">
                             {selectedIds.length > 0 && (
                                 <button
                                     onClick={handleBulkDelete}
@@ -167,197 +187,200 @@ export default function PostBoard({ title, storageKey }: PostBoardProps) {
                             )}
                             <button
                                 onClick={handleCreate}
-                                className="flex items-center space-x-2 bg-black text-white px-4 py-2 rounded-lg hover:bg-gray-800 transition-colors"
+                                className={clsx(
+                                    "flex items-center space-x-2 px-4 py-2 rounded-lg transition-colors text-white",
+                                    isCompany ? "bg-blue-600 hover:bg-blue-700" : "bg-gray-900 hover:bg-gray-800"
+                                )}
                             >
                                 <Plus size={20} />
                                 <span>글쓰기</span>
                             </button>
                         </div>
                     )}
-                </div>
 
-                {view === 'list' && (
-                    <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-                        {/* Search Bar */}
-                        <div className="p-4 border-b border-gray-100 flex justify-end">
-                            <div className="relative w-full max-w-md">
-                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
-                                <input
-                                    type="text"
-                                    placeholder="검색어를 입력하세요..."
-                                    value={searchTerm}
-                                    onChange={(e) => setSearchTerm(e.target.value)}
-                                    className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-black/5"
-                                />
+                    {view === 'list' && (
+                        <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                            {/* Search Bar */}
+                            <div className="p-4 border-b border-gray-100 flex justify-end">
+                                <div className="relative w-full max-w-md">
+                                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+                                    <input
+                                        type="text"
+                                        placeholder="검색어를 입력하세요..."
+                                        value={searchTerm}
+                                        onChange={(e) => setSearchTerm(e.target.value)}
+                                        className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-black/5"
+                                    />
+                                </div>
                             </div>
-                        </div>
 
-                        {/* List */}
-                        <div className="overflow-x-auto">
-                            <table className="w-full text-left">
-                                <thead className="bg-gray-50 text-gray-500 text-sm border-b border-gray-200">
-                                    <tr>
-                                        {isAdmin && (
-                                            <th className="px-6 py-4 font-medium w-16 text-center">
-                                                <input
-                                                    type="checkbox"
-                                                    checked={filteredPosts.length > 0 && selectedIds.length === filteredPosts.length}
-                                                    onChange={handleSelectAll}
-                                                    className="w-4 h-4 rounded border-gray-300 text-black focus:ring-black cursor-pointer"
-                                                />
-                                            </th>
-                                        )}
-                                        <th className="px-6 py-4 font-medium w-20 text-center">No.</th>
-                                        <th className="px-6 py-4 font-medium">제목</th>
-                                        <th className="px-6 py-4 font-medium w-32 text-center">작성자</th>
-                                        <th className="px-6 py-4 font-medium w-32 text-center">날짜</th>
-                                        <th className="px-6 py-4 font-medium w-20 text-center">조회</th>
-                                    </tr>
-                                </thead>
-                                <tbody className="divide-y divide-gray-100">
-                                    {filteredPosts.length === 0 ? (
+                            {/* List */}
+                            <div className="overflow-x-auto">
+                                <table className="w-full text-left">
+                                    <thead className="bg-gray-50 text-gray-500 text-sm border-b border-gray-200">
                                         <tr>
-                                            <td colSpan={isAdmin ? 6 : 5} className="px-6 py-12 text-center text-gray-500">
-                                                등록된 게시물이 없습니다.
-                                            </td>
+                                            {isAdmin && (
+                                                <th className="px-6 py-4 font-medium w-16 text-center">
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={filteredPosts.length > 0 && selectedIds.length === filteredPosts.length}
+                                                        onChange={handleSelectAll}
+                                                        className="w-4 h-4 rounded border-gray-300 text-black focus:ring-black cursor-pointer"
+                                                    />
+                                                </th>
+                                            )}
+                                            <th className="px-6 py-4 font-medium w-20 text-center">No.</th>
+                                            <th className="px-6 py-4 font-medium">제목</th>
+                                            <th className="px-6 py-4 font-medium w-32 text-center">작성자</th>
+                                            <th className="px-6 py-4 font-medium w-32 text-center">날짜</th>
+                                            <th className="px-6 py-4 font-medium w-20 text-center">조회</th>
                                         </tr>
-                                    ) : (
-                                        filteredPosts.map((post, idx) => (
-                                            <tr key={post.id} className="hover:bg-gray-50 transition-colors group cursor-pointer" onClick={() => handleViewDetail(post)}>
-                                                {isAdmin && (
-                                                    <td className="px-6 py-4 text-center" onClick={(e) => e.stopPropagation()}>
-                                                        <input
-                                                            type="checkbox"
-                                                            checked={selectedIds.includes(post.id)}
-                                                            onChange={() => handleSelect(post.id)}
-                                                            className="w-4 h-4 rounded border-gray-300 text-black focus:ring-black cursor-pointer"
-                                                        />
-                                                    </td>
-                                                )}
-                                                <td className="px-6 py-4 text-center text-gray-500 text-sm">
-                                                    {filteredPosts.length - idx}
-                                                </td>
-                                                <td className="px-6 py-4 text-gray-900 font-medium group-hover:text-blue-600 transition-colors">
-                                                    {post.title}
-                                                </td>
-                                                <td className="px-6 py-4 text-center text-gray-500 text-sm">
-                                                    {post.author}
-                                                </td>
-                                                <td className="px-6 py-4 text-center text-gray-500 text-sm">
-                                                    {post.date}
-                                                </td>
-                                                <td className="px-6 py-4 text-center text-gray-500 text-sm">
-                                                    {post.hits}
+                                    </thead>
+                                    <tbody className="divide-y divide-gray-100">
+                                        {filteredPosts.length === 0 ? (
+                                            <tr>
+                                                <td colSpan={isAdmin ? 6 : 5} className="px-6 py-12 text-center text-gray-500">
+                                                    등록된 게시물이 없습니다.
                                                 </td>
                                             </tr>
-                                        ))
+                                        ) : (
+                                            filteredPosts.map((post, idx) => (
+                                                <tr key={post.id} className="hover:bg-gray-50 transition-colors group cursor-pointer" onClick={() => handleViewDetail(post)}>
+                                                    {isAdmin && (
+                                                        <td className="px-6 py-4 text-center" onClick={(e) => e.stopPropagation()}>
+                                                            <input
+                                                                type="checkbox"
+                                                                checked={selectedIds.includes(post.id)}
+                                                                onChange={() => handleSelect(post.id)}
+                                                                className="w-4 h-4 rounded border-gray-300 text-black focus:ring-black cursor-pointer"
+                                                            />
+                                                        </td>
+                                                    )}
+                                                    <td className="px-6 py-4 text-center text-gray-500 text-sm">
+                                                        {filteredPosts.length - idx}
+                                                    </td>
+                                                    <td className="px-6 py-4 text-gray-900 font-medium group-hover:text-blue-600 transition-colors">
+                                                        {post.title}
+                                                    </td>
+                                                    <td className="px-6 py-4 text-center text-gray-500 text-sm">
+                                                        {post.author}
+                                                    </td>
+                                                    <td className="px-6 py-4 text-center text-gray-500 text-sm">
+                                                        {post.date}
+                                                    </td>
+                                                    <td className="px-6 py-4 text-center text-gray-500 text-sm">
+                                                        {post.hits}
+                                                    </td>
+                                                </tr>
+                                            ))
+                                        )}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    )}
+
+                    {view === 'detail' && currentPost && (
+                        <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden p-8">
+                            <div className="border-b border-gray-200 pb-6 mb-6">
+                                <div className="flex justify-between items-start mb-4">
+                                    <h2 className="text-2xl font-bold text-gray-900">{currentPost.title}</h2>
+                                    {isAdmin && (
+                                        <div className="flex space-x-2">
+                                            <button
+                                                onClick={(e) => { e.stopPropagation(); handleEdit(currentPost); }}
+                                                className="p-2 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                                                title="수정"
+                                            >
+                                                <Pencil size={20} />
+                                            </button>
+                                            <button
+                                                onClick={(e) => { e.stopPropagation(); handleDelete(currentPost.id); }}
+                                                className="p-2 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                                                title="삭제"
+                                            >
+                                                <Trash2 size={20} />
+                                            </button>
+                                        </div>
                                     )}
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                )}
-
-                {view === 'detail' && currentPost && (
-                    <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden p-8">
-                        <div className="border-b border-gray-200 pb-6 mb-6">
-                            <div className="flex justify-between items-start mb-4">
-                                <h2 className="text-2xl font-bold text-gray-900">{currentPost.title}</h2>
-                                {isAdmin && (
-                                    <div className="flex space-x-2">
-                                        <button
-                                            onClick={(e) => { e.stopPropagation(); handleEdit(currentPost); }}
-                                            className="p-2 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                                            title="수정"
-                                        >
-                                            <Pencil size={20} />
-                                        </button>
-                                        <button
-                                            onClick={(e) => { e.stopPropagation(); handleDelete(currentPost.id); }}
-                                            className="p-2 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                                            title="삭제"
-                                        >
-                                            <Trash2 size={20} />
-                                        </button>
-                                    </div>
-                                )}
-                            </div>
-                            <div className="flex items-center text-sm text-gray-500 space-x-4">
-                                <span>By {currentPost.author}</span>
-                                <span>•</span>
-                                <span>{currentPost.date}</span>
-                                <span>•</span>
-                                <span>조회 {currentPost.hits}</span>
-                            </div>
-                        </div>
-
-                        <div className="prose max-w-none text-gray-800 whitespace-pre-line min-h-[200px]">
-                            {currentPost.content}
-                        </div>
-
-                        <div className="mt-8 pt-8 border-t border-gray-200 flex justify-center">
-                            <button
-                                onClick={() => setView('list')}
-                                className="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors font-medium"
-                            >
-                                목록으로
-                            </button>
-                        </div>
-                    </div>
-                )}
-
-                {view === 'form' && (
-                    <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden p-8 max-w-4xl mx-auto">
-                        <div className="flex justify-between items-center mb-6">
-                            <h2 className="text-xl font-bold text-gray-900">{currentPost ? '글 수정' : '새 글 작성'}</h2>
-                            <button onClick={() => setView('list')} className="text-gray-400 hover:text-gray-600">
-                                <X size={24} />
-                            </button>
-                        </div>
-
-                        <form onSubmit={handleSubmit} className="space-y-6">
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">제목</label>
-                                <input
-                                    type="text"
-                                    required
-                                    value={formTitle}
-                                    onChange={(e) => setFormTitle(e.target.value)}
-                                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black/5"
-                                    placeholder="제목을 입력하세요"
-                                />
+                                </div>
+                                <div className="flex items-center text-sm text-gray-500 space-x-4">
+                                    <span>By {currentPost.author}</span>
+                                    <span>•</span>
+                                    <span>{currentPost.date}</span>
+                                    <span>•</span>
+                                    <span>조회 {currentPost.hits}</span>
+                                </div>
                             </div>
 
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">내용</label>
-                                <textarea
-                                    required
-                                    value={formContent}
-                                    onChange={(e) => setFormContent(e.target.value)}
-                                    rows={15}
-                                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black/5 resize-none"
-                                    placeholder="내용을 입력하세요"
-                                />
+                            <div className="prose max-w-none text-gray-800 whitespace-pre-line min-h-[200px]">
+                                {currentPost.content}
                             </div>
 
-                            <div className="flex justify-end space-x-4pt-4">
+                            <div className="mt-8 pt-8 border-t border-gray-200 flex justify-center">
                                 <button
-                                    type="button"
                                     onClick={() => setView('list')}
-                                    className="px-6 py-3 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors font-medium"
+                                    className="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors font-medium"
                                 >
-                                    취소
-                                </button>
-                                <button
-                                    type="submit"
-                                    className="px-6 py-3 bg-black text-white rounded-lg hover:bg-gray-800 transition-colors font-medium"
-                                >
-                                    {currentPost ? '수정 완료' : '작성 완료'}
+                                    목록으로
                                 </button>
                             </div>
-                        </form>
-                    </div>
-                )}
+                        </div>
+                    )}
+
+                    {view === 'form' && (
+                        <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden p-8 max-w-4xl mx-auto">
+                            <div className="flex justify-between items-center mb-6">
+                                <h2 className="text-xl font-bold text-gray-900">{currentPost ? '글 수정' : '새 글 작성'}</h2>
+                                <button onClick={() => setView('list')} className="text-gray-400 hover:text-gray-600">
+                                    <X size={24} />
+                                </button>
+                            </div>
+
+                            <form onSubmit={handleSubmit} className="space-y-6">
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-2">제목</label>
+                                    <input
+                                        type="text"
+                                        required
+                                        value={formTitle}
+                                        onChange={(e) => setFormTitle(e.target.value)}
+                                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black/5"
+                                        placeholder="제목을 입력하세요"
+                                    />
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-2">내용</label>
+                                    <textarea
+                                        required
+                                        value={formContent}
+                                        onChange={(e) => setFormContent(e.target.value)}
+                                        rows={15}
+                                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black/5 resize-none"
+                                        placeholder="내용을 입력하세요"
+                                    />
+                                </div>
+
+                                <div className="flex justify-end space-x-4pt-4">
+                                    <button
+                                        type="button"
+                                        onClick={() => setView('list')}
+                                        className="px-6 py-3 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors font-medium"
+                                    >
+                                        취소
+                                    </button>
+                                    <button
+                                        type="submit"
+                                        className="px-6 py-3 bg-black text-white rounded-lg hover:bg-gray-800 transition-colors font-medium"
+                                    >
+                                        {currentPost ? '수정 완료' : '작성 완료'}
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    )}
+                </div>
             </div>
         </MainLayout>
     );

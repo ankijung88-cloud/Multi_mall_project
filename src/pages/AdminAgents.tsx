@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useAgents } from '../context/AgentContext';
 import { useAuthStore } from '../store/useAuthStore';
 import clsx from 'clsx';
-import { Plus, Trash, Edit, Save, X, Calendar } from 'lucide-react';
+import { Plus, Trash, Edit, Save, X, Calendar, ChevronLeft, ChevronRight } from 'lucide-react';
 import type { Agent, AgentSchedule } from '../context/AgentContext';
 
 export default function AdminAgents() {
@@ -26,6 +26,7 @@ export default function AdminAgents() {
     const [formSchedules, setFormSchedules] = useState<AgentSchedule[]>([]);
     const [formCredentials, setFormCredentials] = useState<{ username: string, password: string }>({ username: '', password: '' });
     const [bulkDate, setBulkDate] = useState('');
+    const [browseDate, setBrowseDate] = useState(new Date());
 
 
     const openModal = (agent?: Agent) => {
@@ -106,7 +107,7 @@ export default function AdminAgents() {
         } else {
             // Create new schedule
             const newSchedule: AgentSchedule = {
-                id: crypto.randomUUID(),
+                id: Date.now().toString(36) + Math.random().toString(36).substr(2),
                 date: bulkDate,
                 time: time,
                 title: field === 'title' ? value : '',
@@ -319,101 +320,175 @@ export default function AdminAgents() {
                             {/* Schedule Section */}
                             <div className="border-t pt-4">
                                 <div className="flex justify-between items-center mb-4">
-                                    <h4 className="font-bold flex items-center"><Calendar size={18} className="mr-2" /> 일별 일정 관리 (Daily Sheet)</h4>
-                                </div>
-                                <div className="mb-4 flex items-center space-x-4">
-                                    <label className="text-sm font-medium text-gray-700">날짜 선택:</label>
-                                    <input
-                                        type="date"
-                                        value={bulkDate}
-                                        onChange={(e) => setBulkDate(e.target.value)}
-                                        className="border rounded px-3 py-2 text-sm font-bold text-gray-800"
-                                    />
+                                    <h4 className="font-bold flex items-center"><Calendar size={18} className="mr-2" /> 일정 관리 (Daily Sheet)</h4>
                                 </div>
 
-                                {bulkDate ? (
-                                    <div className="overflow-x-auto border rounded-lg shadow-sm">
-                                        <table className="min-w-full divide-y divide-gray-200">
-                                            <thead className="bg-gray-50">
-                                                <tr>
-                                                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-20">Time</th>
-                                                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Title</th>
-                                                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Description</th>
-                                                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-28">Personal Price</th>
-                                                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-28">Company Price</th>
-                                                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-24">Max Slots</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody className="bg-white divide-y divide-gray-200">
-                                                {['09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00', '18:00', '19:00', '20:00'].map(time => {
-                                                    const schedulesAtTime = formSchedules.filter(s => s.date === bulkDate && s.time === time);
+                                {/* Calendar View vs Daily Sheet View */}
+                                {!bulkDate ? (
+                                    <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+                                        {/* Calendar Header */}
+                                        <div className="flex items-center justify-between px-6 py-4 bg-gray-50 border-b">
+                                            <button
+                                                onClick={() => setBrowseDate(new Date(browseDate.getFullYear(), browseDate.getMonth() - 1, 1))}
+                                                className="p-2 hover:bg-white rounded-full transition-colors"
+                                            >
+                                                <ChevronLeft size={20} />
+                                            </button>
+                                            <h3 className="text-lg font-bold text-gray-800">
+                                                {browseDate.getFullYear()}년 {browseDate.getMonth() + 1}월
+                                            </h3>
+                                            <button
+                                                onClick={() => setBrowseDate(new Date(browseDate.getFullYear(), browseDate.getMonth() + 1, 1))}
+                                                className="p-2 hover:bg-white rounded-full transition-colors"
+                                            >
+                                                <ChevronRight size={20} />
+                                            </button>
+                                        </div>
 
-                                                    return Array(5).fill(null).map((_, subIndex) => {
-                                                        const schedule = schedulesAtTime[subIndex];
-                                                        const isFirst = subIndex === 0;
+                                        {/* Calendar Grid */}
+                                        <div className="p-4">
+                                            <div className="grid grid-cols-7 mb-2 text-center text-xs font-semibold text-gray-500">
+                                                <div className="text-red-500">Sun</div>
+                                                <div>Mon</div>
+                                                <div>Tue</div>
+                                                <div>Wed</div>
+                                                <div>Thu</div>
+                                                <div>Fri</div>
+                                                <div className="text-blue-500">Sat</div>
+                                            </div>
+                                            <div className="grid grid-cols-7 gap-1">
+                                                {/* Empty cells for start padding */}
+                                                {Array.from({ length: new Date(browseDate.getFullYear(), browseDate.getMonth(), 1).getDay() }).map((_, i) => (
+                                                    <div key={`empty-${i}`} className="h-24 bg-gray-50/50 rounded-lg"></div>
+                                                ))}
 
-                                                        return (
-                                                            <tr key={`${time}-${subIndex}`} className={schedule ? "bg-blue-50/30" : ""}>
-                                                                {isFirst && (
-                                                                    <td rowSpan={5} className="px-4 py-2 whitespace-nowrap text-sm font-bold text-gray-700 align-top bg-gray-50 border-r">
-                                                                        {time}
-                                                                    </td>
-                                                                )}
-                                                                <td className="px-4 py-1">
-                                                                    <input
-                                                                        type="text"
-                                                                        value={schedule?.title || ''}
-                                                                        onChange={(e) => handleSheetChange(time, subIndex, 'title', e.target.value)}
-                                                                        placeholder={subIndex === 0 ? "메인 일정 제목" : "추가 일정 제목"}
-                                                                        className="w-full border-gray-200 rounded text-sm focus:ring-blue-500 focus:border-blue-500 bg-transparent"
-                                                                    />
-                                                                </td>
-                                                                <td className="px-4 py-1">
-                                                                    <input
-                                                                        type="text"
-                                                                        value={schedule?.description || ''}
-                                                                        onChange={(e) => handleSheetChange(time, subIndex, 'description', e.target.value)}
-                                                                        placeholder="설명"
-                                                                        className="w-full border-gray-200 rounded text-sm focus:ring-blue-500 focus:border-blue-500 bg-transparent"
-                                                                    />
-                                                                </td>
-                                                                <td className="px-4 py-1">
-                                                                    <input
-                                                                        type="number"
-                                                                        value={schedule?.pricePersonal || ''}
-                                                                        onChange={(e) => handleSheetChange(time, subIndex, 'pricePersonal', e.target.value)}
-                                                                        placeholder="₩ (개인)"
-                                                                        className="w-full border-gray-200 rounded text-sm focus:ring-blue-500 focus:border-blue-500 bg-transparent"
-                                                                    />
-                                                                </td>
-                                                                <td className="px-4 py-1">
-                                                                    <input
-                                                                        type="number"
-                                                                        value={schedule?.priceCompany || ''}
-                                                                        onChange={(e) => handleSheetChange(time, subIndex, 'priceCompany', e.target.value)}
-                                                                        placeholder="₩ (기업)"
-                                                                        className="w-full border-gray-200 rounded text-sm focus:ring-blue-500 focus:border-blue-500 bg-transparent"
-                                                                    />
-                                                                </td>
-                                                                <td className="px-4 py-1">
-                                                                    <input
-                                                                        type="number"
-                                                                        value={schedule ? schedule.maxSlots : 10}
-                                                                        onChange={(e) => handleSheetChange(time, subIndex, 'maxSlots', e.target.value)}
-                                                                        className="w-full border-gray-200 rounded text-sm focus:ring-blue-500 focus:border-blue-500 bg-transparent"
-                                                                    />
-                                                                </td>
-                                                            </tr>
-                                                        );
-                                                    });
+                                                {/* Days */}
+                                                {Array.from({ length: new Date(browseDate.getFullYear(), browseDate.getMonth() + 1, 0).getDate() }).map((_, i) => {
+                                                    const day = i + 1;
+                                                    const dateStr = `${browseDate.getFullYear()}-${String(browseDate.getMonth() + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+                                                    const hasSchedule = formSchedules.filter(s => s.date === dateStr).length;
+
+                                                    return (
+                                                        <div
+                                                            key={day}
+                                                            onClick={() => setBulkDate(dateStr)}
+                                                            className="h-24 border rounded-lg p-2 cursor-pointer hover:border-blue-500 hover:ring-1 hover:ring-blue-500 transition-all flex flex-col justify-between bg-white"
+                                                        >
+                                                            <span className={clsx(
+                                                                "text-sm font-medium",
+                                                                new Date(browseDate.getFullYear(), browseDate.getMonth(), day).getDay() === 0 ? "text-red-500" :
+                                                                    new Date(browseDate.getFullYear(), browseDate.getMonth(), day).getDay() === 6 ? "text-blue-500" : "text-gray-700"
+                                                            )}>
+                                                                {day}
+                                                            </span>
+
+                                                            {hasSchedule > 0 && (
+                                                                <div className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-md font-semibold text-center">
+                                                                    {hasSchedule}개 일정
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                    );
                                                 })}
-                                            </tbody>
-                                        </table>
+                                            </div>
+                                        </div>
                                     </div>
                                 ) : (
-                                    <div className="text-center py-8 bg-gray-50 rounded-lg border border-dashed border-gray-300">
-                                        <p className="text-gray-500">날짜를 선택하면 타임테이블 시트가 표시됩니다.</p>
-                                    </div>
+                                    <>
+                                        <div className="bg-blue-50 p-4 rounded-lg mb-4 flex justify-between items-center">
+                                            <div className="flex items-center">
+                                                <button
+                                                    onClick={() => setBulkDate('')}
+                                                    className="mr-3 p-1 hover:bg-blue-100 rounded text-blue-600"
+                                                >
+                                                    <ChevronLeft size={24} />
+                                                </button>
+                                                <h3 className="text-xl font-bold text-blue-900">{bulkDate} 일정 관리</h3>
+                                            </div>
+                                            <span className="text-sm font-medium text-blue-700 bg-blue-100 px-3 py-1 rounded-full">
+                                                총 {formSchedules.filter(s => s.date === bulkDate).length}개
+                                            </span>
+                                        </div>
+
+                                        <div className="overflow-x-auto border rounded-lg shadow-sm">
+                                            <table className="min-w-full divide-y divide-gray-200">
+                                                <thead className="bg-gray-50">
+                                                    <tr>
+                                                        <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-20">Time</th>
+                                                        <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Title</th>
+                                                        <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Description</th>
+                                                        <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-28">Personal Price</th>
+                                                        <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-28">Company Price</th>
+                                                        <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-24">Max Slots</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody className="bg-white divide-y divide-gray-200">
+                                                    {['09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00', '18:00', '19:00', '20:00'].map(time => {
+                                                        const schedulesAtTime = formSchedules.filter(s => s.date === bulkDate && s.time === time);
+
+                                                        return Array(5).fill(null).map((_, subIndex) => {
+                                                            const schedule = schedulesAtTime[subIndex];
+                                                            const isFirst = subIndex === 0;
+
+                                                            return (
+                                                                <tr key={`${time}-${subIndex}`} className={schedule ? "bg-blue-50/30" : ""}>
+                                                                    {isFirst && (
+                                                                        <td rowSpan={5} className="px-4 py-2 whitespace-nowrap text-sm font-bold text-gray-700 align-top bg-gray-50 border-r">
+                                                                            {time}
+                                                                        </td>
+                                                                    )}
+                                                                    <td className="px-4 py-1">
+                                                                        <input
+                                                                            type="text"
+                                                                            value={schedule?.title || ''}
+                                                                            onChange={(e) => handleSheetChange(time, subIndex, 'title', e.target.value)}
+                                                                            placeholder={subIndex === 0 ? "메인 일정 제목" : "추가 일정 제목"}
+                                                                            className="w-full border-gray-200 rounded text-sm focus:ring-blue-500 focus:border-blue-500 bg-transparent"
+                                                                        />
+                                                                    </td>
+                                                                    <td className="px-4 py-1">
+                                                                        <input
+                                                                            type="text"
+                                                                            value={schedule?.description || ''}
+                                                                            onChange={(e) => handleSheetChange(time, subIndex, 'description', e.target.value)}
+                                                                            placeholder="설명"
+                                                                            className="w-full border-gray-200 rounded text-sm focus:ring-blue-500 focus:border-blue-500 bg-transparent"
+                                                                        />
+                                                                    </td>
+                                                                    <td className="px-4 py-1">
+                                                                        <input
+                                                                            type="number"
+                                                                            value={schedule?.pricePersonal || ''}
+                                                                            onChange={(e) => handleSheetChange(time, subIndex, 'pricePersonal', e.target.value)}
+                                                                            placeholder="₩ (개인)"
+                                                                            className="w-full border-gray-200 rounded text-sm focus:ring-blue-500 focus:border-blue-500 bg-transparent"
+                                                                        />
+                                                                    </td>
+                                                                    <td className="px-4 py-1">
+                                                                        <input
+                                                                            type="number"
+                                                                            value={schedule?.priceCompany || ''}
+                                                                            onChange={(e) => handleSheetChange(time, subIndex, 'priceCompany', e.target.value)}
+                                                                            placeholder="₩ (기업)"
+                                                                            className="w-full border-gray-200 rounded text-sm focus:ring-blue-500 focus:border-blue-500 bg-transparent"
+                                                                        />
+                                                                    </td>
+                                                                    <td className="px-4 py-1">
+                                                                        <input
+                                                                            type="number"
+                                                                            value={schedule ? schedule.maxSlots : 10}
+                                                                            onChange={(e) => handleSheetChange(time, subIndex, 'maxSlots', e.target.value)}
+                                                                            className="w-full border-gray-200 rounded text-sm focus:ring-blue-500 focus:border-blue-500 bg-transparent"
+                                                                        />
+                                                                    </td>
+                                                                </tr>
+                                                            );
+                                                        });
+                                                    })}
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </>
                                 )}
 
                                 {formSchedules.length > 0 && !bulkDate && (

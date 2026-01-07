@@ -1,10 +1,14 @@
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { usePartners } from '../../context/PartnerContext';
 
 export default function KBeautySection() {
     const navigate = useNavigate();
+    const location = useLocation();
     const { partners } = usePartners();
+
+    const isCompany = location.pathname.startsWith('/company') || location.search.includes('type=company');
+    const linkParams = isCompany ? '?type=company' : '';
 
     // Filter partners for this section
     const sectionPartners = partners.filter(p => p.category === '뷰티 & 성형').slice(0, 3);
@@ -17,7 +21,7 @@ export default function KBeautySection() {
                         K-Beauty & Plastic Surgery
                     </h2>
                     <button
-                        onClick={() => navigate('/partners/beauty')}
+                        onClick={() => navigate('/partners/beauty' + linkParams)}
                         className="text-gray-500 hover:text-pink-600 text-sm font-medium transition-colors"
                     >
                         전체 보기
@@ -28,7 +32,7 @@ export default function KBeautySection() {
                     {sectionPartners.map((partner) => (
                         <Link
                             key={partner.id}
-                            to={`/partners/${partner.id}`}
+                            to={`/partners/${partner.id}${linkParams}`}
                             className="block cursor-pointer group text-center"
                         >
                             <motion.div
