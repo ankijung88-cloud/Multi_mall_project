@@ -123,14 +123,26 @@ export default function MainLayout({ children }: MainLayoutProps) {
                                 {
                                     name: '에이전트',
                                     path: '/agents',
-                                    subMenus: ['에이전트 찾기', '이용 가이드', '수수료 안내', '매칭 서비스', '후기']
+                                    subMenus: [
+                                        { name: '이용 가이드', path: isCompany ? '/agents/guide?type=company' : '/agents/guide' },
+                                        { name: '수수료 안내', path: isCompany ? '/agents/fee?type=company' : '/agents/fee' },
+                                        { name: '후기', path: isCompany ? '/agents/reviews?type=company' : '/agents/reviews' }
+                                    ]
                                 },
                                 {
                                     name: 'Personal',
-                                    path: '/contents',
+                                    path: isCompany ? '/contents?type=company' : '/contents',
                                     subMenus: isCompany
-                                        ? ['등록컨텐츠', '설정']
-                                        : ['나의 컨텐츠', '관심 컨텐츠', '컨텐츠 등록', '활동 내역', '설정']
+                                        ? [
+                                            { name: '등록컨텐츠', path: '/contents?type=company' },
+                                            { name: '관심컨텐츠', path: '/contents/interest?type=company' }
+                                        ]
+                                        : [
+                                            { name: '등록컨텐츠', path: '/contents' },
+                                            { name: '나의 컨텐츠', path: '/contents/my' },
+                                            { name: '관심 컨텐츠', path: '/contents/interest' },
+                                            { name: '활동 내역', path: '/contents/history' }
+                                        ]
                                 },
                                 {
                                     name: '커뮤니티',

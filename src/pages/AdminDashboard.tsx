@@ -387,7 +387,7 @@ export default function AdminDashboard() {
                                 // though AdminDashboard is inside App which HAS BoardProvider now. But let's use localStorage direct read here to match existing pattern of this file 
                                 // OR better: Just read localStorage 'mall_board_posts' filtering for inquiry)
                                 const allPosts = JSON.parse(localStorage.getItem('mall_board_posts') || '[]');
-                                const inquiries = allPosts.filter((p: any) => p.type === 'inquiry').sort((a: any, b: any) => new Date(b.date).getTime() - new Date(a.date).getTime()).slice(0, 5);
+                                const inquiries = allPosts.filter((p: any) => p.type === 'partner-inquiry').sort((a: any, b: any) => new Date(b.date).getTime() - new Date(a.date).getTime()).slice(0, 5);
 
                                 if (inquiries.length === 0) {
                                     return (
@@ -405,8 +405,8 @@ export default function AdminDashboard() {
                                         <td className="px-4 py-3 text-xs text-gray-500">{inq.contactInfo || '-'}</td>
                                         <td className="px-4 py-3">
                                             <span className={`text-[10px] px-2 py-0.5 rounded font-medium ${inq.status === 'Resolved' ? 'bg-green-100 text-green-700' :
-                                                    inq.status === 'In Progress' ? 'bg-blue-100 text-blue-700' :
-                                                        'bg-yellow-50 text-yellow-700'
+                                                inq.status === 'In Progress' ? 'bg-blue-100 text-blue-700' :
+                                                    'bg-yellow-50 text-yellow-700'
                                                 }`}>
                                                 {inq.status || 'Pending'}
                                             </span>

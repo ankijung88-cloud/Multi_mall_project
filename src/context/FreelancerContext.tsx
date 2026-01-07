@@ -7,6 +7,7 @@ export interface Freelancer {
     image: string;
     description: string;
     portfolioImages: string[];
+    authorId?: string; // ID of the user who created this content
     credentials?: {
         username: string;
         password: string;
@@ -21,8 +22,14 @@ export interface ContentRequest {
     userName?: string;
     contactInfo?: string; // Phone or Email
     message: string;
+    requesterType: 'personal' | 'company' | 'admin' | 'guest'; // Type of user making request
     status: 'Pending' | 'Approved' | 'Rejected';
     date: string;
+}
+
+interface Favorite {
+    userId: string;
+    contentId: string;
 }
 
 interface FreelancerContextType {
@@ -34,6 +41,9 @@ interface FreelancerContextType {
     deleteRequest: (id: string) => void;
     updateFreelancer: (id: string, updates: Partial<Freelancer>) => void;
     deleteFreelancer: (id: string) => void;
+    favorites: Favorite[];
+    toggleFavorite: (userId: string, contentId: string) => void;
+    isFavorite: (userId: string, contentId: string) => boolean;
 }
 
 const FreelancerContext = createContext<FreelancerContextType | undefined>(undefined);
@@ -41,6 +51,7 @@ const FreelancerContext = createContext<FreelancerContextType | undefined>(undef
 export function FreelancerProvider({ children }: { children: ReactNode }) {
     const [freelancers, setFreelancers] = useState<Freelancer[]>([]);
     const [requests, setRequests] = useState<ContentRequest[]>([]);
+    const [favorites, setFavorites] = useState<Favorite[]>([]);
 
     useEffect(() => {
         // Load Freelancers
@@ -104,6 +115,12 @@ export function FreelancerProvider({ children }: { children: ReactNode }) {
         if (storedRequests) {
             setRequests(JSON.parse(storedRequests));
         }
+
+        // Load Favorites
+        const storedFavorites = localStorage.getItem('mall_content_favorites');
+        if (storedFavorites) {
+            setFavorites(JSON.parse(storedFavorites));
+        }
     }, []);
 
     const addFreelancer = (freelancer: Omit<Freelancer, 'id'>) => {
@@ -156,8 +173,31 @@ export function FreelancerProvider({ children }: { children: ReactNode }) {
         localStorage.setItem('mall_freelancers', JSON.stringify(updated));
     };
 
+    const toggleFavorite = (userId: string, contentId: string) => {
+        setFavorites(prev => {
+            const exists = prev.some(f => f.userId === userId && f.contentId === contentId);
+            let newFavorites;
+            if (exists) {
+                newFavorites = prev.filter(f => !(f.userId === userId && f.contentId === contentId));
+            } else {
+                newFavorites = [...prev, { userId, contentId }];
+            }
+            localStorage.setItem('mall_content_favorites', JSON.stringify(newFavorites));
+            return newFavorites;
+        });
+    };
+
+    const isFavorite = (userId: string, contentId: string) => {
+        return favorites.some(f => f.userId === userId && f.contentId === contentId);
+    };
+
     return (
-        <FreelancerContext.Provider value={{ freelancers, addFreelancer, requests, addRequest, updateRequestStatus, deleteRequest, updateFreelancer, deleteFreelancer }}>
+        <FreelancerContext.Provider value={{
+            freelancers, addFreelancer,
+            requests, addRequest, updateRequestStatus, deleteRequest,
+            updateFreelancer, deleteFreelancer,
+            favorites, toggleFavorite, isFavorite
+        }}>
             {children}
         </FreelancerContext.Provider>
     );

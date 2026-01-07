@@ -58,6 +58,10 @@ import AdminContentRequests from './pages/AdminContentRequests';
 
 import PersonalContentDetail from './pages/PersonalContentDetail';
 import AllPersonalContents from './pages/AllPersonalContents';
+import MyContents from './pages/MyContents';
+import AssociatedContents from './pages/AssociatedContents';
+import RegisterContent from './pages/RegisterContent';
+import ActivityHistory from './pages/ActivityHistory';
 
 // ... (imports)
 import { useAuthStore } from './store/useAuthStore';
@@ -71,7 +75,7 @@ const ProtectedRoute = ({ children, allowedType }: { children: ReactNode, allowe
   if (!isAuthenticated) {
     // Redirect to appropriate login if trying to access admin
     if (allowedType === 'admin') return <Navigate to="/admin/login" replace />;
-    return <Navigate to="/" replace />;
+    return <Navigate to="/login?type=personal" replace />;
   }
 
   // If allowedType is specified, enforce it. If not, allow any authenticated user.
@@ -111,9 +115,9 @@ export default function App() {
 
                     {/* K-Culture Board Routes */}
                     <Route path="/partners/inquiry" element={<InquiryBoard />} />
-                    <Route path="/partners/news" element={<BoardPage type="news" title="파트너 뉴스" subtitle="K-Culture 파트너들의 최신 소식을 전해드립니다." />} />
-                    <Route path="/partners/success" element={<BoardPage type="success" title="성공 사례" subtitle="함께 만들어낸 성공적인 비즈니스 사례를 소개합니다." />} />
-                    <Route path="/partners/guide" element={<BoardPage type="guide" title="가이드" subtitle="파트너십 이용을 위한 상세 가이드입니다." />} />
+                    <Route path="/partners/news" element={<BoardPage type="partner-news" title="파트너 뉴스" subtitle="K-Culture 파트너들의 최신 소식을 전해드립니다." />} />
+                    <Route path="/partners/success" element={<BoardPage type="partner-success" title="성공 사례" subtitle="함께 만들어낸 성공적인 비즈니스 사례를 소개합니다." />} />
+                    <Route path="/partners/guide" element={<BoardPage type="partner-guide" title="가이드" subtitle="파트너십 이용을 위한 상세 가이드입니다." />} />
 
                     <Route path="/partners/course" element={<CoursePartners />} />
                     <Route path="/partners/beauty" element={<BeautyPartners />} />
@@ -143,6 +147,10 @@ export default function App() {
                     <Route path="/personal" element={<PersonalHome />} />
                     <Route path="/company" element={<CompanyHome />} />
                     <Route path="/contents" element={<AllPersonalContents />} />
+                    <Route path="/contents/my" element={<ProtectedRoute><MyContents /></ProtectedRoute>} />
+                    <Route path="/contents/interest" element={<ProtectedRoute><AssociatedContents /></ProtectedRoute>} />
+                    <Route path="/contents/register" element={<ProtectedRoute><RegisterContent /></ProtectedRoute>} />
+                    <Route path="/contents/history" element={<ProtectedRoute><ActivityHistory /></ProtectedRoute>} />
                     <Route path="/contents/:id" element={<PersonalContentDetail />} />
 
                     <Route
@@ -267,6 +275,9 @@ export default function App() {
 
                     {/* Catch all redirect */}
                     <Route path="*" element={<Navigate to="/" replace />} />
+                    <Route path="/agents/guide" element={<BoardPage type="agent-guide" title="에이전트 이용 가이드" subtitle="서비스 이용을 위한 상세 가이드입니다." />} />
+                    <Route path="/agents/fee" element={<BoardPage type="agent-fee" title="수수료 안내" subtitle="투명하고 합리적인 수수료 정책을 안내합니다." />} />
+                    <Route path="/agents/reviews" element={<BoardPage type="agent-reviews" title="사용자 후기" subtitle="실제 사용자들이 남긴 생생한 후기입니다." />} />
                   </Routes>
                 </BoardProvider>
               </FreelancerProvider>

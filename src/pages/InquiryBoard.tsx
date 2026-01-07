@@ -3,7 +3,8 @@ import { useBoard } from '../context/BoardContext';
 import type { Post } from '../context/BoardContext';
 import MainLayout from '../layouts/MainLayout';
 import { Plus, Lock } from 'lucide-react';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { useAuthStore } from '../store/useAuthStore';
 import clsx from 'clsx';
 
 export default function InquiryBoard() {
@@ -12,8 +13,8 @@ export default function InquiryBoard() {
     const isCompany = searchParams.get('type') === 'company';
     const viewMode = isCompany ? 'company' : 'personal';
 
-    const { getPostsByType, addPost } = useBoard();
-    const posts = getPostsByType('inquiry', viewMode);
+    const { getPostsByType, addPost, deletePost } = useBoard();
+    const posts = getPostsByType('partner-inquiry', viewMode);
 
     const [view, setView] = useState<'list' | 'write' | 'detail'>('list');
     const [selectedPost, setSelectedPost] = useState<Post | null>(null);
@@ -21,7 +22,7 @@ export default function InquiryBoard() {
 
     const handleSubmit = () => {
         addPost({
-            type: 'inquiry',
+            type: 'partner-inquiry',
             viewMode,
             title: formData.title,
             content: formData.content,
@@ -32,6 +33,34 @@ export default function InquiryBoard() {
         });
         setFormData({ title: '', content: '', author: '', contactInfo: '', isSecret: true });
         setView('list');
+    };
+
+    const handleDelete = () => {
+        if (selectedPost && confirm('정말 삭제하시겠습니까?')) {
+            deletePost(selectedPost.id);
+            setView('list');
+        }
+    };
+
+    const { isAuthenticated, user, userType } = useAuthStore();
+    const navigate = useNavigate();
+
+    const handleWriteClick = () => {
+        if (!isAuthenticated) {
+            if (confirm('로그인이 필요한 서비스입니다. 로그인 하시겠습니까?')) {
+                navigate('/login');
+            }
+            return;
+        }
+        setView('write');
+        // Auto-fill author info if available
+        if (user) {
+            setFormData(prev => ({
+                ...prev,
+                author: user.name || '',
+                contactInfo: user.email || ''
+            }));
+        }
     };
 
     return (
@@ -54,7 +83,7 @@ export default function InquiryBoard() {
                         <>
                             <div className="flex justify-end mb-6">
                                 <button
-                                    onClick={() => setView('write')}
+                                    onClick={handleWriteClick}
                                     className="bg-blue-600 text-white px-6 py-2 rounded-lg flex items-center gap-2 hover:bg-blue-700 shadow-sm"
                                 >
                                     <Plus size={18} /> 문의하기
@@ -80,29 +109,39 @@ export default function InquiryBoard() {
                                                 </td>
                                             </tr>
                                         ) : (
-                                            posts.map((post, index) => (
-                                                <tr
-                                                    key={post.id}
-                                                    onClick={() => { setSelectedPost(post); setView('detail'); }}
-                                                    className="hover:bg-gray-50 cursor-pointer transition-colors"
-                                                >
-                                                    <td className="px-6 py-4 text-gray-500">{posts.length - index}</td>
-                                                    <td className="px-6 py-4 font-medium text-gray-900 flex items-center gap-2">
-                                                        {post.isSecret && <Lock size={14} className="text-gray-400" />}
-                                                        {post.title}
-                                                    </td>
-                                                    <td className="px-6 py-4 text-gray-500">{post.author}</td>
-                                                    <td className="px-6 py-4">
-                                                        <span className={`px-2 py-1 rounded text-xs font-semibold ${post.status === 'Resolved' ? 'bg-green-100 text-green-800' :
-                                                            post.status === 'In Progress' ? 'bg-blue-100 text-blue-800' :
-                                                                'bg-gray-100 text-gray-800'
-                                                            }`}>
-                                                            {post.status}
-                                                        </span>
-                                                    </td>
-                                                    <td className="px-6 py-4 text-gray-500 text-sm">{post.date}</td>
-                                                </tr>
-                                            ))
+                                            posts.map((post, index) => {
+                                                const canView = !post.isSecret || userType === 'admin' || (user && user.name === post.author);
+                                                return (
+                                                    <tr
+                                                        key={post.id}
+                                                        onClick={() => {
+                                                            if (canView) {
+                                                                setSelectedPost(post);
+                                                                setView('detail');
+                                                            } else {
+                                                                alert('비밀글은 작성자와 관리자만 확인할 수 있습니다.');
+                                                            }
+                                                        }}
+                                                        className={clsx("transition-colors", canView ? "hover:bg-gray-50 cursor-pointer" : "cursor-not-allowed opacity-75")}
+                                                    >
+                                                        <td className="px-6 py-4 text-gray-500">{posts.length - index}</td>
+                                                        <td className="px-6 py-4 font-medium text-gray-900 flex items-center gap-2">
+                                                            {post.isSecret && <Lock size={14} className="text-gray-400" />}
+                                                            {canView ? post.title : '비밀글입니다.'}
+                                                        </td>
+                                                        <td className="px-6 py-4 text-gray-500">{post.author}</td>
+                                                        <td className="px-6 py-4">
+                                                            <span className={`px-2 py-1 rounded text-xs font-semibold ${post.status === 'Resolved' ? 'bg-green-100 text-green-800' :
+                                                                post.status === 'In Progress' ? 'bg-blue-100 text-blue-800' :
+                                                                    'bg-gray-100 text-gray-800'
+                                                                }`}>
+                                                                {post.status}
+                                                            </span>
+                                                        </td>
+                                                        <td className="px-6 py-4 text-gray-500 text-sm">{post.date}</td>
+                                                    </tr>
+                                                );
+                                            })
                                         )}
                                     </tbody>
                                 </table>
@@ -190,13 +229,21 @@ export default function InquiryBoard() {
                             <div className="whitespace-pre-wrap min-h-[200px]">
                                 {selectedPost.content}
                             </div>
-                            <div className="mt-8 pt-6 border-t flex justify-end">
+                            <div className="mt-8 pt-6 border-t flex justify-between">
                                 <button
                                     onClick={() => setView('list')}
                                     className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200"
                                 >
                                     목록으로
                                 </button>
+                                {userType === 'admin' && (
+                                    <button
+                                        onClick={handleDelete}
+                                        className="px-4 py-2 bg-red-100 text-red-600 rounded-lg hover:bg-red-200"
+                                    >
+                                        삭제
+                                    </button>
+                                )}
                             </div>
                         </div>
                     )}

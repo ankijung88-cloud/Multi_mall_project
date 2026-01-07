@@ -134,7 +134,7 @@ export default function PartnerCategoryPage({ categoryName, title, description, 
                             <button
                                 onClick={() => openModal()}
                                 className="absolute right-4 bottom-4 md:right-8 md:bottom-8 bg-white text-black p-3 rounded-full shadow-lg hover:scale-105 transition-transform flex items-center space-x-2"
-                                title="Add Partner"
+                                title="협력사 추가"
                             >
                                 <Plus size={24} />
                                 <span className="font-bold hidden md:inline">추가</span>
@@ -156,7 +156,7 @@ export default function PartnerCategoryPage({ categoryName, title, description, 
                                     {partner.image?.startsWith('data:application/pdf') ? (
                                         <div className="text-center text-gray-500">
                                             <span className="text-4xl block mb-2">📄</span>
-                                            <span className="text-sm font-semibold">PDF Document</span>
+                                            <span className="text-sm font-semibold">PDF 문서</span>
                                         </div>
                                     ) : (
                                         <img

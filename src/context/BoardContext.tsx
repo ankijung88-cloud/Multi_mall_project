@@ -1,7 +1,7 @@
 import { createContext, useContext, useState, useEffect } from 'react';
 import type { ReactNode } from 'react';
 
-export type BoardType = 'inquiry' | 'news' | 'success' | 'guide';
+export type BoardType = 'notice' | 'event' | 'partner-inquiry' | 'partner-news' | 'partner-success' | 'partner-guide' | 'agent-guide' | 'agent-fee' | 'agent-reviews';
 
 export interface Post {
     id: string;
@@ -46,20 +46,20 @@ export function BoardProvider({ children }: { children: ReactNode }) {
             // Initial Dummy Data
             const dummyData: Post[] = [
                 {
-                    id: 'n1', type: 'news', viewMode: 'personal', title: 'Global Partnership Expanded', author: 'Admin',
+                    id: 'n1', type: 'partner-news', viewMode: 'personal', title: 'Global Partnership Expanded', author: 'Admin',
                     content: 'We represent K-Culture to the world.', date: '2024-03-15', views: 120
                 },
                 {
-                    id: 's1', type: 'success', viewMode: 'personal', title: 'Top Auditor K-Pop Star', author: 'Admin',
+                    id: 's1', type: 'partner-success', viewMode: 'personal', title: 'Top Auditor K-Pop Star', author: 'Admin',
                     content: 'Success story of our audition partner.', date: '2024-02-10', views: 450
                 },
                 {
-                    id: 'g1', type: 'guide', viewMode: 'personal', title: 'How to apply for partnership', author: 'Support',
+                    id: 'g1', type: 'partner-guide', viewMode: 'personal', title: 'How to apply for partnership', author: 'Support',
                     content: 'Step by step guide...', date: '2024-01-05', views: 89
                 },
                 // Company Dummy Data
                 {
-                    id: 'cn1', type: 'news', viewMode: 'company', title: 'B2B Partnership Benefits', author: 'BizAdmin',
+                    id: 'cn1', type: 'partner-news', viewMode: 'company', title: 'B2B Partnership Benefits', author: 'BizAdmin',
                     content: 'Exclusive benefits for company partners.', date: '2024-03-20', views: 50
                 }
             ];

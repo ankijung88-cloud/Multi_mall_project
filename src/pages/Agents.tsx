@@ -1,4 +1,6 @@
+import { useState } from 'react';
 import { motion } from 'framer-motion';
+import { Search } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAgents } from '../context/AgentContext';
 import { useAuthStore } from '../store/useAuthStore';
@@ -9,6 +11,13 @@ export default function Agents() {
     const { agents } = useAgents();
     const navigate = useNavigate();
     const { isAuthenticated, userType } = useAuthStore();
+
+    const [searchTerm, setSearchTerm] = useState('');
+
+    const filteredAgents = agents.filter(agent =>
+        agent.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        agent.description.toLowerCase().includes(searchTerm.toLowerCase())
+    );
 
     return (
         <MainLayout>
@@ -39,8 +48,22 @@ export default function Agents() {
                         </p>
                     </motion.div>
 
+                    {/* Search Bar */}
+                    <div className="flex justify-end mb-8">
+                        <div className="relative w-full max-w-md">
+                            <input
+                                type="text"
+                                placeholder="Search agents..."
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
+                                className="w-full pl-10 pr-4 py-3 bg-white/10 border border-white/20 rounded-full text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 backdrop-blur-sm transition-all"
+                            />
+                            <Search className="absolute left-3 top-3.5 text-gray-400" size={20} />
+                        </div>
+                    </div>
+
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
-                        {agents.map((agent, index) => (
+                        {filteredAgents.map((agent, index) => (
                             <motion.div
                                 key={agent.id}
                                 initial={{ opacity: 0, y: 20 }}

@@ -82,12 +82,14 @@ export default function BoardPage({ type, title, subtitle }: BoardPageProps) {
                             For now, strict to admin for News/Guide, everyone for others? 
                             User request said CRUD functionality, implies creating. let's allow button.
                         */}
-                                <button
-                                    onClick={() => setView('write')}
-                                    className="bg-gray-900 text-white px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-gray-800"
-                                >
-                                    <Plus size={18} /> Write
-                                </button>
+                                {userType === 'admin' && (
+                                    <button
+                                        onClick={() => setView('write')}
+                                        className="bg-gray-900 text-white px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-gray-800"
+                                    >
+                                        <Plus size={18} /> Write
+                                    </button>
+                                )}
                             </div>
 
                             <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">

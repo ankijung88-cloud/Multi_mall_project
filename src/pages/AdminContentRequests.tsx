@@ -113,7 +113,7 @@ export default function AdminContentRequests() {
                                         </span>
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                        <div className="font-medium">
+                                        <div className="font-medium flex items-center gap-2">
                                             {adminRole === 'super' ? (
                                                 <button
                                                     onClick={() => handleUserClick(req.userId)}
@@ -124,6 +124,14 @@ export default function AdminContentRequests() {
                                                 </button>
                                             ) : (
                                                 req.userName || 'Guest'
+                                            )}
+                                            {req.requesterType && (
+                                                <span className={`text-[10px] px-1.5 py-0.5 rounded border ${req.requesterType === 'company'
+                                                        ? 'bg-blue-50 text-blue-600 border-blue-100'
+                                                        : 'bg-emerald-50 text-emerald-600 border-emerald-100'
+                                                    }`}>
+                                                    {req.requesterType === 'company' ? 'Company' : 'Personal'}
+                                                </span>
                                             )}
                                         </div>
                                         <div className="text-xs text-gray-500">{req.contactInfo}</div>
