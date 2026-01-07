@@ -110,8 +110,8 @@ export default function MainLayout({ children }: MainLayoutProps) {
                                                 { name: '공연 & 전시', path: '/partners/performance' },
                                                 { name: '오디션', path: '/partners/audition' },
                                                 { name: '패션', path: '/partners/fashion' },
-                                                { name: '여행', path: '/partners?category=여행' },
-                                                { name: '음식', path: '/partners?category=음식' }
+                                                { name: '여행', path: isCompany ? '/partners/travel?type=company' : '/partners/travel' },
+                                                { name: '음식', path: isCompany ? '/partners/food?type=company' : '/partners/food' }
                                             ]
                                         },
                                         '제휴 문의', '파트너 뉴스', '성공 사례', '가이드'

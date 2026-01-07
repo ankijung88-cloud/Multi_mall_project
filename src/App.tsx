@@ -19,6 +19,8 @@ import CoursePartners from './pages/CoursePartners';
 import PerformancePartners from './pages/PerformancePartners';
 import AuditionPartners from './pages/AuditionPartners';
 import FashionPartners from './pages/FashionPartners';
+import Travel from './pages/Travel';
+import Food from './pages/Food';
 import Agents from './pages/Agents';
 import Intro from './pages/Intro';
 import Notice from './pages/Notice';
@@ -102,6 +104,8 @@ export default function App() {
                   <Route path="/partners/performance" element={<PerformancePartners />} />
                   <Route path="/partners/audition" element={<AuditionPartners />} />
                   <Route path="/partners/fashion" element={<FashionPartners />} />
+                  <Route path="/partners/travel" element={<Travel />} />
+                  <Route path="/partners/food" element={<Food />} />
                   <Route path="/partners/:id" element={<PartnerDetail />} />
                   <Route path="/agents" element={<Agents />} />
                   <Route path="/agents/:id" element={<AgentDetail />} />

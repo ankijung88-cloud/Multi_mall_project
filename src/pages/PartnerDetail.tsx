@@ -160,16 +160,41 @@ export default function PartnerDetail() {
         <MainLayout>
             <div className="bg-gray-50 min-h-screen pb-20">
                 {/* Header Image */}
-                <div className="h-[400px] w-full relative">
-                    <img
-                        src={partner.image}
-                        alt={partner.name}
-                        className="w-full h-full object-cover"
-                    />
-                    <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
-                        <div className="text-center text-white p-4">
+                <div className="h-[400px] w-full relative bg-gray-900 overflow-hidden">
+                    {partner.image?.startsWith('data:application/pdf') ? (
+                        <div className="w-full h-full flex items-center justify-center bg-gray-800">
+                            {/* PDF Background Pattern or Just Color */}
+                        </div>
+                    ) : (
+                        <img
+                            src={partner.image}
+                            alt={partner.name}
+                            className="w-full h-full object-cover opacity-70"
+                        />
+                    )}
+
+                    <div className="absolute inset-0 flex items-center justify-center">
+                        <div className="text-center text-white p-4 max-w-4xl">
                             <h1 className="text-4xl md:text-5xl font-bold mb-4">{partner.name}</h1>
-                            <p className="text-xl opacity-90">{partner.description}</p>
+                            <p className="text-xl opacity-90 mb-6">{partner.description}</p>
+
+                            {partner.image?.startsWith('data:application/pdf') && (
+                                <div className="flex justify-center">
+                                    <button
+                                        onClick={() => {
+                                            const newWindow = window.open();
+                                            if (newWindow) {
+                                                newWindow.document.write(
+                                                    `<iframe width='100%' height='100%' src='${partner.image}'></iframe>`
+                                                );
+                                            }
+                                        }}
+                                        className="inline-flex items-center px-6 py-3 bg-white text-blue-900 rounded-full font-bold hover:bg-blue-50 transition-colors"
+                                    >
+                                        <span className="mr-2">📄</span> PDF 자료 보기
+                                    </button>
+                                </div>
+                            )}
                         </div>
                     </div>
                 </div>

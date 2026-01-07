@@ -11,7 +11,11 @@ const CATEGORY_MAP: Record<string, string> = {
     beauty: '뷰티 & 성형',
     performance: '공연 & 전시',
     audition: '오디션',
-    fashion: '패션'
+    fashion: '패션',
+    travel: '여행',
+    food: '음식',
+    'travel-company': '여행_기업',
+    'food-company': '음식_기업'
 };
 
 const REVERSE_CATEGORY_MAP: Record<string, string> = {
@@ -19,7 +23,11 @@ const REVERSE_CATEGORY_MAP: Record<string, string> = {
     '뷰티 & 성형': 'Beauty & Plastic Surgery',
     '공연 & 전시': 'Performance & Exhibition',
     '오디션': 'Audition',
-    '패션': 'Fashion'
+    '패션': 'Fashion',
+    '여행': 'Travel',
+    '음식': 'Food',
+    '여행_기업': 'Corporate Travel',
+    '음식_기업': 'Corporate Food'
 };
 
 export default function AdminPartners() {
@@ -121,6 +129,7 @@ export default function AdminPartners() {
 
     // Schedule Management inside Modal
     const handleSheetChange = (time: string, subIndex: number, field: keyof Schedule, value: any) => {
+        // ... (existing logic)
         if (!bulkDate) return;
 
         // Find all schedules for this time slot
@@ -149,6 +158,17 @@ export default function AdminPartners() {
                 currentSlots: 0
             };
             setFormSchedules([...formSchedules, newSchedule]);
+        }
+    };
+
+    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                setFormImage(reader.result as string);
+            };
+            reader.readAsDataURL(file);
         }
     };
 
@@ -189,8 +209,15 @@ export default function AdminPartners() {
                             className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden cursor-pointer hover:shadow-md transition-shadow"
                             onClick={() => setViewingRequestsPartner(partner)}
                         >
-                            <div className="h-48 overflow-hidden">
-                                <img src={partner.image} alt={partner.name} className="w-full h-full object-cover" />
+                            <div className="h-48 overflow-hidden bg-gray-100 flex items-center justify-center">
+                                {partner.image?.startsWith('data:application/pdf') ? (
+                                    <div className="text-center text-gray-500">
+                                        <span className="text-4xl block mb-2">📄</span>
+                                        <span className="text-sm font-semibold">PDF Document</span>
+                                    </div>
+                                ) : (
+                                    <img src={partner.image} alt={partner.name} className="w-full h-full object-cover" />
+                                )}
                             </div>
                             <div className="p-4">
                                 <h3 className="font-bold text-lg mb-2 flex items-center justify-between">
@@ -309,12 +336,26 @@ export default function AdminPartners() {
                                     />
                                 </div>
                                 <div className="col-span-2">
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">이미지 URL</label>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">이미지 및 파일</label>
+                                    <div className="flex gap-2 mb-2">
+                                        <input
+                                            type="file"
+                                            accept="image/*,.pdf"
+                                            onChange={handleFileChange}
+                                            className="block w-full text-sm text-gray-500
+                                                file:mr-4 file:py-2 file:px-4
+                                                file:rounded-full file:border-0
+                                                file:text-sm file:font-semibold
+                                                file:bg-blue-50 file:text-blue-700
+                                                hover:file:bg-blue-100"
+                                        />
+                                    </div>
                                     <input
                                         type="text"
                                         value={formImage}
                                         onChange={e => setFormImage(e.target.value)}
-                                        className="w-full border rounded-lg px-3 py-2"
+                                        className="w-full border rounded-lg px-3 py-2 text-sm text-gray-400"
+                                        placeholder="URL or File Path (Auto-filled)"
                                     />
                                 </div>
                             </div>
