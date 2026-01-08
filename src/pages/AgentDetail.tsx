@@ -13,8 +13,10 @@ export default function AgentDetail() {
     const { user, isAuthenticated, viewMode } = useAuthStore();
     const navigate = useNavigate();
     const location = useLocation();
+    const searchParams = new URLSearchParams(location.search);
+    const queryType = searchParams.get('type');
 
-    const isCompany = (user?.type === 'Company' || user?.type === 'company') || (!user && viewMode === 'company');
+    const isCompany = (user?.type === 'Company' || user?.type === 'company') || (!user && (viewMode === 'company' || queryType === 'company'));
 
     const agent = getAgent(Number(id));
     const [selectedSchedule, setSelectedSchedule] = useState<AgentSchedule | null>(null);
@@ -46,7 +48,7 @@ export default function AgentDetail() {
                 <div className="min-h-screen flex items-center justify-center">
                     <div className="text-center">
                         <h2 className="text-2xl font-bold mb-2">Agent Not Found</h2>
-                        <button onClick={() => navigate('/agents')} className="text-blue-600 hover:underline">
+                        <button onClick={() => navigate(isCompany ? '/agents?type=company' : '/agents')} className="text-blue-600 hover:underline">
                             Return to List
                         </button>
                     </div>
@@ -60,8 +62,8 @@ export default function AgentDetail() {
         e.stopPropagation();
 
         if (!isAuthenticated || !user) {
-            const redirectType = viewMode === 'company' ? 'company' : 'personal';
-            navigate(`/login?type=${redirectType}`, { state: { from: location.pathname } });
+            const redirectType = isCompany ? 'company' : 'personal';
+            navigate(`/login?type=${redirectType}`, { state: { from: location.pathname + location.search } });
             return;
         }
         if (!selectedSchedule) return;
@@ -129,7 +131,7 @@ export default function AgentDetail() {
             if (user?.type === 'company') navigate('/company');
             else navigate('/personal');
         } else {
-            navigate('/agents');
+            navigate(isCompany ? '/agents?type=company' : '/agents');
         }
     };
 

@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Search } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useAgents } from '../context/AgentContext';
 import { useAuthStore } from '../store/useAuthStore';
 import clsx from 'clsx';
@@ -11,6 +11,11 @@ export default function Agents() {
     const { agents } = useAgents();
     const navigate = useNavigate();
     const { isAuthenticated, userType } = useAuthStore();
+    const location = useLocation();
+    const searchParams = new URLSearchParams(location.search);
+    const queryType = searchParams.get('type');
+
+    const isCompanyView = userType === 'company' || queryType === 'company';
 
     const [searchTerm, setSearchTerm] = useState('');
 
@@ -23,7 +28,7 @@ export default function Agents() {
         <MainLayout>
             <div className={clsx(
                 "min-h-screen text-white transition-colors duration-500",
-                userType === 'company'
+                isCompanyView
                     ? "bg-gradient-to-b from-blue-900 via-indigo-900 to-gray-900"
                     : "bg-gradient-to-b from-gray-900 via-purple-900 to-gray-900"
             )}>
@@ -35,14 +40,14 @@ export default function Agents() {
                     >
                         <h1 className={clsx(
                             "text-5xl font-bold mb-6 bg-clip-text text-transparent",
-                            userType === 'company'
+                            isCompanyView
                                 ? "bg-gradient-to-r from-blue-400 to-teal-300"
                                 : "bg-gradient-to-r from-purple-400 to-pink-400"
                         )}>
-                            {userType === 'company' ? 'Corporate Agents' : 'Professional Agents'}
+                            {isCompanyView ? 'Corporate Agents' : 'Professional Agents'}
                         </h1>
-                        <p className={clsx("text-xl max-w-2xl mx-auto", userType === 'company' ? "text-blue-200" : "text-gray-300")}>
-                            {userType === 'company'
+                        <p className={clsx("text-xl max-w-2xl mx-auto", isCompanyView ? "text-blue-200" : "text-gray-300")}>
+                            {isCompanyView
                                 ? '기업 컨설팅 및 전문 서비스를 제공하는 최정예 에이전트 그룹입니다.'
                                 : 'Meet our expert agents ready to assist you with your journey.'}
                         </p>
@@ -71,9 +76,9 @@ export default function Agents() {
                                 transition={{ delay: index * 0.1 }}
                                 onClick={() => {
                                     if (!isAuthenticated) {
-                                        navigate(`/login?type=personal`, { state: { from: `/agents/${agent.id}` } });
+                                        navigate(isCompanyView ? '/login?type=company' : '/login?type=personal', { state: { from: `/agents/${agent.id}` } });
                                     } else {
-                                        navigate(`/agents/${agent.id}`);
+                                        navigate(isCompanyView ? `/agents/${agent.id}?type=company` : `/agents/${agent.id}`);
                                     }
                                 }}
                                 className="bg-gray-800 rounded-2xl overflow-hidden cursor-pointer group hover:ring-2 hover:ring-purple-500 transition-all duration-300"

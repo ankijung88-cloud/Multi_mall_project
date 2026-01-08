@@ -102,7 +102,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
     const siteShortcuts = [
         { path: '/', label: 'Main Home' },
         { path: '/personal', label: 'Personal Home' },
-        { path: '/company', label: 'Company Home' },
+        { path: '/company?type=company', label: 'Company Home' },
         { path: '/shop', label: 'Shop' },
         { path: '/partners', label: 'Partners' },
         { path: '/agents', label: 'Agents' },

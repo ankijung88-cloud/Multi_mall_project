@@ -165,8 +165,13 @@ export default function AdminPartnerRequests() {
                                         {request.partnerName}
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap">
-                                        <div className="text-sm font-medium text-gray-900">{request.scheduleTitle}</div>
+                                        <div className="text-sm font-medium text-gray-900">
+                                            {request.inquiryContent ? <span className="text-purple-600 font-bold">[문의] 1:1 상담</span> : request.scheduleTitle}
+                                        </div>
                                         <div className="text-sm text-gray-500">{request.scheduleDate}</div>
+                                        {request.inquiryContent && (
+                                            <div className="text-xs text-gray-500 truncate w-32">{request.inquiryContent}</div>
+                                        )}
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap text-center">
                                         <span className={clsx(
@@ -281,6 +286,16 @@ export default function AdminPartnerRequests() {
                                     <option value="sent_to_partner">업체 전송됨 (Sent)</option>
                                 </select>
                             </div>
+
+
+                            {editingRequest.inquiryContent && (
+                                <div className="col-span-full">
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">문의 내용</label>
+                                    <div className="w-full border rounded px-3 py-2 bg-gray-50 text-sm h-32 overflow-y-auto whitespace-pre-wrap">
+                                        {editingRequest.inquiryContent}
+                                    </div>
+                                </div>
+                            )}
                         </div>
                         <div className="p-6 border-t bg-gray-50 flex justify-end space-x-3">
                             <button
@@ -298,18 +313,21 @@ export default function AdminPartnerRequests() {
                             </button>
                         </div>
                     </div>
-                </div>
-            )}
+                </div >
+            )
+            }
 
             {/* User Detail Modal */}
-            {detailUser && (
-                <UserDetailModal
-                    isOpen={!!detailUser}
-                    onClose={() => setDetailUser(null)}
-                    userId={detailUser.id}
-                    userType={detailUser.type as any}
-                />
-            )}
-        </div>
+            {
+                detailUser && (
+                    <UserDetailModal
+                        isOpen={!!detailUser}
+                        onClose={() => setDetailUser(null)}
+                        userId={detailUser.id}
+                        userType={detailUser.type as any}
+                    />
+                )
+            }
+        </div >
     );
 }

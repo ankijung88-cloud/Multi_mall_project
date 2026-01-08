@@ -14,7 +14,9 @@ export default function PartnerDetail() {
     const navigate = useNavigate();
     const location = useLocation();
 
-    const isCompany = (user?.type === 'Company' || user?.type === 'company') || (!user && viewMode === 'company');
+    const searchParams = new URLSearchParams(location.search);
+    const queryType = searchParams.get('type');
+    const isCompany = (user?.type === 'Company' || user?.type === 'company') || (!user && (viewMode === 'company' || queryType === 'company'));
 
     const partner = getPartner(Number(id));
     const [selectedSchedule, setSelectedSchedule] = useState<Schedule | null>(null);
@@ -23,6 +25,8 @@ export default function PartnerDetail() {
     const [cardExpiry, setCardExpiry] = useState('');
     const [cardCVC, setCardCVC] = useState('');
     const [paymentMethod, setPaymentMethod] = useState<'card' | 'account' | 'cash'>('card');
+    const [inquiryText, setInquiryText] = useState('');
+    const [isSubmittingInquiry, setIsSubmittingInquiry] = useState(false);
 
     const handleCardNumberChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const value = e.target.value.replace(/\D/g, '');
@@ -170,9 +174,147 @@ export default function PartnerDetail() {
 
 
 
+    const handleInquirySubmit = async () => {
+        if (!isAuthenticated) {
+            alert('로그인이 필요한 서비스입니다.\n(로그인 페이지로 이동합니다)');
+            const redirectType = viewMode === 'company' ? 'company' : 'personal';
+            navigate(`/login?type=${redirectType}`, { state: { from: location.pathname } });
+            return;
+        }
+
+        if (!inquiryText.trim()) {
+            alert('문의 내용을 입력해주세요.');
+            return;
+        }
+
+        if (!user) return;
+
+        setIsSubmittingInquiry(true);
+
+        // Simulate delay
+        await new Promise(resolve => setTimeout(resolve, 1000));
+
+        try {
+            addRequest({
+                partnerId: partner.id,
+                partnerName: partner.name,
+                userId: user.id,
+                userName: user.name || user.id,
+                userType: isCompany ? 'Company' : 'Personal',
+                inquiryContent: inquiryText,
+                // Default values for required fields in booking (hidden for inquiry)
+                scheduleId: 'inquiry-' + Date.now(),
+                scheduleTitle: '1:1 문의',
+                scheduleDate: new Date().toISOString().split('T')[0],
+                paymentStatus: 'pending',
+                paymentAmount: 0,
+                paymentMethod: 'Inquiry'
+            });
+            alert('문의가 성공적으로 접수되었습니다.\n관리자 확인 후 답변 드리겠습니다.');
+            setInquiryText('');
+        } catch (error) {
+            console.error("Inquiry Error:", error);
+            alert('문의 접수 중 오류가 발생했습니다.');
+        } finally {
+            setIsSubmittingInquiry(false);
+        }
+    };
+
     // Sort schedules by date
     const sortedSchedules = [...partner.schedules].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 
+    // K-Beauty Layout
+    if (partner.category && (partner.category.includes('뷰티') || partner.category.includes('Beauty'))) {
+
+
+        return (
+            <MainLayout>
+                <div className="bg-white min-h-screen pb-20 pt-10">
+                    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                        {/* Top Section: Split Layout */}
+                        <div className="flex flex-col md:flex-row gap-12 mb-20">
+                            {/* Left: Representative Image */}
+                            <div className="w-full md:w-1/2">
+                                <div className="aspect-[4/5] rounded-lg overflow-hidden shadow-lg bg-gray-100">
+                                    <img
+                                        src={partner.image}
+                                        alt={partner.name}
+                                        className="w-full h-full object-cover"
+                                    />
+                                </div>
+                            </div>
+
+                            {/* Right: Info & Inquiry Form */}
+                            <div className="w-full md:w-1/2 flex flex-col justify-center">
+                                <h1 className="text-4xl font-bold mb-4 text-gray-900">{partner.name}</h1>
+                                <div className="h-1 w-20 bg-black mb-6"></div>
+                                <p className="text-lg text-gray-600 mb-8 leading-relaxed">
+                                    {partner.description}
+                                </p>
+
+                                <div className="bg-gray-50 p-8 rounded-xl border border-gray-200">
+                                    <h3 className="text-xl font-bold mb-4 flex items-center">
+                                        <span className="mr-2">💬</span> 문의하기
+                                    </h3>
+                                    <p className="text-sm text-gray-500 mb-4">
+                                        궁금하신 점을 남겨주시면 담당자가 확인 후 신속히 연락드리겠습니다.
+                                    </p>
+
+                                    <textarea
+                                        className="w-full h-40 p-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent resize-none mb-4"
+                                        placeholder="문의하실 내용을 입력해주세요..."
+                                        value={inquiryText}
+                                        onChange={(e) => setInquiryText(e.target.value)}
+                                    ></textarea>
+
+                                    <button
+                                        onClick={handleInquirySubmit}
+                                        disabled={isSubmittingInquiry}
+                                        className={clsx(
+                                            "w-full py-4 text-white font-bold text-lg rounded-lg transition-all",
+                                            isSubmittingInquiry
+                                                ? "bg-gray-400 cursor-not-allowed"
+                                                : "bg-black hover:bg-gray-800 shadow-lg hover:shadow-xl"
+                                        )}
+                                    >
+                                        {isSubmittingInquiry ? '접수 중...' : '문의하기'}
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Bottom Section: Detail Content (Full Width) */}
+                        <div className="border-t border-gray-200 pt-16">
+                            <h2 className="text-2xl font-bold mb-8 text-center">상세 정보</h2>
+
+                            {partner.image?.startsWith('data:application/pdf') ? (
+                                <div className="w-full h-[800px] bg-gray-100 rounded-xl overflow-hidden shadow-inner border border-gray-200">
+                                    <iframe
+                                        src={partner.image}
+                                        className="w-full h-full"
+                                        title="PDF Viewer"
+                                    />
+                                </div>
+                            ) : (
+                                <div className="w-full">
+                                    {/* Assuming partner.image is the main detail image too, or we could add a placeholder if real app has distinct fields */}
+                                    {/* Since user asked for "Introduction Image", reusing the main image as a placeholder for the detail view or assuming separate content would be here. */}
+                                    {/* Let's render the image again but full width as requested, usually this would be a long detail image */}
+                                    <img
+                                        src={partner.image}
+                                        alt="Detail"
+                                        className="w-full h-auto rounded-xl shadow-sm"
+                                    />
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            </MainLayout>
+        );
+    }
+
+    // Default Layout (Preserved)
     return (
         <MainLayout>
             <div className="bg-gray-50 min-h-screen pb-20">

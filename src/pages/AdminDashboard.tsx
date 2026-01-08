@@ -3,10 +3,16 @@ import { motion } from 'framer-motion';
 import { Users, ShoppingBag, DollarSign, Clock, FileSpreadsheet, Handshake, Briefcase, MessageCircle, TrendingUp } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/useAuthStore';
+import { usePartners } from '../context/PartnerContext';
+import { useBoard } from '../context/BoardContext';
+import { Trash } from 'lucide-react';
+import clsx from 'clsx';
 
 export default function AdminDashboard() {
     const navigate = useNavigate();
     const { adminRole } = useAuthStore();
+    const { requests, deleteRequest } = usePartners();
+    const { posts, deletePost } = useBoard();
 
     useEffect(() => {
         if (adminRole === 'partner') {
@@ -15,6 +21,85 @@ export default function AdminDashboard() {
             navigate('/admin/agent-requests', { replace: true });
         }
     }, [adminRole, navigate]);
+
+    // ... (existing state)
+
+    // Merge Inquiries
+    const mergedInquiries = [
+        ...requests.filter(r => r.scheduleTitle === '1:1 문의' || !!r.inquiryContent).map(r => ({
+            id: r.id,
+            date: r.timestamp,
+            author: r.userName,
+            title: r.inquiryContent || r.scheduleTitle,
+            contact: r.contact,
+            status: r.status,
+            source: 'Partner Detail',
+            originalObj: r
+        })),
+        ...posts.filter(p => p.type === 'partner-inquiry').map(p => ({
+            id: p.id,
+            date: p.date, // Note: Board posts might currently store date as YYYY-MM-DD vs ISO timestamp in Request
+            author: p.author,
+            title: p.title,
+            contact: p.contactInfo,
+            status: p.status,
+            source: 'Inquiry Board',
+            originalObj: p
+        }))
+    ].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()).slice(0, 10); // Show top 10
+
+    // ... (rest of component until return) ...
+
+    // IN THE RENDER:
+    {
+        mergedInquiries.length === 0 ? (
+            <tr>
+                <td colSpan={7} className="px-4 py-8 text-center text-gray-400 text-sm">신규 문의 내역이 없습니다. (No new inquiries)</td>
+            </tr>
+        ) : (
+            mergedInquiries.map((inq) => (
+                <tr key={inq.id} className="hover:bg-gray-50">
+                    <td className="px-4 py-3 text-xs text-gray-500">
+                        {new Date(inq.date).toLocaleDateString()}
+                    </td>
+                    <td className="px-4 py-3 text-sm font-medium text-gray-800">
+                        {inq.author}
+                        <span className="block text-[10px] text-gray-400">{inq.source}</span>
+                    </td>
+                    <td className="px-4 py-3 text-sm text-gray-600 truncate max-w-[200px]">
+                        {inq.title}
+                    </td>
+                    <td className="px-4 py-3 text-xs text-gray-500">{inq.contact || '-'}</td>
+                    <td className="px-4 py-3">
+                        <span className={clsx(
+                            "text-[10px] px-2 py-0.5 rounded font-medium",
+                            inq.status === 'approved' || inq.status === 'Resolved' ? "bg-green-100 text-green-700" :
+                                "bg-yellow-50 text-yellow-700"
+                        )}>
+                            {inq.status || 'Pending'}
+                        </span>
+                    </td>
+                    <td className="px-4 py-3 text-right">
+                        <button
+                            onClick={() => {
+                                if (window.confirm('정말 삭제하시겠습니까?')) {
+                                    if (inq.source === 'Inquiry Board') {
+                                        deletePost(inq.id);
+                                    } else {
+                                        deleteRequest(inq.id);
+                                    }
+                                }
+                            }}
+                            className="text-gray-400 hover:text-red-500 transition-colors"
+                            title="Delete"
+                        >
+                            <Trash size={16} />
+                        </button>
+                    </td>
+                </tr>
+            ))
+        )
+    }
 
     const [stats, setStats] = useState({
         revenue: 0,
@@ -367,7 +452,6 @@ export default function AdminDashboard() {
                         <h3 className="font-bold text-gray-800">Partnership Inquiries (제휴 문의)</h3>
                         <span className="bg-red-50 text-red-600 text-xs px-2 py-0.5 rounded-full font-bold">New</span>
                     </div>
-                    <Link to="/partners/inquiry" className="text-sm text-blue-600 hover:text-blue-800">Go to Board</Link>
                 </div>
 
                 <div className="overflow-x-auto">
@@ -375,41 +459,109 @@ export default function AdminDashboard() {
                         <thead className="bg-gray-50 border-b border-gray-100">
                             <tr>
                                 <th className="px-4 py-3 text-xs font-semibold text-gray-500">Date</th>
-                                <th className="px-4 py-3 text-xs font-semibold text-gray-500">Author/Company</th>
+                                <th className="px-4 py-3 text-xs font-semibold text-gray-500">Type</th>
+                                <th className="px-4 py-3 text-xs font-semibold text-gray-500">Author/Source</th>
                                 <th className="px-4 py-3 text-xs font-semibold text-gray-500">Title</th>
                                 <th className="px-4 py-3 text-xs font-semibold text-gray-500">Contact</th>
                                 <th className="px-4 py-3 text-xs font-semibold text-gray-500">Status</th>
+                                <th className="px-4 py-3 text-xs font-semibold text-gray-500 text-right">Action</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-100">
                             {(() => {
-                                // Fetch inquiries just for display here (quick read from localStorage for compatibility without full Context provider wrap in AdminDashboard if not present, 
-                                // though AdminDashboard is inside App which HAS BoardProvider now. But let's use localStorage direct read here to match existing pattern of this file 
-                                // OR better: Just read localStorage 'mall_board_posts' filtering for inquiry)
-                                const allPosts = JSON.parse(localStorage.getItem('mall_board_posts') || '[]');
-                                const inquiries = allPosts.filter((p: any) => p.type === 'partner-inquiry').sort((a: any, b: any) => new Date(b.date).getTime() - new Date(a.date).getTime()).slice(0, 5);
+                                // 1. Partner Requests (from Detail Page)
+                                const partnerInquiries = requests
+                                    .filter(r => r.scheduleTitle === '1:1 문의' || !!r.inquiryContent)
+                                    .map(r => ({
+                                        id: r.id,
+                                        date: r.timestamp,
+                                        author: r.userName,
+                                        title: r.inquiryContent || r.scheduleTitle,
+                                        contact: r.contact,
+                                        status: r.status,
+                                        source: 'Partner Detail',
+                                        isBoard: false,
+                                        inquirerType: r.userType || 'Personal' // 'Personal' | 'Company'
+                                    }));
 
-                                if (inquiries.length === 0) {
+                                // 2. Board Inquiries (from K-Culture Menu)
+                                const boardInquiries = posts
+                                    .filter(p => p.type === 'partner-inquiry')
+                                    .map(p => ({
+                                        id: p.id,
+                                        date: p.date, // Usually YYYY-MM-DD
+                                        author: p.author,
+                                        title: p.title,
+                                        contact: p.contactInfo,
+                                        status: p.status,
+                                        source: 'Inquiry Board',
+                                        isBoard: true,
+                                        inquirerType: p.viewMode === 'company' ? 'Company' : 'Personal'
+                                    }));
+
+                                // Merge and Sort
+                                const merged = [...partnerInquiries, ...boardInquiries]
+                                    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+                                    .slice(0, 10);
+
+                                if (merged.length === 0) {
                                     return (
                                         <tr>
-                                            <td colSpan={5} className="px-4 py-8 text-center text-gray-400 text-sm">No new inquiries.</td>
+                                            <td colSpan={7} className="px-4 py-8 text-center text-gray-400 text-sm">
+                                                신규 문의 내역이 없습니다. (No new inquiries)
+                                            </td>
                                         </tr>
                                     )
                                 }
 
-                                return inquiries.map((inq: any) => (
-                                    <tr key={inq.id} className="hover:bg-gray-50">
-                                        <td className="px-4 py-3 text-xs text-gray-500">{inq.date}</td>
-                                        <td className="px-4 py-3 text-sm font-medium text-gray-800">{inq.author}</td>
-                                        <td className="px-4 py-3 text-sm text-gray-600 truncate max-w-[200px]">{inq.title}</td>
-                                        <td className="px-4 py-3 text-xs text-gray-500">{inq.contactInfo || '-'}</td>
+                                return merged.map((inq, idx) => (
+                                    <tr key={`${inq.id}-${idx}`} className="hover:bg-gray-50">
+                                        <td className="px-4 py-3 text-xs text-gray-500">
+                                            {new Date(inq.date).toLocaleDateString()}
+                                        </td>
                                         <td className="px-4 py-3">
-                                            <span className={`text-[10px] px-2 py-0.5 rounded font-medium ${inq.status === 'Resolved' ? 'bg-green-100 text-green-700' :
-                                                inq.status === 'In Progress' ? 'bg-blue-100 text-blue-700' :
-                                                    'bg-yellow-50 text-yellow-700'
-                                                }`}>
+                                            <span className={clsx(
+                                                "text-[10px] px-2 py-0.5 rounded font-bold border",
+                                                inq.inquirerType === 'Company'
+                                                    ? "bg-blue-50 text-blue-700 border-blue-100"
+                                                    : "bg-gray-50 text-gray-600 border-gray-100"
+                                            )}>
+                                                {inq.inquirerType}
+                                            </span>
+                                        </td>
+                                        <td className="px-4 py-3 text-sm font-medium text-gray-800">
+                                            {inq.author}
+                                            <span className="block text-[10px] text-gray-400">{inq.source}</span>
+                                        </td>
+                                        <td className="px-4 py-3 text-sm text-gray-600 truncate max-w-[200px]">
+                                            {inq.title}
+                                        </td>
+                                        <td className="px-4 py-3 text-xs text-gray-500">{inq.contact || '-'}</td>
+                                        <td className="px-4 py-3">
+                                            <span className={clsx(
+                                                "text-[10px] px-2 py-0.5 rounded font-medium",
+                                                inq.status === 'approved' || inq.status === 'Resolved' ? "bg-green-100 text-green-700" :
+                                                    "bg-yellow-50 text-yellow-700"
+                                            )}>
                                                 {inq.status || 'Pending'}
                                             </span>
+                                        </td>
+                                        <td className="px-4 py-3 text-right">
+                                            <button
+                                                onClick={() => {
+                                                    if (window.confirm('정말 삭제하시겠습니까?')) {
+                                                        if (inq.isBoard) {
+                                                            deletePost(inq.id);
+                                                        } else {
+                                                            deleteRequest(inq.id);
+                                                        }
+                                                    }
+                                                }}
+                                                className="text-gray-400 hover:text-red-500 transition-colors"
+                                                title="Delete"
+                                            >
+                                                <Trash size={16} />
+                                            </button>
                                         </td>
                                     </tr>
                                 ));

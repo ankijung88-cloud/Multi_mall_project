@@ -42,6 +42,8 @@ export interface PartnerRequest {
     paymentDate?: string;
     paymentMethod?: string;
     userType?: 'Personal' | 'Company';
+    inquiryContent?: string; // New field for inquiry
+    contact?: string; // New field for user contact
 }
 
 interface PartnerContextType {
@@ -51,7 +53,7 @@ interface PartnerContextType {
     updatePartner: (id: number, updates: Partial<Omit<Partner, 'id'>>) => void;
     deletePartner: (id: number) => void;
     getPartner: (id: number) => Partner | undefined;
-    addRequest: (request: Omit<PartnerRequest, 'id' | 'timestamp' | 'status'>) => void;
+    addRequest: (request: Omit<PartnerRequest, 'id' | 'timestamp' | 'status'> & { scheduleId?: string, scheduleTitle?: string, scheduleDate?: string }) => void;
     updateRequestStatus: (id: string, status: PartnerRequest['status']) => void;
     deleteRequest: (id: string) => void;
     updateRequest: (id: string, updates: Partial<PartnerRequest>) => void;
@@ -59,7 +61,28 @@ interface PartnerContextType {
 
 const PartnerContext = createContext<PartnerContextType | undefined>(undefined);
 
-const initialPartners: Partner[] = [];
+const initialPartners: Partner[] = [
+    {
+        id: 101,
+        name: 'Gagnam Beauty Center',
+        image: 'https://images.unsplash.com/photo-1519415510236-718bdfcd4788?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
+        description: 'Premium K-Beauty & Plastic Surgery Consultation Center. Experience the best of Korean beauty services with our expert team.',
+        category: '뷰티 & 성형',
+        schedules: [
+            {
+                id: 's1',
+                date: '2024-03-20',
+                time: '14:00',
+                title: 'VIP Consultation',
+                description: '1:1 Private Consultation with Chief Surgeon',
+                maxSlots: 5,
+                currentSlots: 2,
+                pricePersonal: 50000,
+                priceCompany: 100000
+            }
+        ]
+    }
+];
 
 export function PartnerProvider({ children }: { children: ReactNode }) {
     const [partners, setPartners] = useState<Partner[]>([]);
@@ -162,13 +185,19 @@ export function PartnerProvider({ children }: { children: ReactNode }) {
 
     const getPartner = (id: number) => partners.find(p => p.id === id);
 
-    const addRequest = (requestData: Omit<PartnerRequest, 'id' | 'timestamp' | 'status'>) => {
+    // Updated type definition to allow optional schedule fields for Inquiries
+    const addRequest = (requestData: Omit<PartnerRequest, 'id' | 'timestamp' | 'status'> & { scheduleId?: string, scheduleTitle?: string, scheduleDate?: string }) => {
+        const { scheduleId, scheduleTitle, scheduleDate, ...rest } = requestData;
+
         const newRequest: PartnerRequest = {
-            ...requestData,
+            scheduleId: scheduleId || '',
+            scheduleTitle: scheduleTitle || 'Inquiry',
+            scheduleDate: scheduleDate || new Date().toISOString().split('T')[0],
+            ...rest,
             id: Date.now().toString(36) + Math.random().toString(36).substr(2),
             timestamp: new Date().toISOString(),
-            status: 'pending'
-        };
+            status: 'pending',
+        } as PartnerRequest;
         saveRequests([...requests, newRequest]);
     };
 

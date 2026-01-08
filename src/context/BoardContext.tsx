@@ -1,7 +1,7 @@
 import { createContext, useContext, useState, useEffect } from 'react';
 import type { ReactNode } from 'react';
 
-export type BoardType = 'notice' | 'event' | 'partner-inquiry' | 'partner-news' | 'partner-success' | 'partner-guide' | 'agent-guide' | 'agent-fee' | 'agent-reviews';
+export type BoardType = 'notice' | 'event' | 'partner-inquiry' | 'partner-news' | 'partner-success' | 'partner-guide' | 'agent-guide' | 'agent-fee' | 'agent-reviews' | 'reservation-support' | 'info-sharing' | 'customer-center';
 
 export interface Post {
     id: string;

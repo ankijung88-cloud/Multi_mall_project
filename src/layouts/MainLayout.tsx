@@ -122,7 +122,7 @@ export default function MainLayout({ children }: MainLayoutProps) {
                                 },
                                 {
                                     name: '에이전트',
-                                    path: '/agents',
+                                    path: isCompany ? '/agents?type=company' : '/agents',
                                     subMenus: [
                                         { name: '이용 가이드', path: isCompany ? '/agents/guide?type=company' : '/agents/guide' },
                                         { name: '수수료 안내', path: isCompany ? '/agents/fee?type=company' : '/agents/fee' },
@@ -147,7 +147,14 @@ export default function MainLayout({ children }: MainLayoutProps) {
                                 {
                                     name: '커뮤니티',
                                     path: '#',
-                                    subMenus: ['맞춤형 일정추천', '예약 및 일정서포트\n(추가 fee 발생)', '정보공유', '항공사링크', '호텔링크', '교통링크', '고객센터']
+                                    subMenus: [
+                                        { name: '예약 및 일정서포트\n(추가 fee 발생)', path: isCompany ? '/community/reservation?type=company' : '/community/reservation' },
+                                        { name: '정보공유', path: isCompany ? '/community/info?type=company' : '/community/info' },
+                                        { name: '항공사링크', path: isCompany ? '/community/airline?type=company' : '/community/airline' },
+                                        { name: '호텔링크', path: isCompany ? '/community/hotel?type=company' : '/community/hotel' },
+                                        { name: '교통링크', path: isCompany ? '/community/transport?type=company' : '/community/transport' },
+                                        { name: '고객센터', path: isCompany ? '/community/center?type=company' : '/community/center' }
+                                    ]
                                 },
                             ].map((item) => (
                                 <div key={item.name} className="relative group p-4">

@@ -1,4 +1,4 @@
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { usePartners } from '../context/PartnerContext';
 import { useAuthStore } from '../store/useAuthStore';
 import MainLayout from '../layouts/MainLayout';
@@ -9,8 +9,11 @@ export default function BeautyPartners() {
     const { partners } = usePartners();
     const navigate = useNavigate();
     const { userType } = useAuthStore();
+    const location = useLocation();
+    const searchParams = new URLSearchParams(location.search);
+    const queryType = searchParams.get('type');
+    const isCompanyView = userType === 'company' || queryType === 'company';
 
-    // Specific category filter
     // Specific category filter
     const displayedPartners = partners
         .filter(p => p.category?.trim() === '뷰티 & 성형')
@@ -22,13 +25,13 @@ export default function BeautyPartners() {
                 {/* Hero */}
                 <div className={clsx(
                     "text-white py-16 mb-12 transition-colors duration-300",
-                    userType === 'company' ? "bg-blue-900" : "bg-gray-900"
+                    isCompanyView ? "bg-blue-900" : "bg-gray-900"
                 )}>
                     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
                         <h1 className="text-4xl md:text-5xl font-bold mb-4">
                             K-Beauty & Plastic Surgery
                         </h1>
-                        <p className={clsx("text-xl max-w-2xl mx-auto", userType === 'company' ? "text-blue-200" : "text-gray-300")}>
+                        <p className={clsx("text-xl max-w-2xl mx-auto", isCompanyView ? "text-blue-200" : "text-gray-300")}>
                             대한민국 최고의 뷰티 및 의료 서비스를 제공하는 파트너사를 소개합니다.
                         </p>
                     </div>
@@ -40,7 +43,7 @@ export default function BeautyPartners() {
                             <motion.div
                                 key={partner.id}
                                 whileHover={{ y: -5 }}
-                                onClick={() => navigate(`/partners/${partner.id}`)}
+                                onClick={() => navigate(`/partners/${partner.id}${isCompanyView ? '?type=company' : ''}`)}
                                 className="bg-white rounded-xl shadow-sm hover:shadow-xl transition-all duration-300 overflow-hidden cursor-pointer group border border-gray-100"
                             >
                                 <div className="h-48 overflow-hidden">

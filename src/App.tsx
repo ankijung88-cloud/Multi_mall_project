@@ -53,10 +53,14 @@ import AdminPartnerRequests from './pages/AdminPartnerRequests';
 import AdminShippedOrders from './pages/AdminShippedOrders';
 import AdminInvoices from './pages/AdminInvoices';
 import AdminAgents from './pages/AdminAgents';
+import CommunityBoard from './pages/CommunityBoard';
+import LinkGridPage from './pages/LinkGridPage';
+
 import AdminAgentRequests from './pages/AdminAgentRequests';
 import AdminContentRequests from './pages/AdminContentRequests';
-
 import PersonalContentDetail from './pages/PersonalContentDetail';
+
+
 import AllPersonalContents from './pages/AllPersonalContents';
 import MyContents from './pages/MyContents';
 import AssociatedContents from './pages/AssociatedContents';
@@ -163,6 +167,15 @@ export default function App() {
                         <OrderHistory />
                       </ProtectedRoute>
                     } />
+
+                    {/* Community Routes */}
+                    <Route path="/community/reservation" element={<CommunityBoard category="reservation" />} />
+                    <Route path="/community/info" element={<CommunityBoard category="info" />} />
+                    <Route path="/community/center" element={<CommunityBoard category="center" />} />
+
+                    <Route path="/community/airline" element={<LinkGridPage category="airline" />} />
+                    <Route path="/community/hotel" element={<LinkGridPage category="hotel" />} />
+                    <Route path="/community/transport" element={<LinkGridPage category="transport" />} />
 
                     {/* Admin Routes */}
                     <Route path="/admin" element={

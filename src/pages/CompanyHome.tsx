@@ -149,7 +149,7 @@ export default function CompanyHome() {
                                 Choose Agent
                             </h2>
                             <button
-                                onClick={() => navigate('/agents')}
+                                onClick={() => navigate('/agents?type=company')}
                                 className="text-gray-500 hover:text-purple-600 text-sm font-medium transition-colors"
                             >
                                 전체 에이전트 보기
@@ -164,7 +164,7 @@ export default function CompanyHome() {
                                         if (!isAuthenticated) {
                                             navigate('/login?type=company', { state: { from: `/agents/${agent.id}` } });
                                         } else {
-                                            navigate(`/agents/${agent.id}`);
+                                            navigate(`/agents/${agent.id}?type=company`);
                                         }
                                     }}
                                     className="block cursor-pointer group text-center"
@@ -197,7 +197,7 @@ export default function CompanyHome() {
                                 Personal Contents
                             </h2>
                             <button
-                                onClick={() => navigate('/contents')}
+                                onClick={() => navigate('/contents?type=company')}
                                 className="text-gray-500 hover:text-orange-600 text-sm font-medium transition-colors"
                             >
                                 전체 컨텐츠 보기 (View All)
