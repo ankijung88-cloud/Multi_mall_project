@@ -33,7 +33,7 @@ export default function MainLayout({ children }: MainLayoutProps) {
 
     const handleAuthAction = (action: () => void) => {
         if (!isAuthenticated) {
-            navigate('/login?type=personal');
+            navigate(`/login?type=${isCompany ? 'company' : 'personal'}`);
             return;
         }
         action();
@@ -160,6 +160,7 @@ export default function MainLayout({ children }: MainLayoutProps) {
                                 <div key={item.name} className="relative group p-4">
                                     <Link
                                         to={item.path}
+                                        onClick={(e) => item.path === '#' && e.preventDefault()}
                                         className={clsx(
                                             "text-base font-medium transition-colors border-b-2 border-transparent pb-1 block h-full flex items-center",
                                             "text-gray-600 hover:text-gray-900",
@@ -275,7 +276,7 @@ export default function MainLayout({ children }: MainLayoutProps) {
                                 </button>
                             ) : (
                                 <Link
-                                    to="/login?type=personal"
+                                    to={`/login?type=${isCompany ? 'company' : 'personal'}`}
                                     className="flex items-center space-x-1 text-gray-600 hover:text-emerald-500 transition-colors"
                                 >
                                     <LogIn size={18} />

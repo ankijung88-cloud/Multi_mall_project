@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { CartProvider } from './context/CartContext';
 import { ProductProvider } from './context/ProductContext';
 import { PartnerProvider } from './context/PartnerContext';
@@ -75,11 +75,14 @@ import ScrollToTop from './components/ScrollToTop';
 const ProtectedRoute = ({ children, allowedType }: { children: ReactNode, allowedType?: 'personal' | 'company' | 'admin' }) => {
   const isAuthenticated = useAuthStore(state => state.isAuthenticated);
   const userType = useAuthStore(state => state.userType);
+  const location = useLocation();
+  const searchParams = new URLSearchParams(location.search);
+  const isCompany = searchParams.get('type') === 'company';
 
   if (!isAuthenticated) {
     // Redirect to appropriate login if trying to access admin
     if (allowedType === 'admin') return <Navigate to="/admin/login" replace />;
-    return <Navigate to="/login?type=personal" replace />;
+    return <Navigate to={`/login?type=${isCompany ? 'company' : 'personal'}`} replace />;
   }
 
   // If allowedType is specified, enforce it. If not, allow any authenticated user.

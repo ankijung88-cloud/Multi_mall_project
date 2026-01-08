@@ -85,7 +85,7 @@ export default function Shop() {
                             <motion.div
                                 key={product.id}
                                 layout
-                                onClick={() => navigate(`/product/${product.id}`)}
+                                onClick={() => navigate(`/product/${product.id}${viewType === 'company' ? '?type=company' : ''}`)}
                                 className="bg-white rounded-xl shadow-sm hover:shadow-xl transition-all duration-300 border border-gray-100 overflow-hidden group cursor-pointer flex flex-col h-full"
                             >
                                 <div className="h-64 overflow-hidden relative">

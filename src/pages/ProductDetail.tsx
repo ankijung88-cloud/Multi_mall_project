@@ -1,4 +1,4 @@
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useProducts } from '../context/ProductContext';
 import { useAuthStore } from '../store/useAuthStore';
 import { useCart } from '../context/CartContext';
@@ -10,6 +10,7 @@ import { PriceDisplay } from '../components/PriceDisplay';
 export default function ProductDetail() {
     const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
+    const location = useLocation();
     const { getProduct } = useProducts();
     const { userType, isAuthenticated } = useAuthStore();
     const { addToCart } = useCart();
@@ -34,7 +35,8 @@ export default function ProductDetail() {
         );
     }
 
-    const isCompany = userType === 'company';
+    const searchParams = new URLSearchParams(location.search);
+    const isCompany = userType === 'company' || searchParams.get('type') === 'company';
     const currentPrice = isCompany ? product.companyPrice : product.personalPrice;
 
     return (
@@ -101,12 +103,8 @@ export default function ProductDetail() {
                                 whileHover={{ scale: 1.02 }}
                                 whileTap={{ scale: 0.98 }}
                                 onClick={() => {
-                                    if (!isAuthenticated && !isCompany) {
-                                        navigate('/login?type=personal');
-                                        return;
-                                    }
-                                    if (!isAuthenticated && isCompany) {
-                                        navigate('/login?type=company');
+                                    if (!isAuthenticated) {
+                                        navigate(`/login?type=${isCompany ? 'company' : 'personal'}`);
                                         return;
                                     }
                                     addToCart({
