@@ -11,12 +11,14 @@ export interface Schedule {
     currentSlots: number;
     pricePersonal?: number;
     priceCompany?: number;
+    detailImage?: string; // Detailed image for the schedule page
 }
 
 export interface Partner {
     id: number;
     name: string;
     image: string;
+    detailImage?: string; // New: Partner specific detail/intro image
     description: string;
     category?: string;
     schedules: Schedule[];

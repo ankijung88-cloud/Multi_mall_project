@@ -18,6 +18,7 @@ import OrderHistory from './pages/OrderHistory';
 import Shop from './pages/Shop';
 import Partners from './pages/Partners';
 import PartnerDetail from './pages/PartnerDetail';
+import ScheduleDetail from './pages/ScheduleDetail';
 import BeautyPartners from './pages/BeautyPartners';
 import CoursePartners from './pages/CoursePartners';
 import PerformancePartners from './pages/PerformancePartners';
@@ -134,6 +135,7 @@ export default function App() {
                     <Route path="/partners/travel" element={<Travel />} />
                     <Route path="/partners/food" element={<Food />} />
                     <Route path="/partners/:id" element={<PartnerDetail />} />
+                    <Route path="/partners/:partnerId/schedules/:scheduleId" element={<ScheduleDetail />} />
                     <Route path="/agents" element={<Agents />} />
                     <Route path="/agents/:id" element={<AgentDetail />} />
 

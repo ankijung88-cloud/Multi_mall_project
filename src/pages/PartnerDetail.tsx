@@ -1,11 +1,12 @@
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { usePartners } from '../context/PartnerContext';
-import type { Schedule } from '../context/PartnerContext';
 import { useAuthStore } from '../store/useAuthStore';
 import MainLayout from '../layouts/MainLayout';
 import { Calendar, Users, Clock, CheckCircle } from 'lucide-react';
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import clsx from 'clsx';
+import ScheduleDetailModal from '../components/ScheduleDetailModal';
+import type { Schedule } from '../context/PartnerContext';
 
 export default function PartnerDetail() {
     const { id } = useParams();
@@ -19,49 +20,7 @@ export default function PartnerDetail() {
     const isCompany = (user?.type === 'Company' || user?.type === 'company') || (!user && (viewMode === 'company' || queryType === 'company'));
 
     const partner = getPartner(Number(id));
-    const [selectedSchedule, setSelectedSchedule] = useState<Schedule | null>(null);
-    const [applicationStep, setApplicationStep] = useState<'idle' | 'checking' | 'confirm' | 'payment' | 'processing' | 'success'>('idle');
-    const [cardNumber, setCardNumber] = useState('');
-    const [cardExpiry, setCardExpiry] = useState('');
-    const [cardCVC, setCardCVC] = useState('');
-    const [paymentMethod, setPaymentMethod] = useState<'card' | 'account' | 'cash'>('card');
-    const [inquiryText, setInquiryText] = useState('');
-    const [isSubmittingInquiry, setIsSubmittingInquiry] = useState(false);
 
-    const handleCardNumberChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const value = e.target.value.replace(/\D/g, '');
-        const formatted = value.replace(/(\d{4})(?=\d)/g, '$1-').substr(0, 19);
-        setCardNumber(formatted);
-    };
-
-    const handleExpiryChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const value = e.target.value.replace(/\D/g, '');
-        if (value.length >= 2) {
-            const formatted = value.replace(/(\d{2})(?=\d)/g, '$1/').substr(0, 5);
-            setCardExpiry(formatted);
-        } else {
-            setCardExpiry(value);
-        }
-    };
-
-
-    const handleCloseModal = () => {
-        setApplicationStep('idle');
-        setSelectedSchedule(null);
-        // Navigate to landing page
-        if (isCompany) navigate('/company');
-        else navigate('/personal');
-    };
-
-    // Auto-redirect on success
-    useEffect(() => {
-        if (applicationStep === 'success') {
-            const timer = setTimeout(() => {
-                handleCloseModal();
-            }, 2000);
-            return () => clearTimeout(timer);
-        }
-    }, [applicationStep]);
 
     if (!partner) {
         return (
@@ -78,88 +37,14 @@ export default function PartnerDetail() {
         );
     }
 
-    const handleInitialApply = (e: React.MouseEvent) => {
-        e.preventDefault();
-        e.stopPropagation();
+    const [inquiryText, setInquiryText] = useState('');
+    const [isSubmittingInquiry, setIsSubmittingInquiry] = useState(false);
 
-        if (!isAuthenticated) {
-            alert('로그인이 필요한 서비스입니다.\n(로그인 페이지로 이동합니다)');
-            const redirectType = viewMode === 'company' ? 'company' : 'personal';
-            navigate(`/login?type=${redirectType}`, { state: { from: location.pathname } });
-            return;
-        }
+    // For Modal (Travel Category)
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [selectedScheduleForModal, setSelectedScheduleForModal] = useState<Schedule | null>(null);
 
-
-        if (!selectedSchedule) return;
-
-        // Start flow
-        setApplicationStep('checking');
-
-        // Simulate API check delay
-        setTimeout(() => {
-            if (selectedSchedule.currentSlots >= selectedSchedule.maxSlots) {
-                alert("신청 가능한 정원이 가득 찼습니다.");
-                setApplicationStep('idle');
-            } else {
-                setApplicationStep('confirm');
-            }
-        }, 600);
-    };
-
-    const handleProceedToPayment = () => {
-        if (!selectedSchedule) return;
-
-        // Determine Price
-        const price = isCompany ? selectedSchedule.priceCompany : selectedSchedule.pricePersonal;
-
-        if (price && price > 0) {
-            setApplicationStep('payment');
-        } else {
-            // Free event, skip payment
-            handleCompleteBooking(0);
-        }
-    };
-
-    const handlePaymentSubmit = (e: React.FormEvent) => {
-        e.preventDefault();
-        setApplicationStep('processing');
-
-        // Simulate Payment Gateway
-        setTimeout(() => {
-            const price = isCompany ? selectedSchedule?.priceCompany : selectedSchedule?.pricePersonal;
-            handleCompleteBooking(price || 0);
-        }, 1500);
-    };
-
-    const handleCompleteBooking = (amout: number) => {
-        if (!selectedSchedule || !user) {
-            alert('오류가 발생했습니다: 사용자 정보가 없거나 일정이 선택되지 않았습니다.\n다시 시도해 주세요.');
-            setApplicationStep('idle');
-            return;
-        }
-
-        try {
-            addRequest({
-                partnerId: partner.id,
-                partnerName: partner.name,
-                userId: user.id,
-                userName: user.name || user.id,
-                scheduleId: selectedSchedule.id,
-                scheduleTitle: selectedSchedule.title,
-                scheduleDate: selectedSchedule.date,
-                paymentStatus: amout > 0 ? 'paid' : 'pending',
-                paymentAmount: amout,
-                paymentDate: new Date().toISOString(),
-                paymentMethod: amout > 0 ? (paymentMethod === 'card' ? 'Credit Card' : paymentMethod === 'account' ? 'Bank Transfer' : 'On-site Payment') : 'Free',
-                userType: isCompany ? 'Company' : 'Personal'
-            });
-            setApplicationStep('success');
-        } catch (error) {
-            console.error("Booking Error:", error);
-            alert('신청 처리 중 오류가 발생했습니다. 관리자에게 문의하세요.');
-            setApplicationStep('idle');
-        }
-    };
+    const isTravelCategory = partner.category && (partner.category.includes('여행') || partner.category.includes('Travel'));
 
     const handleCancel = (e: React.MouseEvent) => {
         e.preventDefault();
@@ -299,9 +184,9 @@ export default function PartnerDetail() {
                                 <div className="w-full">
                                     {/* Assuming partner.image is the main detail image too, or we could add a placeholder if real app has distinct fields */}
                                     {/* Since user asked for "Introduction Image", reusing the main image as a placeholder for the detail view or assuming separate content would be here. */}
-                                    {/* Let's render the image again but full width as requested, usually this would be a long detail image */}
+                                    {/* Use detailImage if available, otherwise use main image */}
                                     <img
-                                        src={partner.image}
+                                        src={partner.detailImage || partner.image}
                                         alt="Detail"
                                         className="w-full h-auto rounded-xl shadow-sm"
                                     />
@@ -374,12 +259,16 @@ export default function PartnerDetail() {
                                 {sortedSchedules.map((schedule) => (
                                     <div
                                         key={schedule.id}
-                                        onClick={() => setSelectedSchedule(schedule)}
+                                        onClick={() => {
+                                            if (isTravelCategory) {
+                                                setSelectedScheduleForModal(schedule);
+                                                setIsModalOpen(true);
+                                            } else {
+                                                navigate(`/partners/${partner.id}/schedules/${schedule.id}${queryType ? `?type=${queryType}` : ''}`);
+                                            }
+                                        }}
                                         className={clsx(
-                                            "border rounded-xl p-6 cursor-pointer transition-all hover:shadow-md",
-                                            selectedSchedule?.id === schedule.id
-                                                ? "border-blue-500 ring-2 ring-blue-200 bg-blue-50"
-                                                : "border-gray-200 bg-white hover:border-blue-300"
+                                            "border rounded-xl p-6 cursor-pointer transition-all hover:shadow-md border-gray-200 bg-white hover:border-blue-300"
                                         )}
                                     >
                                         <div className="flex justify-between items-start mb-4">
@@ -387,9 +276,8 @@ export default function PartnerDetail() {
                                                 <Clock size={14} className="mr-1" />
                                                 {schedule.date}
                                             </div>
-                                            {selectedSchedule?.id === schedule.id && (
-                                                <CheckCircle className="text-blue-600" size={20} />
-                                            )}
+                                            <CheckCircle className="text-gray-300 group-hover:text-blue-500" size={20} />
+
                                         </div>
                                         <h3 className="font-bold text-lg mb-2">{schedule.title}</h3>
                                         <p className="text-sm text-gray-500 mb-4 h-10 line-clamp-2">{schedule.description}</p>
@@ -439,231 +327,19 @@ export default function PartnerDetail() {
                                 onClick={handleCancel}
                                 className="px-8 py-3 rounded-lg font-bold text-lg transition-all shadow-md bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 hover:text-gray-900"
                             >
-                                취소
-                            </button>
-                            <button
-                                type="button"
-                                onClick={handleInitialApply}
-                                disabled={!selectedSchedule || (selectedSchedule && selectedSchedule.currentSlots >= selectedSchedule.maxSlots)}
-                                className={clsx(
-                                    "px-8 py-3 rounded-lg font-bold text-lg transition-all shadow-lg",
-                                    (selectedSchedule && selectedSchedule.currentSlots < selectedSchedule.maxSlots)
-                                        ? "bg-blue-600 hover:bg-blue-700 text-white transform hover:-translate-y-1"
-                                        : "bg-gray-200 text-gray-400 cursor-not-allowed"
-                                )}
-                            >
-                                참여 신청하기
+                                목록으로
                             </button>
                         </div>
                     </div>
                 </div>
 
-                {/* Application Steps Modal */}
-                {applicationStep !== 'idle' && (
-                    <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-                        <div className="bg-white rounded-xl shadow-xl w-full max-w-sm p-6 text-center">
-
-                            {applicationStep === 'checking' && (
-                                <div className="py-8">
-                                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-                                    <p className="text-lg font-medium text-gray-700">신청 가능 여부 확인 중...</p>
-                                </div>
-                            )}
-
-                            {applicationStep === 'confirm' && (
-                                <div>
-                                    <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                                        <CheckCircle className="text-blue-600" size={32} />
-                                    </div>
-                                    <h3 className="text-xl font-bold text-gray-900 mb-2">신청 하시겠습니까?</h3>
-                                    <p className="text-gray-600 mb-6">
-                                        선택하신 <strong>{selectedSchedule?.title}</strong><br />
-                                        ({selectedSchedule?.date}) 일정에<br />
-                                        참여를 신청합니다.
-                                    </p>
-                                    <div className="flex gap-3">
-                                        <button
-                                            onClick={() => setApplicationStep('idle')}
-                                            className="flex-1 bg-gray-100 text-gray-700 py-3 rounded-lg font-bold hover:bg-gray-200 transition-colors"
-                                        >
-                                            취소
-                                        </button>
-                                        <button
-                                            onClick={handleProceedToPayment}
-                                            className="flex-1 bg-blue-600 text-white py-3 rounded-lg font-bold hover:bg-blue-700 transition-colors"
-                                        >
-                                            다음 (결제)
-                                        </button>
-                                    </div>
-                                </div>
-                            )}
-
-                            {applicationStep === 'payment' && (
-                                <form onSubmit={handlePaymentSubmit} className="text-left">
-                                    <h3 className="text-xl font-bold text-gray-900 mb-4 text-center">결제 정보 입력</h3>
-
-                                    <div className="bg-gray-50 p-4 rounded-lg mb-4 border border-gray-100">
-                                        <div className="flex justify-between items-center mb-2">
-                                            <span className="text-gray-600">결제 금액</span>
-                                            <span className="font-bold text-lg text-blue-600">
-                                                ₩{(isCompany ? selectedSchedule?.priceCompany : selectedSchedule?.pricePersonal)?.toLocaleString() || 0}
-                                            </span>
-                                        </div>
-                                        <div className="text-xs text-right text-gray-400">
-                                            (${((isCompany ? selectedSchedule?.priceCompany || 0 : selectedSchedule?.pricePersonal || 0) / 1450).toFixed(2)})
-                                        </div>
-                                    </div>
-
-                                    {/* Payment Method Selection */}
-                                    <div className="flex gap-2 mb-6">
-                                        <button
-                                            type="button"
-                                            onClick={() => setPaymentMethod('card')}
-                                            className={clsx(
-                                                "flex-1 py-2 text-sm font-medium rounded-lg border transition-all",
-                                                paymentMethod === 'card'
-                                                    ? "bg-blue-50 border-blue-500 text-blue-700"
-                                                    : "bg-white border-gray-300 text-gray-600 hover:bg-gray-50"
-                                            )}
-                                        >
-                                            카드 결제
-                                        </button>
-                                        <button
-                                            type="button"
-                                            onClick={() => setPaymentMethod('account')}
-                                            className={clsx(
-                                                "flex-1 py-2 text-sm font-medium rounded-lg border transition-all",
-                                                paymentMethod === 'account'
-                                                    ? "bg-blue-50 border-blue-500 text-blue-700"
-                                                    : "bg-white border-gray-300 text-gray-600 hover:bg-gray-50"
-                                            )}
-                                        >
-                                            무통장 입금
-                                        </button>
-                                        <button
-                                            type="button"
-                                            onClick={() => setPaymentMethod('cash')}
-                                            className={clsx(
-                                                "flex-1 py-2 text-sm font-medium rounded-lg border transition-all",
-                                                paymentMethod === 'cash'
-                                                    ? "bg-blue-50 border-blue-500 text-blue-700"
-                                                    : "bg-white border-gray-300 text-gray-600 hover:bg-gray-50"
-                                            )}
-                                        >
-                                            현장 결제
-                                        </button>
-                                    </div>
-
-                                    {paymentMethod === 'card' && (
-                                        <div className="space-y-3 mb-6">
-                                            <div>
-                                                <label className="block text-xs font-semibold text-gray-500 mb-1">카드 번호</label>
-                                                <input
-                                                    type="text"
-                                                    placeholder="0000-0000-0000-0000"
-                                                    className="w-full border border-gray-300 rounded p-2 text-sm"
-                                                    value={cardNumber}
-                                                    onChange={handleCardNumberChange}
-                                                    maxLength={19}
-                                                    required
-                                                />
-                                            </div>
-                                            <div className="flex gap-3">
-                                                <div className="flex-1">
-                                                    <label className="block text-xs font-semibold text-gray-500 mb-1">유효기간</label>
-                                                    <input
-                                                        type="text"
-                                                        placeholder="MM/YY"
-                                                        className="w-full border border-gray-300 rounded p-2 text-sm"
-                                                        value={cardExpiry}
-                                                        onChange={handleExpiryChange}
-                                                        maxLength={5}
-                                                        required
-                                                    />
-                                                </div>
-                                                <div className="w-1/3">
-                                                    <label className="block text-xs font-semibold text-gray-500 mb-1">CVC</label>
-                                                    <input
-                                                        type="text"
-                                                        placeholder="123"
-                                                        className="w-full border border-gray-300 rounded p-2 text-sm"
-                                                        value={cardCVC}
-                                                        onChange={(e) => setCardCVC(e.target.value.replace(/\D/g, '').substr(0, 3))}
-                                                        maxLength={3}
-                                                        required
-                                                    />
-                                                </div>
-                                            </div>
-                                        </div>
-                                    )}
-
-                                    {paymentMethod === 'account' && (
-                                        <div className="bg-gray-50 p-4 rounded-lg border border-gray-200 mb-6 text-sm">
-                                            <p className="font-bold text-gray-800 mb-1">입금 계좌 안내</p>
-                                            <p className="text-gray-600">기업은행 123-456-789012</p>
-                                            <p className="text-gray-600">예금주: (주)멀티몰</p>
-                                            <div className="mt-3 text-xs text-blue-600 bg-blue-50 p-2 rounded">
-                                                * 입금자명과 신청자명이 동일해야 확인이 가능합니다.
-                                            </div>
-                                        </div>
-                                    )}
-
-                                    {paymentMethod === 'cash' && (
-                                        <div className="bg-gray-50 p-4 rounded-lg border border-gray-200 mb-6 text-sm">
-                                            <p className="font-bold text-gray-800 mb-1">현장 결제 안내</p>
-                                            <p className="text-gray-600">행사 당일 현장에서 카드 또는 현금으로 결제해 주세요.</p>
-                                            <div className="mt-3 text-xs text-blue-600 bg-blue-50 p-2 rounded">
-                                                * 노쇼 방지를 위해 사전 연락 없이 불참 시 추후 신청이 제한될 수 있습니다.
-                                            </div>
-                                        </div>
-                                    )}
-
-                                    <div className="flex gap-3">
-                                        <button
-                                            type="button"
-                                            onClick={() => setApplicationStep('idle')}
-                                            className="flex-1 bg-gray-100 text-gray-700 py-3 rounded-lg font-bold hover:bg-gray-200 transition-colors"
-                                        >
-                                            취소
-                                        </button>
-                                        <button
-                                            type="submit"
-                                            className="flex-1 bg-blue-600 text-white py-3 rounded-lg font-bold hover:bg-blue-700 transition-colors"
-                                        >
-                                            {paymentMethod === 'card' ? '결제하기' : '신청하기'}
-                                        </button>
-                                    </div>
-                                </form>
-                            )}
-
-                            {applicationStep === 'processing' && (
-                                <div className="py-8">
-                                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-                                    <p className="text-lg font-medium text-gray-700">결제 진행 중...</p>
-                                    <p className="text-sm text-gray-500 mt-2">잠시만 기다려 주세요.</p>
-                                </div>
-                            )}
-
-                            {applicationStep === 'success' && (
-                                <div>
-                                    <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                                        <CheckCircle className="text-green-600" size={32} />
-                                    </div>
-                                    <h3 className="text-xl font-bold text-gray-900 mb-2">신청 완료!</h3>
-                                    <p className="text-gray-600 mb-6 whitespace-pre-line">
-                                        참여 신청이 성공적으로 접수되었습니다.<br />
-                                        관리자 승인 후 안내 문자가 발송됩니다.
-                                    </p>
-                                    <button
-                                        onClick={handleCloseModal}
-                                        className="w-full bg-blue-600 text-white py-3 rounded-lg font-bold hover:bg-blue-700 transition-colors"
-                                    >
-                                        확인
-                                    </button>
-                                </div>
-                            )}
-                        </div>
-                    </div>
+                {isTravelCategory && selectedScheduleForModal && (
+                    <ScheduleDetailModal
+                        partner={partner}
+                        schedule={selectedScheduleForModal}
+                        isOpen={isModalOpen}
+                        onClose={() => setIsModalOpen(false)}
+                    />
                 )}
             </div>
         </MainLayout>

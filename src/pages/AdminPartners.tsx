@@ -42,6 +42,7 @@ export default function AdminPartners() {
     // Form State
     const [formName, setFormName] = useState('');
     const [formImage, setFormImage] = useState('');
+    const [formDetailImage, setFormDetailImage] = useState('');
     const [formDescription, setFormDescription] = useState('');
     // formCategory is removed as it's determined by URL
     const [formSchedules, setFormSchedules] = useState<Schedule[]>([]);
@@ -67,6 +68,7 @@ export default function AdminPartners() {
             setEditingPartner(partner);
             setFormName(partner.name);
             setFormImage(partner.image);
+            setFormDetailImage(partner.detailImage || '');
             setFormDescription(partner.description);
             setFormSchedules(partner.schedules);
             setFormCredentials(partner.credentials || { username: '', password: '' });
@@ -74,6 +76,7 @@ export default function AdminPartners() {
             setEditingPartner(null);
             setFormName('');
             setFormImage('');
+            setFormDetailImage('');
             setFormDescription('');
             setFormSchedules([]);
             setFormCredentials({ username: '', password: '' });
@@ -100,6 +103,7 @@ export default function AdminPartners() {
         const partnerData = {
             name: formName,
             image: formImage,
+            detailImage: formDetailImage,
             description: formDescription,
             category: currentCategoryName, // Auto-assigned from URL
             schedules: formSchedules,
@@ -155,18 +159,20 @@ export default function AdminPartners() {
                 maxSlots: field === 'maxSlots' ? Number(value) : 10,
                 pricePersonal: field === 'pricePersonal' ? Number(value) : undefined,
                 priceCompany: field === 'priceCompany' ? Number(value) : undefined,
-                currentSlots: 0
+                currentSlots: 0,
+                detailImage: field === 'detailImage' ? value : undefined
             };
             setFormSchedules([...formSchedules, newSchedule]);
         }
     };
 
-    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>, field: 'image' | 'detailImage') => {
         const file = e.target.files?.[0];
         if (file) {
             const reader = new FileReader();
             reader.onloadend = () => {
-                setFormImage(reader.result as string);
+                if (field === 'image') setFormImage(reader.result as string);
+                else setFormDetailImage(reader.result as string);
             };
             reader.readAsDataURL(file);
         }
@@ -336,12 +342,12 @@ export default function AdminPartners() {
                                     />
                                 </div>
                                 <div className="col-span-2">
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">이미지 및 파일</label>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">대표 이미지 (Main Image)</label>
                                     <div className="flex gap-2 mb-2">
                                         <input
                                             type="file"
                                             accept="image/*,.pdf"
-                                            onChange={handleFileChange}
+                                            onChange={(e) => handleFileChange(e, 'image')}
                                             className="block w-full text-sm text-gray-500
                                                 file:mr-4 file:py-2 file:px-4
                                                 file:rounded-full file:border-0
@@ -354,6 +360,28 @@ export default function AdminPartners() {
                                         type="text"
                                         value={formImage}
                                         onChange={e => setFormImage(e.target.value)}
+                                        className="w-full border rounded-lg px-3 py-2 text-sm text-gray-400 mb-4"
+                                        placeholder="URL or File Path (Auto-filled)"
+                                    />
+
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">상세 이미지 (Detail/Intro Image)</label>
+                                    <div className="flex gap-2 mb-2">
+                                        <input
+                                            type="file"
+                                            accept="image/*,.pdf"
+                                            onChange={(e) => handleFileChange(e, 'detailImage')}
+                                            className="block w-full text-sm text-gray-500
+                                                file:mr-4 file:py-2 file:px-4
+                                                file:rounded-full file:border-0
+                                                file:text-sm file:font-semibold
+                                                file:bg-green-50 file:text-green-700
+                                                hover:file:bg-green-100"
+                                        />
+                                    </div>
+                                    <input
+                                        type="text"
+                                        value={formDetailImage}
+                                        onChange={e => setFormDetailImage(e.target.value)}
                                         className="w-full border rounded-lg px-3 py-2 text-sm text-gray-400"
                                         placeholder="URL or File Path (Auto-filled)"
                                     />
@@ -504,6 +532,7 @@ export default function AdminPartners() {
                                                         <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-28">Personal Price</th>
                                                         <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-28">Company Price</th>
                                                         <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-24">Max Slots</th>
+                                                        <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-32">Detail Image</th>
                                                     </tr>
                                                 </thead>
                                                 <tbody className="bg-white divide-y divide-gray-200">
@@ -564,6 +593,42 @@ export default function AdminPartners() {
                                                                             onChange={(e) => handleSheetChange(time, subIndex, 'maxSlots', e.target.value)}
                                                                             className="w-full border-gray-200 rounded text-sm focus:ring-blue-500 focus:border-blue-500 bg-transparent"
                                                                         />
+                                                                    </td>
+                                                                    <td className="px-4 py-1">
+                                                                        <div className="flex items-center space-x-2">
+                                                                            {schedule?.detailImage ? (
+                                                                                <div className="relative group w-8 h-8">
+                                                                                    <img src={schedule.detailImage} alt="Detail" className="w-full h-full object-cover rounded" />
+                                                                                    <button
+                                                                                        onClick={() => handleSheetChange(time, subIndex, 'detailImage', '')}
+                                                                                        className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full w-4 h-4 flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 transition-opacity"
+                                                                                    >
+                                                                                        ×
+                                                                                    </button>
+                                                                                </div>
+                                                                            ) : (
+                                                                                <label className="cursor-pointer text-gray-400 hover:text-blue-600">
+                                                                                    <div className="w-8 h-8 border border-dashed border-gray-300 rounded flex items-center justify-center text-xs">
+                                                                                        +
+                                                                                    </div>
+                                                                                    <input
+                                                                                        type="file"
+                                                                                        accept="image/*"
+                                                                                        className="hidden"
+                                                                                        onChange={(e) => {
+                                                                                            const file = e.target.files?.[0];
+                                                                                            if (file) {
+                                                                                                const reader = new FileReader();
+                                                                                                reader.onloadend = () => {
+                                                                                                    handleSheetChange(time, subIndex, 'detailImage', reader.result);
+                                                                                                };
+                                                                                                reader.readAsDataURL(file);
+                                                                                            }
+                                                                                        }}
+                                                                                    />
+                                                                                </label>
+                                                                            )}
+                                                                        </div>
                                                                     </td>
                                                                 </tr>
                                                             );
