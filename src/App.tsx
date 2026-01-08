@@ -31,12 +31,13 @@ import AgentDetail from './pages/AgentDetail';
 import Intro from './pages/Intro';
 import Notice from './pages/Notice';
 import Event from './pages/Event';
-import News from './pages/News';
+
 import Recruit from './pages/Recruit';
 
 // Board Pages
 import BoardPage from './pages/BoardPage';
 import InquiryBoard from './pages/InquiryBoard';
+
 
 // Admin Imports
 import AdminLogin from './pages/AdminLogin';
@@ -144,7 +145,7 @@ export default function App() {
                     <Route path="/intro" element={<Intro />} />
                     <Route path="/notice" element={<Notice />} />
                     <Route path="/event" element={<Event />} />
-                    <Route path="/news" element={<News />} />
+
                     <Route path="/recruit" element={<Recruit />} />
 
                     <Route path="/find-account" element={<FindAccount />} />

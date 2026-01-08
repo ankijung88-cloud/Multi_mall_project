@@ -1,254 +1,128 @@
 import { useState } from 'react';
-import { useBoard } from '../context/BoardContext';
-import type { Post } from '../context/BoardContext';
 import MainLayout from '../layouts/MainLayout';
-import { Plus, Lock } from 'lucide-react';
-import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/useAuthStore';
-import clsx from 'clsx';
+import { useNavigate } from 'react-router-dom';
 
-export default function InquiryBoard() {
-    const location = useLocation();
-    const searchParams = new URLSearchParams(location.search);
-    const isCompany = searchParams.get('type') === 'company';
-    const viewMode = isCompany ? 'company' : 'personal';
-
-    const { getPostsByType, addPost, deletePost } = useBoard();
-    const posts = getPostsByType('partner-inquiry', viewMode);
-
-    const [view, setView] = useState<'list' | 'write' | 'detail'>('list');
-    const [selectedPost, setSelectedPost] = useState<Post | null>(null);
-    const [formData, setFormData] = useState({ title: '', content: '', author: '', contactInfo: '', isSecret: true });
-
-    const handleSubmit = () => {
-        addPost({
-            type: 'partner-inquiry',
-            viewMode,
-            title: formData.title,
-            content: formData.content,
-            author: formData.author || 'Anonymous',
-            contactInfo: formData.contactInfo,
-            isSecret: formData.isSecret,
-            status: 'Pending'
-        });
-        setFormData({ title: '', content: '', author: '', contactInfo: '', isSecret: true });
-        setView('list');
-    };
-
-    const handleDelete = () => {
-        if (selectedPost && confirm('정말 삭제하시겠습니까?')) {
-            deletePost(selectedPost.id);
-            setView('list');
-        }
-    };
-
-    const { isAuthenticated, user, userType } = useAuthStore();
+const InquiryBoard = () => {
+    const { user } = useAuthStore();
     const navigate = useNavigate();
+    const [title, setTitle] = useState('');
+    const [content, setContent] = useState('');
+    const [category, setCategory] = useState('alliance'); // alliance, marketing, other
 
-    const handleWriteClick = () => {
-        if (!isAuthenticated) {
-            if (confirm('로그인이 필요한 서비스입니다. 로그인 하시겠습니까?')) {
-                navigate('/login');
-            }
+    const handleSubmit = (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!user) {
+            alert('로그인이 필요합니다.');
+            navigate('/login?type=company');
             return;
         }
-        setView('write');
-        // Auto-fill author info if available
-        if (user) {
-            setFormData(prev => ({
-                ...prev,
-                author: user.name || '',
-                contactInfo: user.email || ''
-            }));
-        }
+        // In a real app, this would send data to backend
+        alert('제휴 문의가 접수되었습니다.\n담당자 검토 후 연락드리겠습니다.');
+        setTitle('');
+        setContent('');
+        setCategory('alliance');
     };
 
     return (
         <MainLayout>
-            <div className="bg-gray-50 min-h-screen pb-20">
-                {/* Hero Section */}
-                <div className={clsx(
-                    "py-16 mb-12 transition-colors duration-300",
-                    isCompany ? "bg-blue-900 text-white" : "bg-gray-900 text-white"
-                )}>
-                    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-                        <h1 className="text-4xl md:text-5xl font-bold mb-4">제휴 문의</h1>
-                        <p className={clsx("text-xl max-w-2xl mx-auto", isCompany ? "text-blue-200" : "text-gray-300")}>성공적인 비즈니스를 위한 파트너십을 제안해주세요.</p>
+            <div className="bg-white min-h-screen py-16">
+                <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+                    <div className="text-center mb-12">
+                        <h1 className="text-3xl font-bold text-gray-900 mb-4">제휴 문의</h1>
+                        <p className="text-gray-600">
+                            K-Culture 파트너스와 함께 성장할 기업을 찾습니다.<br />
+                            비즈니스 제휴, 마케팅 협력 등 다양한 제안을 기다립니다.
+                        </p>
                     </div>
-                </div>
 
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-
-                    {view === 'list' && (
-                        <>
-                            <div className="flex justify-end mb-6">
-                                <button
-                                    onClick={handleWriteClick}
-                                    className="bg-blue-600 text-white px-6 py-2 rounded-lg flex items-center gap-2 hover:bg-blue-700 shadow-sm"
+                    <div className="bg-gray-50 rounded-xl p-8 border border-gray-200 shadow-sm">
+                        <form onSubmit={handleSubmit} className="space-y-6">
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    문의 유형
+                                </label>
+                                <select
+                                    value={category}
+                                    onChange={(e) => setCategory(e.target.value)}
+                                    className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors"
                                 >
-                                    <Plus size={18} /> 문의하기
+                                    <option value="alliance">비즈니스 제휴</option>
+                                    <option value="marketing">마케팅 협력</option>
+                                    <option value="store">입점 문의</option>
+                                    <option value="other">기타</option>
+                                </select>
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    제목
+                                </label>
+                                <input
+                                    type="text"
+                                    value={title}
+                                    onChange={(e) => setTitle(e.target.value)}
+                                    placeholder="제안서 제목을 입력해주세요"
+                                    className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors"
+                                    required
+                                />
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    문의 내용
+                                </label>
+                                <textarea
+                                    value={content}
+                                    onChange={(e) => setContent(e.target.value)}
+                                    placeholder="구체적인 제안 내용을 작성해주세요"
+                                    rows={10}
+                                    className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors resize-none"
+                                    required
+                                />
+                            </div>
+
+                            <div className="flex justify-end gap-3 pt-4">
+                                <button
+                                    type="button"
+                                    onClick={() => navigate(-1)}
+                                    className="px-6 py-3 bg-gray-200 text-gray-700 rounded-lg font-medium hover:bg-gray-300 transition-colors"
+                                >
+                                    취소
+                                </button>
+                                <button
+                                    type="submit"
+                                    className="px-6 py-3 bg-blue-600 text-white rounded-lg font-bold hover:bg-blue-700 transition-colors shadow-md"
+                                >
+                                    문의하기
                                 </button>
                             </div>
+                        </form>
+                    </div>
 
-                            <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-                                <table className="w-full text-left">
-                                    <thead className="bg-gray-50 border-b border-gray-200">
-                                        <tr>
-                                            <th className="px-6 py-4 font-semibold text-gray-700 w-20">No</th>
-                                            <th className="px-6 py-4 font-semibold text-gray-700">제목</th>
-                                            <th className="px-6 py-4 font-semibold text-gray-700 w-32">작성자</th>
-                                            <th className="px-6 py-4 font-semibold text-gray-700 w-32">상태</th>
-                                            <th className="px-6 py-4 font-semibold text-gray-700 w-32">작성일</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody className="divide-y divide-gray-100">
-                                        {posts.length === 0 ? (
-                                            <tr>
-                                                <td colSpan={5} className="px-6 py-12 text-center text-gray-400">
-                                                    등록된 문의가 없습니다.
-                                                </td>
-                                            </tr>
-                                        ) : (
-                                            posts.map((post, index) => {
-                                                const canView = !post.isSecret || userType === 'admin' || (user && user.name === post.author);
-                                                return (
-                                                    <tr
-                                                        key={post.id}
-                                                        onClick={() => {
-                                                            if (canView) {
-                                                                setSelectedPost(post);
-                                                                setView('detail');
-                                                            } else {
-                                                                alert('비밀글은 작성자와 관리자만 확인할 수 있습니다.');
-                                                            }
-                                                        }}
-                                                        className={clsx("transition-colors", canView ? "hover:bg-gray-50 cursor-pointer" : "cursor-not-allowed opacity-75")}
-                                                    >
-                                                        <td className="px-6 py-4 text-gray-500">{posts.length - index}</td>
-                                                        <td className="px-6 py-4 font-medium text-gray-900 flex items-center gap-2">
-                                                            {post.isSecret && <Lock size={14} className="text-gray-400" />}
-                                                            {canView ? post.title : '비밀글입니다.'}
-                                                        </td>
-                                                        <td className="px-6 py-4 text-gray-500">{post.author}</td>
-                                                        <td className="px-6 py-4">
-                                                            <span className={`px-2 py-1 rounded text-xs font-semibold ${post.status === 'Resolved' ? 'bg-green-100 text-green-800' :
-                                                                post.status === 'In Progress' ? 'bg-blue-100 text-blue-800' :
-                                                                    'bg-gray-100 text-gray-800'
-                                                                }`}>
-                                                                {post.status}
-                                                            </span>
-                                                        </td>
-                                                        <td className="px-6 py-4 text-gray-500 text-sm">{post.date}</td>
-                                                    </tr>
-                                                );
-                                            })
-                                        )}
-                                    </tbody>
-                                </table>
-                            </div>
-                        </>
-                    )}
-
-                    {view === 'write' && (
-                        <div className="max-w-2xl mx-auto bg-white p-8 rounded-xl shadow-lg border border-gray-100">
-                            <h2 className="text-xl font-bold mb-6">제휴 문의 작성</h2>
-                            <div className="space-y-4">
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">작성자 / 업체명</label>
-                                        <input
-                                            type="text"
-                                            value={formData.author}
-                                            onChange={e => setFormData({ ...formData, author: e.target.value })}
-                                            className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                                        />
-                                    </div>
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">연락처 (이메일/전화번호)</label>
-                                        <input
-                                            type="text"
-                                            value={formData.contactInfo}
-                                            onChange={e => setFormData({ ...formData, contactInfo: e.target.value })}
-                                            className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                                        />
-                                    </div>
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">제목</label>
-                                    <input
-                                        type="text"
-                                        value={formData.title}
-                                        onChange={e => setFormData({ ...formData, title: e.target.value })}
-                                        className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                                    />
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">문의 내용</label>
-                                    <textarea
-                                        value={formData.content}
-                                        onChange={e => setFormData({ ...formData, content: e.target.value })}
-                                        className="w-full px-4 py-2 border rounded-lg h-40 focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                                    />
-                                </div>
-                                <div className="flex items-center">
-                                    <input
-                                        type="checkbox"
-                                        id="secret"
-                                        checked={formData.isSecret}
-                                        onChange={e => setFormData({ ...formData, isSecret: e.target.checked })}
-                                        className="mr-2"
-                                    />
-                                    <label htmlFor="secret" className="text-sm text-gray-600">비밀글 설정 (관리자와 작성자만 볼 수 있습니다)</label>
-                                </div>
-                                <div className="flex justify-end gap-3 pt-4">
-                                    <button
-                                        onClick={() => setView('list')}
-                                        className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg"
-                                    >
-                                        취소
-                                    </button>
-                                    <button
-                                        onClick={handleSubmit}
-                                        className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-                                    >
-                                        문의 등록
-                                    </button>
-                                </div>
-                            </div>
+                    <div className="mt-12 grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div className="text-center p-6 bg-blue-50 rounded-xl">
+                            <div className="text-2xl mb-2">📞</div>
+                            <h3 className="font-bold text-gray-900 mb-1">전화 문의</h3>
+                            <p className="text-gray-600 text-sm">02-1234-5678</p>
+                            <p className="text-gray-500 text-xs mt-1">(평일 09:00 - 18:00)</p>
                         </div>
-                    )}
-
-                    {view === 'detail' && selectedPost && (
-                        <div className="max-w-3xl mx-auto bg-white rounded-xl shadow-sm border border-gray-200 p-8">
-                            <h2 className="text-2xl font-bold mb-4">{selectedPost.title}</h2>
-                            <div className="flex gap-4 text-sm text-gray-500 mb-8 pb-4 border-b">
-                                <span>작성자: {selectedPost.author}</span>
-                                <span>날짜: {selectedPost.date}</span>
-                                <span>상태: {selectedPost.status}</span>
-                            </div>
-                            <div className="whitespace-pre-wrap min-h-[200px]">
-                                {selectedPost.content}
-                            </div>
-                            <div className="mt-8 pt-6 border-t flex justify-between">
-                                <button
-                                    onClick={() => setView('list')}
-                                    className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200"
-                                >
-                                    목록으로
-                                </button>
-                                {userType === 'admin' && (
-                                    <button
-                                        onClick={handleDelete}
-                                        className="px-4 py-2 bg-red-100 text-red-600 rounded-lg hover:bg-red-200"
-                                    >
-                                        삭제
-                                    </button>
-                                )}
-                            </div>
+                        <div className="text-center p-6 bg-blue-50 rounded-xl">
+                            <div className="text-2xl mb-2">📧</div>
+                            <h3 className="font-bold text-gray-900 mb-1">이메일 문의</h3>
+                            <p className="text-gray-600 text-sm">partnership@multimall.com</p>
                         </div>
-                    )}
+                        <div className="text-center p-6 bg-blue-50 rounded-xl">
+                            <div className="text-2xl mb-2">🏢</div>
+                            <h3 className="font-bold text-gray-900 mb-1">방문 상담</h3>
+                            <p className="text-gray-600 text-sm">서울시 강남구 테헤란로 123</p>
+                            <p className="text-gray-500 text-xs mt-1">(사전 예약 필수)</p>
+                        </div>
+                    </div>
                 </div>
             </div>
         </MainLayout>
     );
-}
+};
+
+export default InquiryBoard;

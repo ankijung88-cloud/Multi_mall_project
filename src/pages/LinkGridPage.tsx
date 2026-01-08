@@ -122,6 +122,27 @@ interface LinkGridPageProps {
     category: 'airline' | 'hotel' | 'transport';
 }
 
+// Predefined pastel colors for cards
+const CARD_COLORS = [
+    'bg-red-50 hover:bg-red-100',
+    'bg-orange-50 hover:bg-orange-100',
+    'bg-amber-50 hover:bg-amber-100',
+    'bg-yellow-50 hover:bg-yellow-100',
+    'bg-lime-50 hover:bg-lime-100',
+    'bg-green-50 hover:bg-green-100',
+    'bg-emerald-50 hover:bg-emerald-100',
+    'bg-teal-50 hover:bg-teal-100',
+    'bg-cyan-50 hover:bg-cyan-100',
+    'bg-sky-50 hover:bg-sky-100',
+    'bg-blue-50 hover:bg-blue-100',
+    'bg-indigo-50 hover:bg-indigo-100',
+    'bg-violet-50 hover:bg-violet-100',
+    'bg-purple-50 hover:bg-purple-100',
+    'bg-fuchsia-50 hover:bg-fuchsia-100',
+    'bg-pink-50 hover:bg-pink-100',
+    'bg-rose-50 hover:bg-rose-100',
+];
+
 export default function LinkGridPage({ category }: LinkGridPageProps) {
     const location = useLocation();
     const searchParams = new URLSearchParams(location.search);
@@ -235,14 +256,7 @@ export default function LinkGridPage({ category }: LinkGridPageProps) {
 
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
                     {links.map((link, index) => {
-                        const hostname = (() => {
-                            try {
-                                return new URL(link.url).hostname;
-                            } catch {
-                                return '';
-                            }
-                        })();
-                        const logoUrl = hostname ? `https://logo.clearbit.com/${hostname}` : '';
+                        const colorClass = CARD_COLORS[index % CARD_COLORS.length];
 
                         return (
                             <a
@@ -251,11 +265,13 @@ export default function LinkGridPage({ category }: LinkGridPageProps) {
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 className={clsx(
-                                    "flex flex-col items-center justify-center p-4 bg-white rounded-xl border transition-all duration-300 h-40 group relative overflow-hidden",
+                                    "flex flex-col items-center justify-center p-4 rounded-xl border transition-all duration-300 h-40 group relative overflow-hidden",
+                                    colorClass, // Apply dynamic color
                                     isCompany ? "hover:border-blue-500 hover:shadow-blue-100" : "hover:border-emerald-500 hover:shadow-emerald-100",
                                     "hover:-translate-y-1 shadow-sm hover:shadow-lg cursor-pointer"
                                 )}
                             >
+                                {/* Admin Delete Button */}
                                 {/* Admin Delete Button */}
                                 {isAdmin && (
                                     <button
@@ -267,28 +283,7 @@ export default function LinkGridPage({ category }: LinkGridPageProps) {
                                     </button>
                                 )}
 
-                                {/* Logo Placeholder (Circle) */}
-                                <div className={clsx(
-                                    "w-16 h-16 rounded-full flex items-center justify-center mb-3 transition-colors overflow-hidden",
-                                    isCompany ? "bg-blue-50 group-hover:bg-blue-100" : "bg-emerald-50 group-hover:bg-emerald-100",
-                                    "border border-gray-100"
-                                )}>
-                                    <img
-                                        src={logoUrl}
-                                        alt={`${link.name} logo`}
-                                        className="w-10 h-10 object-contain"
-                                        onError={(e) => {
-                                            e.currentTarget.style.display = 'none';
-                                            e.currentTarget.parentElement?.classList.add('fallback-logo');
-                                        }}
-                                    />
-                                    {/* Fallback Text */}
-                                    <span className="hidden fallback-logo:block text-xs font-bold text-gray-400">
-                                        LOGO
-                                    </span>
-                                </div>
-
-                                <span className="text-sm font-medium text-gray-700 text-center line-clamp-2 px-1">
+                                <span className="text-xl font-bold text-gray-800 text-center line-clamp-2 px-2 group-hover:text-blue-600 transition-colors">
                                     {link.name}
                                 </span>
 

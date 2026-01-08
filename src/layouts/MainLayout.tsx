@@ -78,7 +78,6 @@ export default function MainLayout({ children, hideFooter = false }: MainLayoutP
                                             { name: '소개', path: '/intro' },
                                             { name: '공지사항', path: '/notice' },
                                             { name: '이벤트', path: '/event' },
-                                            { name: '뉴스', path: '/news' },
                                             { name: '채용', path: '/recruit' }
                                         ]
                                 },
@@ -115,9 +114,12 @@ export default function MainLayout({ children, hideFooter = false }: MainLayoutP
                                                 { name: '음식', path: isCompany ? '/partners/food?type=company' : '/partners/food' }
                                             ]
                                         },
-                                        { name: '제휴 문의', path: isCompany ? '/partners/inquiry?type=company' : '/partners/inquiry' },
-                                        { name: '파트너 뉴스', path: isCompany ? '/partners/news?type=company' : '/partners/news' },
-                                        { name: '성공 사례', path: isCompany ? '/partners/success?type=company' : '/partners/success' },
+                                        // Specific Items for Company Only
+                                        ...(isCompany ? [
+                                            { name: '제휴 문의', path: '/partners/inquiry?type=company' },
+                                            { name: '파트너 뉴스', path: '/partners/news?type=company' },
+                                            { name: '성공 사례', path: '/partners/success?type=company' }
+                                        ] : []),
                                         { name: '가이드', path: isCompany ? '/partners/guide?type=company' : '/partners/guide' }
                                     ]
                                 },
