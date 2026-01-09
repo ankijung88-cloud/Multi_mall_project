@@ -105,7 +105,7 @@ const ProtectedRoute = ({ children, allowedType }: { children: ReactNode, allowe
 
 export default function App() {
   return (
-    <BrowserRouter basename="/multiserver">
+    <BrowserRouter>
       <ScrollToTop />
       <CartProvider>
         <ProductProvider>

@@ -1,4 +1,5 @@
 import { createContext, useContext, useState, useEffect } from 'react';
+import axios from 'axios';
 import type { ReactNode } from 'react';
 import { products as initialProducts } from '../data/products';
 import type { Product } from '../data/products';
@@ -16,42 +17,44 @@ const ProductContext = createContext<ProductContextType | undefined>(undefined);
 export function ProductProvider({ children }: { children: ReactNode }) {
     const [products, setProducts] = useState<Product[]>([]);
 
-    // Load from localStorage or use initial data
+    // Load products from API
     useEffect(() => {
-        try {
-            const storedProducts = localStorage.getItem('mall_products');
-            if (storedProducts) {
-                setProducts(JSON.parse(storedProducts));
-            } else {
-                setProducts(initialProducts);
-                localStorage.setItem('mall_products', JSON.stringify(initialProducts));
-            }
-        } catch (error) {
-            console.error("Failed to load products from localStorage:", error);
-            // Fallback to initial products if storage is corrupted
-            setProducts(initialProducts);
-            localStorage.setItem('mall_products', JSON.stringify(initialProducts));
-        }
+        axios.get('/api/products')
+            .then(res => setProducts(res.data))
+            .catch(err => {
+                console.error("Failed to load products:", err);
+                setProducts(initialProducts); // Fallback
+            });
     }, []);
 
-    // Save to localStorage whenever products change
-    const saveToStorage = (newProducts: Product[]) => {
-        setProducts(newProducts);
-        localStorage.setItem('mall_products', JSON.stringify(newProducts));
+    const addProduct = async (productData: Omit<Product, 'id'>) => {
+        try {
+            const res = await axios.post('/api/products', productData);
+            setProducts([...products, res.data]);
+        } catch (err) {
+            console.error("Failed to add product:", err);
+            alert("Failed to save product to server.");
+        }
     };
 
-    const addProduct = (productData: Omit<Product, 'id'>) => {
-        const newId = products.length > 0 ? Math.max(...products.map(p => p.id)) + 1 : 1;
-        const newProduct = { ...productData, id: newId };
-        saveToStorage([...products, newProduct]);
+    const updateProduct = async (id: number, updates: Partial<Omit<Product, 'id'>>) => {
+        try {
+            const res = await axios.put(`/api/products/${id}`, updates);
+            setProducts(products.map(p => p.id === id ? res.data : p)); // Use returned data
+        } catch (err) {
+            console.error("Failed to update product:", err);
+            alert("Failed to update product on server.");
+        }
     };
 
-    const updateProduct = (id: number, updates: Partial<Omit<Product, 'id'>>) => {
-        saveToStorage(products.map(p => p.id === id ? { ...p, ...updates } : p));
-    };
-
-    const deleteProduct = (id: number) => {
-        saveToStorage(products.filter(p => p.id !== id));
+    const deleteProduct = async (id: number) => {
+        try {
+            await axios.delete(`/api/products/${id}`);
+            setProducts(products.filter(p => p.id !== id));
+        } catch (err) {
+            console.error("Failed to delete product:", err);
+            alert("Failed to delete product on server.");
+        }
     };
 
     const getProduct = (id: number) => {

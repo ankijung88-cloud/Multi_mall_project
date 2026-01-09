@@ -102,25 +102,20 @@ export default function MainLayout({ children, hideFooter = false }: MainLayoutP
                                     name: 'K-Culture',
                                     path: isCompany ? '/partners?type=company' : '/partners',
                                     subMenus: [
-                                        {
-                                            title: '파트너 소개',
-                                            items: [
-                                                { name: 'K-코스', path: isCompany ? '/partners/course?type=company' : '/partners/course' },
-                                                { name: '뷰티 & 병원', path: isCompany ? '/partners/beauty?type=company' : '/partners/beauty' },
-                                                { name: '공연 & 전시', path: isCompany ? '/partners/performance?type=company' : '/partners/performance' },
-                                                { name: '오디션', path: isCompany ? '/partners/audition?type=company' : '/partners/audition' },
-                                                { name: '패션', path: isCompany ? '/partners/fashion?type=company' : '/partners/fashion' },
-                                                { name: '여행', path: isCompany ? '/partners/travel?type=company' : '/partners/travel' },
-                                                { name: '음식', path: isCompany ? '/partners/food?type=company' : '/partners/food' }
-                                            ]
-                                        },
+                                        { name: 'K-코스', path: isCompany ? '/partners/course?type=company' : '/partners/course' },
+                                        { name: '뷰티 & 병원', path: isCompany ? '/partners/beauty?type=company' : '/partners/beauty' },
+                                        { name: '공연 & 전시', path: isCompany ? '/partners/performance?type=company' : '/partners/performance' },
+                                        { name: '오디션', path: isCompany ? '/partners/audition?type=company' : '/partners/audition' },
+                                        { name: '패션', path: isCompany ? '/partners/fashion?type=company' : '/partners/fashion' },
+                                        { name: '여행', path: isCompany ? '/partners/travel?type=company' : '/partners/travel' },
+                                        { name: '음식', path: isCompany ? '/partners/food?type=company' : '/partners/food' },
+                                        { name: '가이드', path: isCompany ? '/partners/guide?type=company' : '/partners/guide' },
                                         // Specific Items for Company Only
                                         ...(isCompany ? [
                                             { name: '제휴 문의', path: '/partners/inquiry?type=company' },
                                             { name: '파트너 뉴스', path: '/partners/news?type=company' },
                                             { name: '성공 사례', path: '/partners/success?type=company' }
-                                        ] : []),
-                                        { name: '가이드', path: isCompany ? '/partners/guide?type=company' : '/partners/guide' }
+                                        ] : [])
                                     ]
                                 },
                                 {
@@ -207,31 +202,10 @@ export default function MainLayout({ children, hideFooter = false }: MainLayoutP
                                                         </Link>
                                                     );
                                                 } else {
-                                                    // Nested Menu Item
-                                                    return (
-                                                        <div key={idx} className="relative group/nested">
-                                                            <button
-                                                                className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-gray-900 flex justify-between items-center"
-                                                            >
-                                                                {subItem.title}
-                                                                <span className="text-gray-400 text-xs">▶</span>
-                                                            </button>
-                                                            {/* Nested Dropdown */}
-                                                            <div className="absolute left-full top-0 w-40 bg-white border border-gray-100 shadow-xl rounded-lg overflow-hidden opacity-0 invisible group-hover/nested:opacity-100 group-hover/nested:visible transition-all duration-200 -ml-1">
-                                                                <div className="py-1">
-                                                                    {subItem.items.map((nestedItem, nIdx) => (
-                                                                        <Link
-                                                                            key={nIdx}
-                                                                            to={typeof nestedItem === 'string' ? '#' : nestedItem.path}
-                                                                            className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-gray-900"
-                                                                        >
-                                                                            {typeof nestedItem === 'string' ? nestedItem : nestedItem.name}
-                                                                        </Link>
-                                                                    ))}
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                    );
+                                                    // This branch is now unreachable as all menus are flattened.
+                                                    // Keeping it safe or removing it?
+                                                    // Best to just return null or simplify knowing we are flat.
+                                                    return null;
                                                 }
                                             })}
                                         </div>

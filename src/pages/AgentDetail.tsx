@@ -3,7 +3,7 @@ import { useAgents } from '../context/AgentContext';
 import type { AgentSchedule } from '../context/AgentContext';
 import { useAuthStore } from '../store/useAuthStore';
 import MainLayout from '../layouts/MainLayout';
-import { Calendar, Users, Clock, CheckCircle } from 'lucide-react';
+import { Calendar, Clock, CheckCircle, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useState } from 'react';
 import clsx from 'clsx';
 
@@ -85,7 +85,7 @@ export default function AgentDetail() {
     const handleProceedToPayment = () => {
         if (!selectedSchedule) return;
 
-        const price = isCompany ? selectedSchedule.priceCompany : selectedSchedule.pricePersonal;
+        const price = isCompany ? selectedSchedule.companyPrice : selectedSchedule.personalPrice;
 
         if (price && price > 0) {
             setApplicationStep('payment');
@@ -99,7 +99,7 @@ export default function AgentDetail() {
         setApplicationStep('processing');
 
         setTimeout(() => {
-            const price = isCompany ? selectedSchedule?.priceCompany : selectedSchedule?.pricePersonal;
+            const price = isCompany ? selectedSchedule?.companyPrice : selectedSchedule?.personalPrice;
             handleCompleteBooking(price || 0);
         }, 1500);
     };
@@ -124,24 +124,14 @@ export default function AgentDetail() {
         setApplicationStep('success');
     };
 
-    const handleCancel = (e: React.MouseEvent) => {
-        e.preventDefault();
-        e.stopPropagation();
-        if (isAuthenticated) {
-            if (user?.type === 'company') navigate('/company');
-            else navigate('/personal');
-        } else {
-            navigate(isCompany ? '/agents?type=company' : '/agents');
-        }
-    };
-
     const handleCloseModal = () => {
         setApplicationStep('idle');
         setSelectedSchedule(null);
     };
 
-    // Sort schedules by date
-    const sortedSchedules = [...agent.schedules].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+    // Calendar State
+    const [browseDate, setBrowseDate] = useState(new Date());
+    const [selectedDate, setSelectedDate] = useState<string | null>(null);
 
     return (
         <MainLayout>
@@ -163,100 +153,182 @@ export default function AgentDetail() {
 
                 <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 -mt-20 relative z-10">
                     <div className="bg-white rounded-xl shadow-xl p-8 mb-8">
-                        <div className="flex items-center space-x-2 mb-6">
-                            <Calendar className="text-blue-600" size={24} />
-                            <h2 className="text-2xl font-bold text-gray-800">상담 및 운영 일정</h2>
-                        </div>
-
-                        {sortedSchedules.length === 0 ? (
-                            <div className="text-center py-12 bg-gray-50 rounded-lg text-gray-500">
-                                현재 등록된 일정이 없습니다.
-                            </div>
-                        ) : (
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                                {sortedSchedules.map((schedule) => (
-                                    <div
-                                        key={schedule.id}
-                                        onClick={() => setSelectedSchedule(schedule)}
-                                        className={clsx(
-                                            "border rounded-xl p-6 cursor-pointer transition-all hover:shadow-md",
-                                            selectedSchedule?.id === schedule.id
-                                                ? "border-blue-500 ring-2 ring-blue-200 bg-blue-50"
-                                                : "border-gray-200 bg-white hover:border-blue-300"
-                                        )}
-                                    >
-                                        <div className="flex justify-between items-start mb-4">
-                                            <div className="bg-gray-100 rounded px-2 py-1 text-sm font-semibold flex items-center text-gray-700">
-                                                <Clock size={14} className="mr-1" />
-                                                {schedule.date}
-                                            </div>
-                                            {selectedSchedule?.id === schedule.id && (
-                                                <CheckCircle className="text-blue-600" size={20} />
-                                            )}
-                                        </div>
-                                        <h3 className="font-bold text-lg mb-2">{schedule.title}</h3>
-                                        <p className="text-sm text-gray-500 mb-4 h-10 line-clamp-2">{schedule.description}</p>
-
-                                        <div className="mb-4">
-                                            {isCompany && schedule.priceCompany ? (
-                                                <div className="flex flex-col">
-                                                    <span className="text-xs text-blue-500 font-semibold">기업 회원가</span>
-                                                    <div className="flex items-baseline gap-1">
-                                                        <span className="text-xl font-bold text-blue-700">₩{schedule.priceCompany.toLocaleString()}</span>
-                                                        <span className="text-sm text-gray-500">(${(schedule.priceCompany / 1450).toFixed(2)})</span>
-                                                    </div>
-                                                </div>
-                                            ) : !isCompany && schedule.pricePersonal ? (
-                                                <div className="flex flex-col">
-                                                    <span className="text-xs text-emerald-500 font-semibold">개인 회원가</span>
-                                                    <div className="flex items-baseline gap-1">
-                                                        <span className="text-xl font-bold text-emerald-700">₩{schedule.pricePersonal.toLocaleString()}</span>
-                                                        <span className="text-sm text-gray-500">(${(schedule.pricePersonal / 1450).toFixed(2)})</span>
-                                                    </div>
-                                                </div>
-                                            ) : (
-                                                <div className="h-[3.25rem]"></div>
-                                            )}
-                                        </div>
-
-                                        <div className="flex items-center justify-between text-sm pt-4 border-t border-gray-100">
-                                            <div className="flex items-center text-gray-600">
-                                                <Users size={16} className="mr-1" />
-                                                <span>정원 {schedule.maxSlots}명</span>
-                                            </div>
-                                            <div className={clsx(
-                                                "font-medium",
-                                                schedule.currentSlots >= schedule.maxSlots ? "text-red-500" : "text-green-600"
-                                            )}>
-                                                {schedule.currentSlots >= schedule.maxSlots ? "마감" : "신청 가능"}
-                                            </div>
-                                        </div>
-                                    </div>
-                                ))}
+                        {/* Detail Intro Image */}
+                        {agent.detailImage && (
+                            <div className="mb-8 rounded-xl overflow-hidden shadow-sm border border-gray-100">
+                                <img src={agent.detailImage} alt="Details" className="w-full h-auto" />
                             </div>
                         )}
 
-                        <div className="mt-8 flex justify-end border-t pt-6 gap-4">
-                            <button
-                                type="button"
-                                onClick={handleCancel}
-                                className="px-8 py-3 rounded-lg font-bold text-lg transition-all shadow-md bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 hover:text-gray-900"
-                            >
-                                취소
-                            </button>
-                            <button
-                                type="button"
-                                onClick={handleInitialApply}
-                                disabled={!selectedSchedule || (selectedSchedule && selectedSchedule.currentSlots >= selectedSchedule.maxSlots)}
-                                className={clsx(
-                                    "px-8 py-3 rounded-lg font-bold text-lg transition-all shadow-lg",
-                                    (selectedSchedule && selectedSchedule.currentSlots < selectedSchedule.maxSlots)
-                                        ? "bg-blue-600 hover:bg-blue-700 text-white transform hover:-translate-y-1"
-                                        : "bg-gray-200 text-gray-400 cursor-not-allowed"
+                        <div className="flex items-center space-x-2 mb-6">
+                            <Calendar className="text-blue-600" size={24} />
+                            <h2 className="text-2xl font-bold text-gray-800">예약 및 일정 (Reservation)</h2>
+                        </div>
+
+                        <div className="flex flex-col md:flex-row gap-8">
+                            {/* Calendar Side */}
+                            <div className="w-full md:w-1/2">
+                                <div className="bg-white border rounded-xl overflow-hidden">
+                                    {/* Calendar Header */}
+                                    <div className="flex items-center justify-between px-6 py-4 bg-gray-50 border-b">
+                                        <button
+                                            onClick={() => setBrowseDate(new Date(browseDate.getFullYear(), browseDate.getMonth() - 1, 1))}
+                                            className="p-2 hover:bg-white rounded-full transition-colors"
+                                        >
+                                            <ChevronLeft size={20} />
+                                        </button>
+                                        <h3 className="text-lg font-bold text-gray-800">
+                                            {browseDate.getFullYear()}년 {browseDate.getMonth() + 1}월
+                                        </h3>
+                                        <button
+                                            onClick={() => setBrowseDate(new Date(browseDate.getFullYear(), browseDate.getMonth() + 1, 1))}
+                                            className="p-2 hover:bg-white rounded-full transition-colors"
+                                        >
+                                            <ChevronRight size={20} />
+                                        </button>
+                                    </div>
+
+                                    {/* Calendar Grid */}
+                                    <div className="p-4">
+                                        <div className="grid grid-cols-7 mb-2 text-center text-xs font-semibold text-gray-500">
+                                            <div className="text-red-500">Sun</div>
+                                            <div>Mon</div>
+                                            <div>Tue</div>
+                                            <div>Wed</div>
+                                            <div>Thu</div>
+                                            <div>Fri</div>
+                                            <div className="text-blue-500">Sat</div>
+                                        </div>
+                                        <div className="grid grid-cols-7 gap-1">
+                                            {/* Empty cells for start padding */}
+                                            {Array.from({ length: new Date(browseDate.getFullYear(), browseDate.getMonth(), 1).getDay() }).map((_, i) => (
+                                                <div key={`empty-${i}`} className="h-10 md:h-14 bg-gray-50/50 rounded-lg"></div>
+                                            ))}
+
+                                            {/* Days */}
+                                            {Array.from({ length: new Date(browseDate.getFullYear(), browseDate.getMonth() + 1, 0).getDate() }).map((_, i) => {
+                                                const day = i + 1;
+                                                const dateStr = `${browseDate.getFullYear()}-${String(browseDate.getMonth() + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+                                                const schedulesOnDay = (agent.schedules || []).filter(s => s.date === dateStr);
+                                                const hasSchedule = schedulesOnDay.length > 0;
+                                                const isSelected = selectedDate === dateStr;
+
+                                                return (
+                                                    <div
+                                                        key={day}
+                                                        onClick={() => {
+                                                            if (hasSchedule) {
+                                                                setSelectedDate(dateStr);
+                                                                setSelectedSchedule(null); // Reset specific slot selection
+                                                            }
+                                                        }}
+                                                        className={clsx(
+                                                            "h-10 md:h-14 border rounded-lg flex flex-col items-center justify-center cursor-pointer transition-all relative",
+                                                            isSelected ? "border-blue-500 ring-2 ring-blue-200 bg-blue-50" : "border-gray-100 hover:border-gray-300",
+                                                            !hasSchedule && "bg-gray-50 text-gray-300 cursor-default"
+                                                        )}
+                                                    >
+                                                        <span className={clsx(
+                                                            "text-sm font-medium",
+                                                            !hasSchedule ? "text-gray-300" :
+                                                                new Date(browseDate.getFullYear(), browseDate.getMonth(), day).getDay() === 0 ? "text-red-500" :
+                                                                    new Date(browseDate.getFullYear(), browseDate.getMonth(), day).getDay() === 6 ? "text-blue-500" : "text-gray-700"
+                                                        )}>
+                                                            {day}
+                                                        </span>
+                                                        {hasSchedule && (
+                                                            <div className="w-1.5 h-1.5 rounded-full bg-blue-500 mt-1"></div>
+                                                        )}
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Time Slots Side */}
+                            <div className="w-full md:w-1/2">
+                                <h3 className="font-bold text-lg mb-4 flex items-center">
+                                    <Clock size={20} className="mr-2 text-gray-400" />
+                                    {selectedDate ? `${selectedDate} 예약 가능 시간` : '날짜를 선택해주세요'}
+                                </h3>
+
+                                {!selectedDate ? (
+                                    <div className="bg-gray-50 rounded-xl border border-dashed border-gray-300 h-64 flex items-center justify-center text-gray-400">
+                                        왼쪽 달력에서 날짜를 선택하세요
+                                    </div>
+                                ) : (
+                                    <div className="space-y-3 max-h-[500px] overflow-y-auto pr-2">
+                                        {(agent.schedules || []).filter(s => s.date === selectedDate).length === 0 ? (
+                                            <div className="text-center py-8 text-gray-500">예약 가능한 시간이 없습니다.</div>
+                                        ) : (
+                                            (agent.schedules || [])
+                                                .filter(s => s.date === selectedDate)
+                                                .sort((a, b) => a.time.localeCompare(b.time))
+                                                .map(schedule => (
+                                                    <div
+                                                        key={schedule.id}
+                                                        onClick={() => {
+                                                            if (schedule.isAvailable === false) return;
+                                                            if (schedule.currentSlots >= schedule.maxSlots) return;
+                                                            setSelectedSchedule(schedule);
+                                                        }}
+                                                        className={clsx(
+                                                            "p-4 border rounded-xl transition-all cursor-pointer relative overflow-hidden",
+                                                            selectedSchedule?.id === schedule.id
+                                                                ? "border-blue-600 bg-blue-50 ring-1 ring-blue-600"
+                                                                : schedule.isAvailable === false
+                                                                    ? "border-gray-100 bg-gray-50 opacity-50 cursor-not-allowed"
+                                                                    : schedule.currentSlots >= schedule.maxSlots
+                                                                        ? "border-gray-200 bg-gray-50 opacity-60 cursor-not-allowed"
+                                                                        : "border-gray-200 bg-white hover:border-blue-400 hover:shadow-sm"
+                                                        )}
+                                                    >
+                                                        <div className="flex justify-between items-center mb-1">
+                                                            <span className="font-bold text-lg text-gray-800">{schedule.time}</span>
+                                                            <span className={clsx(
+                                                                "text-xs font-bold px-2 py-0.5 rounded-full",
+                                                                schedule.isAvailable === false ? "bg-gray-200 text-gray-500" :
+                                                                    schedule.currentSlots >= schedule.maxSlots ? "bg-red-100 text-red-700" : "bg-green-100 text-green-700"
+                                                            )}>
+                                                                {schedule.isAvailable === false ? "예약 불가" :
+                                                                    schedule.currentSlots >= schedule.maxSlots ? "마감" : `${schedule.maxSlots - schedule.currentSlots}자리 남음`}
+                                                            </span>
+                                                        </div>
+                                                        <div className="text-sm text-gray-600 mb-2">{schedule.title}</div>
+                                                        <div className="flex items-center justify-between mt-2 pt-2 border-t border-gray-100">
+                                                            <span className="text-xs text-gray-500">참가비</span>
+                                                            <div className="text-sm font-bold text-blue-600">
+                                                                {isCompany
+                                                                    ? (schedule.companyPrice ? `₩${schedule.companyPrice.toLocaleString()}` : '무료')
+                                                                    : (schedule.personalPrice ? `₩${schedule.personalPrice.toLocaleString()}` : '무료')
+                                                                }
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                ))
+                                        )}
+                                    </div>
                                 )}
-                            >
-                                참여 신청하기
-                            </button>
+
+                                <div className="mt-6 pt-6 border-t">
+                                    <button
+                                        type="button"
+                                        onClick={handleInitialApply}
+                                        disabled={!selectedSchedule}
+                                        className={clsx(
+                                            "w-full py-4 rounded-xl font-bold text-lg transition-all shadow-lg flex items-center justify-center",
+                                            selectedSchedule
+                                                ? "bg-blue-600 hover:bg-blue-700 text-white transform hover:-translate-y-1"
+                                                : "bg-gray-200 text-gray-400 cursor-not-allowed"
+                                        )}
+                                    >
+                                        <span>예약 신청하기</span>
+                                        {selectedSchedule && <ChevronRight size={20} className="ml-2" />}
+                                    </button>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -309,11 +381,11 @@ export default function AgentDetail() {
                                         <div className="flex justify-between items-center mb-2">
                                             <span className="text-gray-600">결제 금액</span>
                                             <span className="font-bold text-lg text-blue-600">
-                                                ₩{(isCompany ? selectedSchedule?.priceCompany : selectedSchedule?.pricePersonal)?.toLocaleString() || 0}
+                                                ₩{(isCompany ? selectedSchedule?.companyPrice : selectedSchedule?.personalPrice)?.toLocaleString() || 0}
                                             </span>
                                         </div>
                                         <div className="text-xs text-right text-gray-400">
-                                            (${((isCompany ? selectedSchedule?.priceCompany || 0 : selectedSchedule?.pricePersonal || 0) / 1450).toFixed(2)})
+                                            (${((isCompany ? selectedSchedule?.companyPrice || 0 : selectedSchedule?.personalPrice || 0) / 1450).toFixed(2)})
                                         </div>
                                     </div>
 

@@ -42,7 +42,7 @@ export default function AdminPartners() {
     // Form State
     const [formName, setFormName] = useState('');
     const [formImage, setFormImage] = useState('');
-    const [formDetailImage, setFormDetailImage] = useState('');
+    const [formDetailImages, setFormDetailImages] = useState<string[]>([]);
     const [formDescription, setFormDescription] = useState('');
     // formCategory is removed as it's determined by URL
     const [formSchedules, setFormSchedules] = useState<Schedule[]>([]);
@@ -68,15 +68,28 @@ export default function AdminPartners() {
             setEditingPartner(partner);
             setFormName(partner.name);
             setFormImage(partner.image);
-            setFormDetailImage(partner.detailImage || '');
+
+            // Parse detailImage
+            let initDetailImages: string[] = [];
+            if (partner.detailImage) {
+                try {
+                    const parsed = JSON.parse(partner.detailImage);
+                    if (Array.isArray(parsed)) initDetailImages = parsed;
+                    else initDetailImages = [partner.detailImage];
+                } catch (e) {
+                    initDetailImages = [partner.detailImage];
+                }
+            }
+            setFormDetailImages(initDetailImages);
+
             setFormDescription(partner.description);
-            setFormSchedules(partner.schedules);
+            setFormSchedules(partner.schedules || []);
             setFormCredentials(partner.credentials || { username: '', password: '' });
         } else {
             setEditingPartner(null);
             setFormName('');
             setFormImage('');
-            setFormDetailImage('');
+            setFormDetailImages([]);
             setFormDescription('');
             setFormSchedules([]);
             setFormCredentials({ username: '', password: '' });
@@ -103,16 +116,28 @@ export default function AdminPartners() {
         const partnerData = {
             name: formName,
             image: formImage,
-            detailImage: formDetailImage,
+            detailImage: JSON.stringify(formDetailImages),
             description: formDescription,
             category: currentCategoryName, // Auto-assigned from URL
-            schedules: formSchedules,
+            schedules: formSchedules.map(schedule => ({
+                date: schedule.date,
+                time: schedule.time,
+                title: schedule.title,
+                description: schedule.description,
+                maxSlots: Number(schedule.maxSlots),
+                currentSlots: Number(schedule.currentSlots),
+                personalPrice: (schedule.personalPrice === undefined || schedule.personalPrice === null) ? 0 : Number(schedule.personalPrice),
+                companyPrice: (schedule.companyPrice === undefined || schedule.companyPrice === null) ? 0 : Number(schedule.companyPrice),
+                detailImage: schedule.detailImage
+            })) as any,
             credentials: (formCredentials.username && formCredentials.password) ? formCredentials : undefined
         };
 
         if (editingPartner) {
+            console.log("Frontend Sending Update:", JSON.stringify(partnerData, null, 2));
             updatePartner(editingPartner.id, partnerData);
         } else {
+            console.log("Frontend Sending Create:", JSON.stringify(partnerData, null, 2));
             addPartner(partnerData);
         }
         closeModal();
@@ -140,12 +165,23 @@ export default function AdminPartners() {
         const schedulesAtTime = formSchedules.filter(s => s.date === bulkDate && s.time === time);
         const targetSchedule = schedulesAtTime[subIndex];
 
+        // Ensure numeric fields are numbers, handle empty strings as undefined or 0
+        let refinedValue = value;
+        if (field === 'personalPrice' || field === 'companyPrice' || field === 'maxSlots') {
+            if (value === '' || value === null || value === undefined) {
+                refinedValue = field === 'maxSlots' ? 10 : undefined; // Default maxSlots to 10 if cleared
+            } else {
+                refinedValue = Number(value);
+                if (isNaN(refinedValue)) refinedValue = undefined;
+            }
+        }
+
         if (targetSchedule) {
             // Update existing schedule
             const realIndex = formSchedules.findIndex(s => s.id === targetSchedule.id);
             if (realIndex >= 0) {
                 const updated = [...formSchedules];
-                updated[realIndex] = { ...updated[realIndex], [field]: value };
+                updated[realIndex] = { ...updated[realIndex], [field]: refinedValue };
                 setFormSchedules(updated);
             }
         } else {
@@ -156,9 +192,9 @@ export default function AdminPartners() {
                 time: time,
                 title: field === 'title' ? value : '',
                 description: field === 'description' ? value : '',
-                maxSlots: field === 'maxSlots' ? Number(value) : 10,
-                pricePersonal: field === 'pricePersonal' ? Number(value) : undefined,
-                priceCompany: field === 'priceCompany' ? Number(value) : undefined,
+                maxSlots: field === 'maxSlots' ? (value && !isNaN(Number(value)) ? Number(value) : 10) : 10,
+                personalPrice: field === 'personalPrice' && value !== '' ? Number(value) : undefined,
+                companyPrice: field === 'companyPrice' && value !== '' ? Number(value) : undefined,
                 currentSlots: 0,
                 detailImage: field === 'detailImage' ? value : undefined
             };
@@ -167,15 +203,45 @@ export default function AdminPartners() {
     };
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>, field: 'image' | 'detailImage') => {
-        const file = e.target.files?.[0];
-        if (file) {
-            const reader = new FileReader();
-            reader.onloadend = () => {
-                if (field === 'image') setFormImage(reader.result as string);
-                else setFormDetailImage(reader.result as string);
-            };
-            reader.readAsDataURL(file);
+        if (field === 'image') {
+            const file = e.target.files?.[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onloadend = () => {
+                    setFormImage(reader.result as string);
+                };
+                reader.readAsDataURL(file);
+            }
+        } else {
+            const files = e.target.files;
+            if (files) {
+                if (formDetailImages.length + files.length > 22) {
+                    alert("상세 이미지는 최대 22장까지만 등록 가능합니다.");
+                    return;
+                }
+
+                const newImages: string[] = [];
+                let processedCount = 0;
+
+                Array.from(files).forEach(file => {
+                    const reader = new FileReader();
+                    reader.onloadend = () => {
+                        if (reader.result) {
+                            newImages.push(reader.result as string);
+                        }
+                        processedCount++;
+                        if (processedCount === files.length) {
+                            setFormDetailImages(prev => [...prev, ...newImages]);
+                        }
+                    };
+                    reader.readAsDataURL(file);
+                });
+            }
         }
+    };
+
+    const removeDetailImage = (index: number) => {
+        setFormDetailImages(prev => prev.filter((_, i) => i !== index));
     };
 
     return (
@@ -364,11 +430,15 @@ export default function AdminPartners() {
                                         placeholder="URL or File Path (Auto-filled)"
                                     />
 
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">상세 이미지 (Detail/Intro Image)</label>
+                                    <div className="flex justify-between items-center mb-1">
+                                        <label className="block text-sm font-medium text-gray-700">상세 이미지 (Detail Images)</label>
+                                        <span className="text-xs text-gray-500">{formDetailImages.length} / 22 Uploaded</span>
+                                    </div>
                                     <div className="flex gap-2 mb-2">
                                         <input
                                             type="file"
-                                            accept="image/*,.pdf"
+                                            multiple
+                                            accept="image/*"
                                             onChange={(e) => handleFileChange(e, 'detailImage')}
                                             className="block w-full text-sm text-gray-500
                                                 file:mr-4 file:py-2 file:px-4
@@ -376,15 +446,26 @@ export default function AdminPartners() {
                                                 file:text-sm file:font-semibold
                                                 file:bg-green-50 file:text-green-700
                                                 hover:file:bg-green-100"
+                                            disabled={formDetailImages.length >= 22}
                                         />
                                     </div>
-                                    <input
-                                        type="text"
-                                        value={formDetailImage}
-                                        onChange={e => setFormDetailImage(e.target.value)}
-                                        className="w-full border rounded-lg px-3 py-2 text-sm text-gray-400"
-                                        placeholder="URL or File Path (Auto-filled)"
-                                    />
+
+                                    {/* Image Grid */}
+                                    {formDetailImages.length > 0 && (
+                                        <div className="grid grid-cols-4 sm:grid-cols-6 gap-2 mt-2 mb-2">
+                                            {formDetailImages.map((img, idx) => (
+                                                <div key={idx} className="relative group w-full pt-[100%] bg-gray-100 rounded-lg overflow-hidden border">
+                                                    <img src={img} alt={`Detail ${idx}`} className="absolute inset-0 w-full h-full object-cover" />
+                                                    <button
+                                                        onClick={() => removeDetailImage(idx)}
+                                                        className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                                                    >
+                                                        <X size={12} />
+                                                    </button>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
                                 </div>
                             </div>
 
@@ -532,7 +613,6 @@ export default function AdminPartners() {
                                                         <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-28">Personal Price</th>
                                                         <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-28">Company Price</th>
                                                         <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-24">Max Slots</th>
-                                                        <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-32">Detail Image</th>
                                                     </tr>
                                                 </thead>
                                                 <tbody className="bg-white divide-y divide-gray-200">
@@ -571,8 +651,8 @@ export default function AdminPartners() {
                                                                     <td className="px-4 py-1">
                                                                         <input
                                                                             type="number"
-                                                                            value={schedule?.pricePersonal || ''}
-                                                                            onChange={(e) => handleSheetChange(time, subIndex, 'pricePersonal', e.target.value)}
+                                                                            value={schedule?.personalPrice ?? ''}
+                                                                            onChange={(e) => handleSheetChange(time, subIndex, 'personalPrice', e.target.value)}
                                                                             placeholder="₩ (개인)"
                                                                             className="w-full border-gray-200 rounded text-sm focus:ring-blue-500 focus:border-blue-500 bg-transparent"
                                                                         />
@@ -580,8 +660,8 @@ export default function AdminPartners() {
                                                                     <td className="px-4 py-1">
                                                                         <input
                                                                             type="number"
-                                                                            value={schedule?.priceCompany || ''}
-                                                                            onChange={(e) => handleSheetChange(time, subIndex, 'priceCompany', e.target.value)}
+                                                                            value={schedule?.companyPrice ?? ''}
+                                                                            onChange={(e) => handleSheetChange(time, subIndex, 'companyPrice', e.target.value)}
                                                                             placeholder="₩ (기업)"
                                                                             className="w-full border-gray-200 rounded text-sm focus:ring-blue-500 focus:border-blue-500 bg-transparent"
                                                                         />
@@ -593,42 +673,6 @@ export default function AdminPartners() {
                                                                             onChange={(e) => handleSheetChange(time, subIndex, 'maxSlots', e.target.value)}
                                                                             className="w-full border-gray-200 rounded text-sm focus:ring-blue-500 focus:border-blue-500 bg-transparent"
                                                                         />
-                                                                    </td>
-                                                                    <td className="px-4 py-1">
-                                                                        <div className="flex items-center space-x-2">
-                                                                            {schedule?.detailImage ? (
-                                                                                <div className="relative group w-8 h-8">
-                                                                                    <img src={schedule.detailImage} alt="Detail" className="w-full h-full object-cover rounded" />
-                                                                                    <button
-                                                                                        onClick={() => handleSheetChange(time, subIndex, 'detailImage', '')}
-                                                                                        className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full w-4 h-4 flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 transition-opacity"
-                                                                                    >
-                                                                                        ×
-                                                                                    </button>
-                                                                                </div>
-                                                                            ) : (
-                                                                                <label className="cursor-pointer text-gray-400 hover:text-blue-600">
-                                                                                    <div className="w-8 h-8 border border-dashed border-gray-300 rounded flex items-center justify-center text-xs">
-                                                                                        +
-                                                                                    </div>
-                                                                                    <input
-                                                                                        type="file"
-                                                                                        accept="image/*"
-                                                                                        className="hidden"
-                                                                                        onChange={(e) => {
-                                                                                            const file = e.target.files?.[0];
-                                                                                            if (file) {
-                                                                                                const reader = new FileReader();
-                                                                                                reader.onloadend = () => {
-                                                                                                    handleSheetChange(time, subIndex, 'detailImage', reader.result);
-                                                                                                };
-                                                                                                reader.readAsDataURL(file);
-                                                                                            }
-                                                                                        }}
-                                                                                    />
-                                                                                </label>
-                                                                            )}
-                                                                        </div>
                                                                     </td>
                                                                 </tr>
                                                             );

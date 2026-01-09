@@ -17,11 +17,18 @@ export default function PartnerDetail() {
 
     const searchParams = new URLSearchParams(location.search);
     const queryType = searchParams.get('type');
-    const isCompany = (user?.type === 'Company' || user?.type === 'company') || (!user && (viewMode === 'company' || queryType === 'company'));
+    const isCompany = (user?.type === 'Company' || user?.type === 'company') || (viewMode === 'company' || queryType === 'company');
 
     const partner = getPartner(Number(id));
 
+    const [inquiryText, setInquiryText] = useState('');
+    const [isSubmittingInquiry, setIsSubmittingInquiry] = useState(false);
 
+    // For Modal (Travel Category)
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [selectedScheduleForModal, setSelectedScheduleForModal] = useState<Schedule | null>(null);
+
+    // Partner check moved after hooks
     if (!partner) {
         return (
             <MainLayout>
@@ -37,12 +44,7 @@ export default function PartnerDetail() {
         );
     }
 
-    const [inquiryText, setInquiryText] = useState('');
-    const [isSubmittingInquiry, setIsSubmittingInquiry] = useState(false);
 
-    // For Modal (Travel Category)
-    const [isModalOpen, setIsModalOpen] = useState(false);
-    const [selectedScheduleForModal, setSelectedScheduleForModal] = useState<Schedule | null>(null);
 
     const isTravelCategory = partner.category && (partner.category.includes('여행') || partner.category.includes('Travel'));
 
@@ -106,7 +108,7 @@ export default function PartnerDetail() {
     };
 
     // Sort schedules by date
-    const sortedSchedules = [...partner.schedules].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+    const sortedSchedules = [...(partner.schedules || [])].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 
     // K-Beauty Layout
     if (partner.category && (partner.category.includes('뷰티') || partner.category.includes('Beauty'))) {
@@ -181,15 +183,31 @@ export default function PartnerDetail() {
                                     />
                                 </div>
                             ) : (
-                                <div className="w-full">
-                                    {/* Assuming partner.image is the main detail image too, or we could add a placeholder if real app has distinct fields */}
-                                    {/* Since user asked for "Introduction Image", reusing the main image as a placeholder for the detail view or assuming separate content would be here. */}
-                                    {/* Use detailImage if available, otherwise use main image */}
-                                    <img
-                                        src={partner.detailImage || partner.image}
-                                        alt="Detail"
-                                        className="w-full h-auto rounded-xl shadow-sm"
-                                    />
+                                <div className="w-full space-y-4">
+                                    {(() => {
+                                        let images: string[] = [];
+                                        try {
+                                            const parsed = JSON.parse(partner.detailImage || '[]');
+                                            if (Array.isArray(parsed)) images = parsed;
+                                            else if (partner.detailImage) images = [partner.detailImage];
+                                        } catch {
+                                            if (partner.detailImage) images = [partner.detailImage];
+                                        }
+
+                                        // Fallback to main image if no detail images found
+                                        if (images.length === 0 && partner.image) {
+                                            images = [partner.image];
+                                        }
+
+                                        return images.map((img, idx) => (
+                                            <img
+                                                key={idx}
+                                                src={img}
+                                                alt={`Detail ${idx + 1}`}
+                                                className="w-full h-auto rounded-xl shadow-sm"
+                                            />
+                                        ));
+                                    })()}
                                 </div>
                             )}
                         </div>
@@ -244,7 +262,7 @@ export default function PartnerDetail() {
                 </div>
 
                 <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 -mt-20 relative z-10">
-                    <div className="bg-white rounded-xl shadow-xl p-8 mb-8">
+                    <div id="schedule-section" className="bg-white rounded-xl shadow-xl p-8 mb-8">
                         <div className="flex items-center space-x-2 mb-6">
                             <Calendar className="text-blue-600" size={24} />
                             <h2 className="text-2xl font-bold text-gray-800">교육 및 운영 일정</h2>
@@ -283,24 +301,34 @@ export default function PartnerDetail() {
                                         <p className="text-sm text-gray-500 mb-4 h-10 line-clamp-2">{schedule.description}</p>
 
                                         <div className="mb-4">
-                                            {isCompany && schedule.priceCompany ? (
+                                            {isCompany && (schedule.companyPrice !== undefined && schedule.companyPrice !== null) ? (
                                                 <div className="flex flex-col">
                                                     <span className="text-xs text-blue-500 font-semibold">기업 회원가</span>
                                                     <div className="flex items-baseline gap-1">
-                                                        <span className="text-xl font-bold text-blue-700">₩{schedule.priceCompany.toLocaleString()}</span>
-                                                        <span className="text-sm text-gray-500">(${(schedule.priceCompany / 1450).toFixed(2)})</span>
+                                                        <span className="text-xl font-bold text-blue-700">
+                                                            {schedule.companyPrice === 0 ? '무료' : `₩${schedule.companyPrice.toLocaleString()}`}
+                                                        </span>
+                                                        {schedule.companyPrice > 0 && (
+                                                            <span className="text-sm text-gray-500">(${(schedule.companyPrice / 1450).toFixed(2)})</span>
+                                                        )}
                                                     </div>
                                                 </div>
-                                            ) : !isCompany && schedule.pricePersonal ? (
+                                            ) : !isCompany && (schedule.personalPrice !== undefined && schedule.personalPrice !== null) ? (
                                                 <div className="flex flex-col">
                                                     <span className="text-xs text-emerald-500 font-semibold">개인 회원가</span>
                                                     <div className="flex items-baseline gap-1">
-                                                        <span className="text-xl font-bold text-emerald-700">₩{schedule.pricePersonal.toLocaleString()}</span>
-                                                        <span className="text-sm text-gray-500">(${(schedule.pricePersonal / 1450).toFixed(2)})</span>
+                                                        <span className="text-xl font-bold text-emerald-700">
+                                                            {schedule.personalPrice === 0 ? '무료' : `₩${schedule.personalPrice.toLocaleString()}`}
+                                                        </span>
+                                                        {schedule.personalPrice > 0 && (
+                                                            <span className="text-sm text-gray-500">(${(schedule.personalPrice / 1450).toFixed(2)})</span>
+                                                        )}
                                                     </div>
                                                 </div>
                                             ) : (
-                                                <div className="h-[3.25rem]"></div>
+                                                <div className="h-[3.25rem] flex items-end">
+                                                    <span className="text-gray-400 text-sm font-medium">가격 정보 없음 (무료)</span>
+                                                </div>
                                             )}
                                         </div>
 
@@ -331,6 +359,8 @@ export default function PartnerDetail() {
                             </button>
                         </div>
                     </div>
+
+
                 </div>
 
                 {isTravelCategory && selectedScheduleForModal && (

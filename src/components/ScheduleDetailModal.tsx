@@ -80,7 +80,7 @@ export default function ScheduleDetailModal({ partner, schedule, isOpen, onClose
     };
 
     const handleProceedToPayment = () => {
-        const price = isCompany ? schedule.priceCompany : schedule.pricePersonal;
+        const price = isCompany ? schedule.companyPrice : schedule.personalPrice;
         if (price && price > 0) {
             setApplicationStep('payment');
         } else {
@@ -92,7 +92,7 @@ export default function ScheduleDetailModal({ partner, schedule, isOpen, onClose
         e.preventDefault();
         setApplicationStep('processing');
         setTimeout(() => {
-            const price = isCompany ? schedule.priceCompany : schedule.pricePersonal;
+            const price = isCompany ? schedule.companyPrice : schedule.personalPrice;
             handleCompleteBooking(price || 0);
         }, 1500);
     };
@@ -165,6 +165,29 @@ export default function ScheduleDetailModal({ partner, schedule, isOpen, onClose
                         </div>
 
                         <div className="mb-8">
+                            {/* Detail Images */}
+                            <div className="w-full space-y-4 mb-6">
+                                {(() => {
+                                    let images: string[] = [];
+                                    try {
+                                        const parsed = JSON.parse(partner.detailImage || '[]');
+                                        if (Array.isArray(parsed)) images = parsed;
+                                        else if (partner.detailImage) images = [partner.detailImage];
+                                    } catch {
+                                        if (partner.detailImage) images = [partner.detailImage];
+                                    }
+
+                                    return images.map((img, idx) => (
+                                        <img
+                                            key={idx}
+                                            src={img}
+                                            alt={`Detail ${idx + 1}`}
+                                            className="w-full h-auto rounded-lg shadow-sm"
+                                        />
+                                    ));
+                                })()}
+                            </div>
+
                             <h3 className="text-lg font-bold mb-3">상세 설명</h3>
                             <p className="text-gray-700 leading-relaxed whitespace-pre-wrap text-sm">
                                 {schedule.description || "상세 설명이 없습니다."}
@@ -179,8 +202,8 @@ export default function ScheduleDetailModal({ partner, schedule, isOpen, onClose
                         <span className="text-xs text-gray-500 block">참가비</span>
                         <span className="text-xl font-bold text-gray-900">
                             {isCompany
-                                ? (schedule.priceCompany ? `₩${schedule.priceCompany.toLocaleString()}` : '무료')
-                                : (schedule.pricePersonal ? `₩${schedule.pricePersonal.toLocaleString()}` : '무료')
+                                ? (schedule.companyPrice ? `₩${schedule.companyPrice.toLocaleString()}` : '무료')
+                                : (schedule.personalPrice ? `₩${schedule.personalPrice.toLocaleString()}` : '무료')
                             }
                         </span>
                     </div>
@@ -223,8 +246,8 @@ export default function ScheduleDetailModal({ partner, schedule, isOpen, onClose
                                 <p><span className="text-gray-500">일정:</span> {schedule.title}</p>
                                 <p><span className="text-gray-500">일시:</span> {schedule.date} {schedule.time}</p>
                                 <p><span className="text-gray-500">금액:</span> {isCompany
-                                    ? (schedule.priceCompany ? `₩${schedule.priceCompany.toLocaleString()}` : '무료')
-                                    : (schedule.pricePersonal ? `₩${schedule.pricePersonal.toLocaleString()}` : '무료')
+                                    ? (schedule.companyPrice ? `₩${schedule.companyPrice.toLocaleString()}` : '무료')
+                                    : (schedule.personalPrice ? `₩${schedule.personalPrice.toLocaleString()}` : '무료')
                                 }</p>
                             </div>
                             <div className="flex gap-4">
@@ -251,7 +274,7 @@ export default function ScheduleDetailModal({ partner, schedule, isOpen, onClose
                                 <div className="bg-blue-50 p-4 rounded-lg mb-6 text-center">
                                     <p className="text-sm text-blue-800 font-medium mb-1">총 결제 금액</p>
                                     <p className="text-2xl font-bold text-blue-700">
-                                        ₩{(isCompany ? schedule.priceCompany : schedule.pricePersonal)?.toLocaleString() || 0}
+                                        ₩{(isCompany ? schedule.companyPrice : schedule.personalPrice)?.toLocaleString() || 0}
                                     </p>
                                 </div>
 

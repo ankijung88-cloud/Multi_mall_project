@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import axios from 'axios';
 import { useSearchParams, useNavigate, Link } from 'react-router-dom';
 import AuthLayout from '../layouts/AuthLayout';
 import { motion } from 'framer-motion';
@@ -49,41 +50,30 @@ export default function Signup() {
             return;
         }
 
-        // Validation: Duplicate Email
-        const storedMembers = localStorage.getItem('mall_members');
-        const members = storedMembers ? JSON.parse(storedMembers) : [];
-        if (members.some((m: any) => m.email === formData.email)) {
-            alert('이미 가입된 이메일(ID)입니다. 다른 이메일을 사용해 주세요.');
-            return;
-        }
-
         setIsLoading(true);
+        try {
+            const res = await axios.post('/api/auth/register', {
+                name: formData.name,
+                email: formData.email,
+                password: formData.password,
+                type: type === 'company' ? 'company' : 'personal',
+                companyName: formData.companyName,
+                businessNumber: formData.businessNumber
+            });
 
-        // Simulate API call
-        await new Promise(resolve => setTimeout(resolve, 800));
-
-        // Create new member object
-        const newUser = {
-            id: Date.now(), // Simple unique ID
-            name: formData.name,
-            email: formData.email,
-            type: type === 'company' ? 'company' : 'personal',
-            status: 'Active',
-            date: new Date().toISOString().split('T')[0],
-            companyName: formData.companyName || undefined,
-            businessNumber: formData.businessNumber || undefined
-        };
-
-        // Save to localStorage
-        members.push(newUser);
-        localStorage.setItem('mall_members', JSON.stringify(members));
-
-        // Auto login after signup
-        if (type) {
-            login(type);
-            navigate(type === 'company' ? '/company' : '/personal');
+            if (res.data.success) {
+                // Auto login after signup
+                login(type, res.data.user);
+                navigate(type === 'company' ? '/company' : '/personal');
+            } else {
+                alert(res.data.message || '회원가입 실패');
+            }
+        } catch (error: any) {
+            console.error("Signup failed:", error);
+            alert(error.response?.data?.message || '회원가입 중 오류가 발생했습니다.');
+        } finally {
+            setIsLoading(false);
         }
-        setIsLoading(false);
     };
 
     const isCompany = type === 'company';

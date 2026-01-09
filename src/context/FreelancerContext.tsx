@@ -1,4 +1,5 @@
 import { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
+import axios from 'axios';
 
 export interface Freelancer {
     id: string;
@@ -55,136 +56,108 @@ export function FreelancerProvider({ children }: { children: ReactNode }) {
 
     useEffect(() => {
         // Load Freelancers
-        const storedFreelancers = localStorage.getItem('mall_freelancers');
-        if (storedFreelancers) {
-            setFreelancers(JSON.parse(storedFreelancers));
-        } else {
-            // Initial Dummy Data
-            const initialLast: Freelancer[] = [
-                {
-                    id: 'f1',
-                    name: 'Ji-Min Kim',
-                    title: 'Home Styling Expert',
-                    image: 'https://images.unsplash.com/photo-1580489944761-15a19d654956?auto=format&fit=crop&q=80&w=1000',
-                    description: 'Specializing in modern minimalist home styling tailored for single households.',
-                    portfolioImages: [
-                        'https://images.unsplash.com/photo-1513694203232-719a280e022f?auto=format&fit=crop&q=80&w=1000',
-                        'https://images.unsplash.com/photo-1493663284031-b7e3aefcae8e?auto=format&fit=crop&q=80&w=1000'
-                    ]
-                },
-                {
-                    id: 'f2',
-                    name: 'Alex Park',
-                    title: 'Personal Fitness Coach',
-                    image: 'https://images.unsplash.com/photo-1571019614242-c5c5dee9f50b?auto=format&fit=crop&q=80&w=1000',
-                    description: 'Customized fitness plans and diet consulting for busy professionals.',
-                    portfolioImages: [
-                        'https://images.unsplash.com/photo-1542766788-a2f588f447ee?auto=format&fit=crop&q=80&w=1000',
-                        'https://images.unsplash.com/photo-1517836357463-d25dfeac3438?auto=format&fit=crop&q=80&w=1000'
-                    ]
-                },
-                {
-                    id: 'f3',
-                    name: 'Sarah Lee',
-                    title: 'Organic Cooking Instructor',
-                    image: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?auto=format&fit=crop&q=80&w=1000',
-                    description: 'Learn to cook healthy, organic meals with easy-to-follow recipes.',
-                    portfolioImages: [
-                        'https://images.unsplash.com/photo-1556910103-1c02745a30bf?auto=format&fit=crop&q=80&w=1000',
-                        'https://images.unsplash.com/photo-1466637574441-749b8f19452f?auto=format&fit=crop&q=80&w=1000'
-                    ]
-                },
-                {
-                    id: 'f4',
-                    name: 'David Choi',
-                    title: 'Tech Gadget Reviewer',
-                    image: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&q=80&w=1000',
-                    description: 'In-depth reviews and guides for the latest smart home devices.',
-                    portfolioImages: [
-                        'https://images.unsplash.com/photo-1550009158-9ebf69173e03?auto=format&fit=crop&q=80&w=1000',
-                        'https://images.unsplash.com/photo-1526738549149-8e07eca6c147?auto=format&fit=crop&q=80&w=1000'
-                    ]
-                }
-            ];
-            setFreelancers(initialLast);
-            localStorage.setItem('mall_freelancers', JSON.stringify(initialLast));
-        }
+        // Load Freelancers
+        axios.get('/api/freelancers')
+            .then(res => setFreelancers(res.data))
+            .catch(err => console.error("Failed to load freelancers:", err));
 
         // Load Requests
-        const storedRequests = localStorage.getItem('mall_content_requests');
-        if (storedRequests) {
-            setRequests(JSON.parse(storedRequests));
-        }
+        axios.get('/api/freelancers/requests')
+            .then(res => setRequests(res.data))
+            .catch(err => console.error("Failed to load freelancer requests:", err));
 
-        // Load Favorites
-        const storedFavorites = localStorage.getItem('mall_content_favorites');
-        if (storedFavorites) {
-            setFavorites(JSON.parse(storedFavorites));
-        }
+        // Load Favorites (Assuming guest or user context... for now just load all or handle later? 
+        // The previous logic loaded all from local storage. 
+        // Here we might need a userId. But the context doesn't seem to hold userId directly?
+        // Ah, `toggleFavorite` takes `userId`.
+        // For now, let's skip initial load of favorites or maybe we need auth context here?
+        // Inspecting original code: `toggleFavorite` adds to local state and storage. `isFavorite` checks local state.
+        // It seems favorites are global in this context?
+        // Let's defer loading favorites to when we have a user, or just load nothing initially.
+        // Actually, we can fetch favourites for current user if we knew them. 
+        // For MVP, let's just keep favorites in memory or... 
+        // Wait, the original code stored ALL favorites in `mall_content_favorites`.
+        // So we can mock that behavior by fetching *all* favorites if we wanted, but that's bad security.
+        // Let's trying to fetch favorites for a "guest" or handle it dynamically.
+        // For duplication of behavior: logic was "load all favorites".
+        // I'll add an endpoint to get all favorites or just leave it empty until user logs in?
+        // User didn't specify strict auth requirement for favorites.
+        // I will impl simplistic "load favorites for all" if possible? No, route is /favorites/:userId.
+        // I will leave favorites empty initially. User needs to log in.
     }, []);
 
-    const addFreelancer = (freelancer: Omit<Freelancer, 'id'>) => {
-        const newFreelancer = {
-            ...freelancer,
-            id: `f${Date.now()}`
-        };
-        const updated = [...freelancers, newFreelancer];
-        setFreelancers(updated);
-        localStorage.setItem('mall_freelancers', JSON.stringify(updated));
+    const addFreelancer = async (freelancer: Omit<Freelancer, 'id'>) => {
+        try {
+            const res = await axios.post('/api/freelancers', freelancer);
+            setFreelancers([...freelancers, res.data]);
+        } catch (err) {
+            console.error("Failed to add freelancer:", err);
+        }
     };
 
-    const addRequest = (request: Omit<ContentRequest, 'id' | 'date' | 'status'>) => {
-        const newRequest: ContentRequest = {
+    const addRequest = async (request: Omit<ContentRequest, 'id' | 'date' | 'status'>) => {
+        const newRequestData = {
             ...request,
-            id: `req_${Date.now()}`,
             date: new Date().toISOString(),
             status: 'Pending'
         };
-        const updated = [newRequest, ...requests];
-        setRequests(updated);
-        localStorage.setItem('mall_content_requests', JSON.stringify(updated));
+        try {
+            const res = await axios.post('/api/freelancers/requests', newRequestData);
+            setRequests([res.data, ...requests]);
+        } catch (err) {
+            console.error("Failed to add request:", err);
+        }
     };
 
-    const updateRequestStatus = (id: string, status: 'Approved' | 'Rejected') => {
-        const updated = requests.map(req =>
-            req.id === id ? { ...req, status } : req
-        );
-        setRequests(updated);
-        localStorage.setItem('mall_content_requests', JSON.stringify(updated));
+    const updateRequestStatus = async (id: string, status: 'Approved' | 'Rejected') => {
+        try {
+            const res = await axios.put(`/api/freelancers/requests/${id}`, { status });
+            setRequests(requests.map(req => req.id === id ? res.data : req));
+        } catch (err) {
+            console.error("Failed to update request status:", err);
+        }
     };
 
-    const deleteRequest = (id: string) => {
-        const updated = requests.filter(req => req.id !== id);
-        setRequests(updated);
-        localStorage.setItem('mall_content_requests', JSON.stringify(updated));
+    const deleteRequest = async (id: string) => {
+        try {
+            await axios.delete(`/api/freelancers/requests/${id}`);
+            setRequests(requests.filter(req => req.id !== id));
+        } catch (err) {
+            console.error("Failed to delete request:", err);
+        }
     };
 
-    const updateFreelancer = (id: string, updates: Partial<Freelancer>) => {
-        const updated = freelancers.map(f =>
-            f.id === id ? { ...f, ...updates } : f
-        );
-        setFreelancers(updated);
-        localStorage.setItem('mall_freelancers', JSON.stringify(updated));
+    const updateFreelancer = async (id: string, updates: Partial<Freelancer>) => {
+        try {
+            const res = await axios.put(`/api/freelancers/${id}`, updates);
+            setFreelancers(freelancers.map(f => f.id === id ? res.data : f));
+        } catch (err) {
+            console.error("Failed to update freelancer:", err);
+        }
     };
 
-    const deleteFreelancer = (id: string) => {
-        const updated = freelancers.filter(f => f.id !== id);
-        setFreelancers(updated);
-        localStorage.setItem('mall_freelancers', JSON.stringify(updated));
+    const deleteFreelancer = async (id: string) => {
+        try {
+            await axios.delete(`/api/freelancers/${id}`);
+            setFreelancers(freelancers.filter(f => f.id !== id));
+        } catch (err) {
+            console.error("Failed to delete freelancer:", err);
+        }
     };
 
-    const toggleFavorite = (userId: string, contentId: string) => {
-        setFavorites(prev => {
-            const exists = prev.some(f => f.userId === userId && f.contentId === contentId);
-            let newFavorites;
+    const toggleFavorite = async (userId: string, contentId: string) => {
+        const exists = favorites.some(f => f.userId === userId && f.contentId === contentId);
+        try {
             if (exists) {
-                newFavorites = prev.filter(f => !(f.userId === userId && f.contentId === contentId));
+                await axios.delete('http://localhost:3000/api/freelancers/favorites', { data: { userId, contentId } });
+                setFavorites(favorites.filter(f => !(f.userId === userId && f.contentId === contentId)));
             } else {
-                newFavorites = [...prev, { userId, contentId }];
+                const res = await axios.post('http://localhost:3000/api/freelancers/favorites', { userId, contentId });
+                setFavorites([...favorites, res.data]);
             }
-            localStorage.setItem('mall_content_favorites', JSON.stringify(newFavorites));
-            return newFavorites;
-        });
+        } catch (err) {
+            console.error("Failed to toggle favorite:", err);
+        }
     };
 
     const isFavorite = (userId: string, contentId: string) => {

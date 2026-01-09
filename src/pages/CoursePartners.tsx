@@ -1,13 +1,20 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { usePartners } from '../context/PartnerContext';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import MainLayout from '../layouts/MainLayout';
 import { Search, Star } from 'lucide-react';
+import { useAuthStore } from '../store/useAuthStore';
 
 export default function CoursePartners() {
     const { partners } = usePartners();
     const [searchTerm, setSearchTerm] = useState('');
+    const { user, viewMode } = useAuthStore();
+    const location = useLocation();
+    const searchParams = new URLSearchParams(location.search);
+    const queryType = searchParams.get('type');
+
+    const isCompany = (user?.type === 'Company' || user?.type === 'company') || (!user && (viewMode === 'company' || queryType === 'company'));
 
     // Filter for '코스' category
     const category = '코스';
@@ -91,7 +98,7 @@ export default function CoursePartners() {
                                     transition={{ delay: index * 0.1 }}
                                 >
                                     <Link
-                                        to={`/partners/${partner.id}`}
+                                        to={`/partners/${partner.id}${isCompany ? '?type=company' : ''}#schedule-section`}
                                         className="block bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 group border border-gray-100"
                                     >
                                         <div className="relative h-64 overflow-hidden">

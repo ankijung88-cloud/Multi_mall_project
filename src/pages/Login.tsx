@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import axios from 'axios';
 import { useSearchParams, useNavigate, Link, useLocation } from 'react-router-dom';
 import { useAuthStore } from '../store/useAuthStore';
 import AuthLayout from '../layouts/AuthLayout';
@@ -28,48 +29,32 @@ export default function Login() {
         e.preventDefault();
         setIsLoading(true);
 
-        // Simulate API call
-        await new Promise(resolve => setTimeout(resolve, 1000));
+        try {
+            const res = await axios.post('/api/auth/login', {
+                type: type || 'personal', // Default to personal if null
+                username: email,
+                password: password
+            });
 
-        // Mock Logic: If email is unknown, redirect to Signup
-        const isKnownUser = email.startsWith('user') || email.startsWith('company') || email.startsWith('admin');
-
-        // Logic check: Allow admin to bypass member check or strictly check?
-        // For simplicity, let's keep the user's requested logic about "unknown ID":
-        // But for "Auto-fill name", we need to actually FIND the user in mall_members.
-
-        const members = JSON.parse(localStorage.getItem('mall_members') || '[]');
-        const activeTab = type || 'personal'; // Default if null, though effect redirects
-
-        if (activeTab === 'personal' || activeTab === 'company') {
-            const foundUser = members.find((m: any) => m.email === email && m.type.toLowerCase() === activeTab);
-
-            if (foundUser) {
-                // User found, login with full data
-                login(activeTab, foundUser);
+            if (res.data.success) {
+                const activeTab = type || 'personal';
+                login(activeTab, res.data.user); // Update auth store
                 const from = (location.state as any)?.from;
                 navigate(from || (activeTab === 'company' ? '/company' : '/personal'));
             } else {
-                // If not found in DB
-                if (isKnownUser) {
-                    // It's a "demo" allowed ID (e.g. user@example.com) that might not be in DB yet? 
-                    // Or implies we should create a mock session for them?
-                    // Let's create a mock session user so the Name works.
-                    login(activeTab, { name: 'Demo User', email: email, type: activeTab });
-                    const from = (location.state as any)?.from;
-                    navigate(from || (activeTab === 'company' ? '/company' : '/personal'));
-                } else {
-                    // Unknown ID
-                    alert('등록되지 않은 아이디입니다. 회원가입 페이지로 이동합니다.');
-                    navigate(`/signup?type=${activeTab}`);
-                }
+                alert(res.data.message || '로그인 실패');
             }
-        } else {
-            // Admin Login (Login page doesn't usually handle admin param here, but just in case)
-            // AdminLogin.tsx handles admin. Login.tsx is for personal/company.
+        } catch (error: any) {
+            // Handle 401 specifically or generic error
+            if (error.response && error.response.status === 401) {
+                alert('이메일 또는 비밀번호가 일치하지 않습니다.');
+            } else {
+                console.error("Login failed:", error);
+                alert('로그인 중 오류가 발생했습니다.');
+            }
+        } finally {
+            setIsLoading(false);
         }
-
-        setIsLoading(false);
     };
 
     const isCompany = type === 'company';

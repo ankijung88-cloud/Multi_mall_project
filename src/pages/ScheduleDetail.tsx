@@ -15,7 +15,7 @@ export default function ScheduleDetail() {
 
     const searchParams = new URLSearchParams(location.search);
     const queryType = searchParams.get('type');
-    const isCompany = (user?.type === 'Company' || user?.type === 'company') || (!user && (viewMode === 'company' || queryType === 'company'));
+    const isCompany = (user?.type === 'Company' || user?.type === 'company') || (viewMode === 'company' || queryType === 'company');
 
     const partner = getPartner(Number(partnerId));
     const selectedSchedule = partner?.schedules.find(s => s.id === scheduleId) || null;
@@ -103,7 +103,7 @@ export default function ScheduleDetail() {
 
     const handleProceedToPayment = () => {
         if (!selectedSchedule) return;
-        const price = isCompany ? selectedSchedule.priceCompany : selectedSchedule.pricePersonal;
+        const price = isCompany ? selectedSchedule.companyPrice : selectedSchedule.personalPrice;
         if (price && price > 0) {
             setApplicationStep('payment');
         } else {
@@ -115,7 +115,7 @@ export default function ScheduleDetail() {
         e.preventDefault();
         setApplicationStep('processing');
         setTimeout(() => {
-            const price = isCompany ? selectedSchedule?.priceCompany : selectedSchedule?.pricePersonal;
+            const price = isCompany ? selectedSchedule?.companyPrice : selectedSchedule?.personalPrice;
             handleCompleteBooking(price || 0);
         }, 1500);
     };
@@ -172,18 +172,53 @@ export default function ScheduleDetail() {
 
                     {/* Content */}
                     <div className="bg-white rounded-xl shadow-lg overflow-hidden border border-gray-100 mb-8">
-                        {(selectedSchedule.detailImage || partner.detailImage || partner.image) ? (
-                            <img
-                                src={selectedSchedule.detailImage || partner.detailImage || partner.image}
-                                alt="Detail"
-                                className="w-full h-auto"
-                            />
-                        ) : (
-                            <div className="w-full py-20 bg-gray-100 text-gray-400 text-center flex flex-col items-center justify-center">
-                                <span className="text-6xl mb-4">🖼️</span>
-                                <p>상세 이미지가 등록되지 않았습니다.</p>
-                            </div>
-                        )}
+                        <div className="w-full space-y-4">
+                            {(() => {
+                                let images: string[] = [];
+
+                                // Check Schedule Detail Image first
+                                if (selectedSchedule.detailImage) {
+                                    images.push(selectedSchedule.detailImage);
+                                }
+
+                                // Check Partner Detail Images
+                                try {
+                                    const parsed = JSON.parse(partner.detailImage || '[]');
+                                    if (Array.isArray(parsed)) {
+                                        images = [...images, ...parsed];
+                                    } else if (partner.detailImage) {
+                                        images.push(partner.detailImage);
+                                    }
+                                } catch {
+                                    if (partner.detailImage && partner.detailImage !== selectedSchedule.detailImage) {
+                                        images.push(partner.detailImage);
+                                    }
+                                }
+
+                                // Fallback to main image only if nothing else found
+                                if (images.length === 0 && partner.image) {
+                                    images = [partner.image];
+                                }
+
+                                if (images.length === 0) {
+                                    return (
+                                        <div className="w-full py-20 bg-gray-100 text-gray-400 text-center flex flex-col items-center justify-center">
+                                            <span className="text-6xl mb-4">🖼️</span>
+                                            <p>상세 이미지가 등록되지 않았습니다.</p>
+                                        </div>
+                                    );
+                                }
+
+                                return images.map((img, idx) => (
+                                    <img
+                                        key={idx}
+                                        src={img}
+                                        alt={`Detail ${idx + 1}`}
+                                        className="w-full h-auto"
+                                    />
+                                ));
+                            })()}
+                        </div>
 
                         <div className="p-8 border-t border-gray-100">
                             <h3 className="text-xl font-bold mb-4">상세 설명</h3>
@@ -200,8 +235,8 @@ export default function ScheduleDetail() {
                                 <div className="text-sm text-gray-500">참가비</div>
                                 <div className="text-2xl font-bold text-gray-900">
                                     {isCompany
-                                        ? (selectedSchedule.priceCompany ? `₩${selectedSchedule.priceCompany.toLocaleString()}` : '무료')
-                                        : (selectedSchedule.pricePersonal ? `₩${selectedSchedule.pricePersonal.toLocaleString()}` : '무료')
+                                        ? (selectedSchedule.companyPrice ? `₩${selectedSchedule.companyPrice.toLocaleString()}` : '무료')
+                                        : (selectedSchedule.personalPrice ? `₩${selectedSchedule.personalPrice.toLocaleString()}` : '무료')
                                     }
                                 </div>
                             </div>
@@ -245,8 +280,8 @@ export default function ScheduleDetail() {
                                     <p><span className="text-gray-500">일정:</span> {selectedSchedule.title}</p>
                                     <p><span className="text-gray-500">일시:</span> {selectedSchedule.date} {selectedSchedule.time}</p>
                                     <p><span className="text-gray-500">금액:</span> {isCompany
-                                        ? (selectedSchedule.priceCompany ? `₩${selectedSchedule.priceCompany.toLocaleString()}` : '무료')
-                                        : (selectedSchedule.pricePersonal ? `₩${selectedSchedule.pricePersonal.toLocaleString()}` : '무료')
+                                        ? (selectedSchedule.companyPrice ? `₩${selectedSchedule.companyPrice.toLocaleString()}` : '무료')
+                                        : (selectedSchedule.personalPrice ? `₩${selectedSchedule.personalPrice.toLocaleString()}` : '무료')
                                     }</p>
                                 </div>
                                 <div className="flex gap-3">
@@ -273,7 +308,7 @@ export default function ScheduleDetail() {
                                 <div className="bg-blue-50 p-4 rounded-lg mb-6 text-center">
                                     <p className="text-sm text-blue-800 font-medium mb-1">총 결제 금액</p>
                                     <p className="text-2xl font-bold text-blue-700">
-                                        ₩{(isCompany ? selectedSchedule?.priceCompany : selectedSchedule?.pricePersonal)?.toLocaleString() || 0}
+                                        ₩{(isCompany ? selectedSchedule?.companyPrice : selectedSchedule?.personalPrice)?.toLocaleString() || 0}
                                     </p>
                                 </div>
 

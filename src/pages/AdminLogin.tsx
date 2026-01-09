@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react';
+import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/useAuthStore';
-import { usePartners } from '../context/PartnerContext';
-import { useAgents } from '../context/AgentContext';
-import { useFreelancers } from '../context/FreelancerContext';
+// import { usePartners } from '../context/PartnerContext';
+// import { useAgents } from '../context/AgentContext';
+// import { useFreelancers } from '../context/FreelancerContext';
 import { motion } from 'framer-motion';
 import { Lock, Shield, Loader2 } from 'lucide-react';
 import clsx from 'clsx';
@@ -11,9 +12,9 @@ import clsx from 'clsx';
 export default function AdminLogin() {
     const navigate = useNavigate();
     const login = useAuthStore((state) => state.login);
-    const { partners, addPartner } = usePartners();
-    const { agents, addAgent } = useAgents();
-    const { freelancers, addFreelancer } = useFreelancers();
+    // const { partners, addPartner } = usePartners(); // Deprecated
+    // const { agents, addAgent } = useAgents(); // Deprecated
+    // const { freelancers, addFreelancer } = useFreelancers(); // Deprecated
     const [isLoading, setIsLoading] = useState(false);
 
     // Login State
@@ -44,56 +45,67 @@ export default function AdminLogin() {
         e.preventDefault();
         setIsLoading(true);
 
-        // Simulate API check
-        await new Promise(resolve => setTimeout(resolve, 800));
+        try {
+            // First try as admin/super
+            let res = await axios.post('/api/auth/login', {
+                type: 'admin',
+                username,
+                password
+            }).catch(() => null); // If 401, returns null or catches error
 
-        const stored = localStorage.getItem('mall_admin_creds');
-        const creds = stored ? JSON.parse(stored) : { id: 'admin', password: 'admin123' };
+            if (!res) {
+                // Try as partner
+                res = await axios.post('/api/auth/login', { type: 'partner', username, password }).catch(() => null);
+            }
+            if (!res) {
+                // Try as agent
+                res = await axios.post('/api/auth/login', { type: 'agent', username, password }).catch(() => null);
+            }
+            if (!res) {
+                // Try as freelancer
+                res = await axios.post('/api/auth/login', { type: 'freelancer', username, password }).catch(() => null);
+            }
 
-        // 1. Check Super Admin
-        if (username === creds.id && password === creds.password) {
-            login('admin', { name: creds.name }, 'super');
-            navigate('/admin');
+            // Note: The above sequential try is inefficient. Ideally the backend /login should handle lookup across all tables if type isn't known, 
+            // OR the AdminLogin UI should have a selector.
+            // But the current UI doesn't have a selector.
+            // AND the backend requires 'type' to know which table to querying.
+            // To simplify and avoid 4 requests, we could update backend to accept 'any' type or check all?
+            // But for now, let's keep it simple or assume it's mostly 'admin'. 
+            // Better strategy: Update backend to have a generic admin login or iterate there?
+            // "type" parameter in backend is mandatory currently.
+
+            // Actually, the original code iterated through all lists.
+            // So checking all 4 types is the equivalent behavior.
+
+            if (res && res.data.success) {
+                const { user, role } = res.data;
+                // user.id might be string or number.
+                const adminId = user.id;
+                // Determine login args
+                // login(type, userData, adminRole, adminTargetId)
+
+                // Mapping role back to store types
+                // let storeType = 'admin'; // Unused
+
+                login('admin', user, role, adminId);
+
+                // Redirect based on role
+                if (role === 'super') navigate('/admin');
+                else if (role === 'partner') navigate('/admin/partner-requests');
+                else if (role === 'agent') navigate('/admin/agent-requests');
+                else if (role === 'freelancer') navigate('/admin/content-requests');
+                else navigate('/admin');
+
+            } else {
+                alert('관리자 정보가 올바르지 않습니다');
+            }
+        } catch (error) {
+            console.error("Login failed:", error);
+            alert('로그인 중 오류가 발생했습니다.');
+        } finally {
             setIsLoading(false);
-            return;
         }
-
-        // 2. Check Partners
-        if (Array.isArray(partners)) {
-            const partner = partners.find(p => p.credentials?.username === username && p.credentials?.password === password);
-            if (partner) {
-                login('admin', { name: partner.name, id: partner.id }, 'partner', partner.id);
-                navigate('/admin/partner-requests');
-                setIsLoading(false);
-                return;
-            }
-        }
-
-        // 3. Check Agents
-        if (Array.isArray(agents)) {
-            const agent = agents.find(a => a.credentials?.username === username && a.credentials?.password === password);
-            if (agent) {
-                login('admin', { name: agent.name, id: agent.id }, 'agent', agent.id);
-                navigate('/admin/agent-requests');
-                setIsLoading(false);
-                return;
-            }
-        }
-
-        // 4. Check Freelancers
-        if (Array.isArray(freelancers)) {
-            const freelancer = freelancers.find(f => f.credentials?.username === username && f.credentials?.password === password);
-            if (freelancer) {
-                // Pass ID as is (string)
-                login('admin', { name: freelancer.name, id: freelancer.id }, 'freelancer', freelancer.id as any);
-                navigate('/admin/content-requests');
-                setIsLoading(false);
-                return;
-            }
-        }
-
-        alert('관리자 정보가 올바르지 않습니다');
-        setIsLoading(false);
     };
 
     const handleRegister = async (e: React.FormEvent) => {
@@ -107,55 +119,54 @@ export default function AdminLogin() {
             return;
         }
 
-        // Check ID uniqueness
-        const idExists =
-            (partners.some(p => p.credentials?.username === regId)) ||
-            (agents.some(a => a.credentials?.username === regId)) ||
-            (freelancers.some(f => f.credentials?.username === regId)) ||
-            (regId === 'admin');
-
-        if (idExists) {
-            alert("이미 존재하는 ID입니다.");
-            return;
-        }
-
         setIsLoading(true);
-        await new Promise(resolve => setTimeout(resolve, 800));
+        try {
+            // We need to call the respective create endpoints with credentials.
+            // But existing endpoints (e.g. POST /api/partners) take { credentials: { username, password }, ... }
+            // Let's use those.
 
-        const newCreds = { username: regId, password: regPw };
+            const credentials = { username: regId, password: regPw };
+            let res;
 
-        if (regType === 'partner') {
-            addPartner({
-                name: regName,
-                image: "https://via.placeholder.com/150",
-                description: "New Partner",
-                schedules: [],
-                credentials: newCreds
-            });
-        } else if (regType === 'agent') {
-            addAgent({
-                name: regName,
-                image: "https://via.placeholder.com/150",
-                description: "New Agent",
-                schedules: [],
-                credentials: newCreds
-            });
-        } else {
-            addFreelancer({
-                name: regName,
-                title: "New Freelancer",
-                image: "https://via.placeholder.com/150",
-                description: "New Freelancer Description",
-                portfolioImages: [],
-                credentials: newCreds
-            });
+            if (regType === 'partner') {
+                res = await axios.post('/api/partners', {
+                    name: regName,
+                    image: "https://via.placeholder.com/150",
+                    description: "New Partner",
+                    schedules: [],
+                    credentials
+                });
+            } else if (regType === 'agent') {
+                res = await axios.post('/api/agents', {
+                    name: regName,
+                    image: "https://via.placeholder.com/150",
+                    description: "New Agent",
+                    schedules: [],
+                    credentials
+                });
+            } else {
+                res = await axios.post('/api/freelancers', {
+                    name: regName,
+                    title: "New Freelancer",
+                    image: "https://via.placeholder.com/150",
+                    description: "New Freelancer Description",
+                    portfolioImages: [],
+                    credentials
+                });
+            }
+
+            if (res && res.data) {
+                alert("관리자 등록이 완료되었습니다. 로그인해주세요.");
+                setIsRegistering(false);
+                // Reset form
+                setRegName(''); setRegId(''); setRegPw(''); setRegConfirmPw('');
+            }
+        } catch (error: any) {
+            console.error("Registration failed:", error);
+            alert("등록 중 오류가 발생했습니다.");
+        } finally {
+            setIsLoading(false);
         }
-
-        alert("관리자 등록이 완료되었습니다. 로그인해주세요.");
-        setIsRegistering(false);
-        setIsLoading(false);
-        // Reset form
-        setRegName(''); setRegId(''); setRegPw(''); setRegConfirmPw('');
     };
 
     return (

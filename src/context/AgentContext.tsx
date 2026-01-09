@@ -1,4 +1,5 @@
 import { createContext, useContext, useState, useEffect } from 'react';
+import axios from 'axios';
 import type { ReactNode } from 'react';
 
 export interface AgentSchedule {
@@ -9,14 +10,16 @@ export interface AgentSchedule {
     description: string;
     maxSlots: number;
     currentSlots: number;
-    pricePersonal?: number;
-    priceCompany?: number;
+    personalPrice?: number;
+    companyPrice?: number;
+    isAvailable?: boolean;
 }
 
 export interface Agent {
     id: number;
     name: string;
     image: string;
+    detailImage?: string;
     description: string;
     schedules: AgentSchedule[];
     credentials?: {
@@ -58,114 +61,93 @@ interface AgentContextType {
 
 const AgentContext = createContext<AgentContextType | undefined>(undefined);
 
-const initialAgents: Agent[] = [
-    {
-        id: 1,
-        name: "Top Agent Kim",
-        image: "https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&q=80&w=1000",
-        description: "Professional Real Estate Agent.",
-        schedules: [
-            { id: 'S1', date: '2026-02-10', time: '10:00', title: 'Consultation', description: 'Real Estate Consultation', maxSlots: 5, currentSlots: 0, pricePersonal: 100000, priceCompany: 150000 }
-        ],
-        credentials: { username: 'agentkim', password: 'password' }
-    }
-];
-
 export function AgentProvider({ children }: { children: ReactNode }) {
     const [agents, setAgents] = useState<Agent[]>([]);
     const [requests, setRequests] = useState<AgentRequest[]>([]);
 
     useEffect(() => {
-        const storedAgents = localStorage.getItem('mall_agents');
-        if (storedAgents) {
-            try {
-                const parsed = JSON.parse(storedAgents);
-                if (Array.isArray(parsed)) {
-                    // Migration: Ensure pricing fields exist
-                    const migrated = parsed.map((a: Agent) => ({
-                        ...a,
-                        schedules: a.schedules.map((s: AgentSchedule) => ({
-                            ...s,
-                            pricePersonal: s.pricePersonal !== undefined ? s.pricePersonal : 30000,
-                            priceCompany: s.priceCompany !== undefined ? s.priceCompany : 50000
-                        }))
-                    }));
-                    setAgents(migrated);
-                } else {
-                    console.error("Invalid agents data in localStorage, resetting.");
-                    setAgents(initialAgents);
-                    localStorage.setItem('mall_agents', JSON.stringify(initialAgents));
-                }
-            } catch (e) {
-                console.error("Failed to parse agents data, resetting.", e);
-                setAgents(initialAgents);
-                localStorage.setItem('mall_agents', JSON.stringify(initialAgents));
-            }
-        } else {
-            setAgents(initialAgents);
-            localStorage.setItem('mall_agents', JSON.stringify(initialAgents));
-        }
+        // Load Agents
+        // Load Agents
+        axios.get('/api/agents')
+            .then(res => setAgents(res.data))
+            .catch(err => console.error("Failed to load agents:", err));
 
-        const storedRequests = localStorage.getItem('mall_agent_requests');
-        if (storedRequests) {
-            try {
-                const parsed = JSON.parse(storedRequests);
-                if (Array.isArray(parsed)) {
-                    setRequests(parsed);
-                } else {
-                    setRequests([]);
-                }
-            } catch (e) {
-                setRequests([]);
-            }
-        }
+        // Load Requests
+        axios.get('/api/agents/requests')
+            .then(res => setRequests(res.data))
+            .catch(err => console.error("Failed to load agent requests:", err));
     }, []);
 
-    const saveAgents = (newAgents: Agent[]) => {
-        setAgents(newAgents);
-        localStorage.setItem('mall_agents', JSON.stringify(newAgents));
+
+    const addAgent = async (agentData: Omit<Agent, 'id'>) => {
+        try {
+            const res = await axios.post('/api/agents', agentData);
+            setAgents([...agents, res.data]);
+        } catch (err) {
+            console.error("Failed to add agent:", err);
+        }
     };
 
-    const saveRequests = (newRequests: AgentRequest[]) => {
-        setRequests(newRequests);
-        localStorage.setItem('mall_agent_requests', JSON.stringify(newRequests));
+    const updateAgent = async (id: number, updates: Partial<Omit<Agent, 'id'>>) => {
+        try {
+            const res = await axios.put(`/api/agents/${id}`, updates);
+            setAgents(agents.map(p => p.id === id ? res.data : p));
+        } catch (err) {
+            console.error("Failed to update agent:", err);
+        }
     };
 
-    const addAgent = (agentData: Omit<Agent, 'id'>) => {
-        const newId = agents.length > 0 ? Math.max(...agents.map(p => p.id)) + 1 : 1;
-        saveAgents([...agents, { ...agentData, id: newId }]);
-    };
-
-    const updateAgent = (id: number, updates: Partial<Omit<Agent, 'id'>>) => {
-        saveAgents(agents.map(p => p.id === id ? { ...p, ...updates } : p));
-    };
-
-    const deleteAgent = (id: number) => {
-        saveAgents(agents.filter(p => p.id !== id));
+    const deleteAgent = async (id: number) => {
+        try {
+            await axios.delete(`/api/agents/${id}`);
+            setAgents(agents.filter(p => p.id !== id));
+        } catch (err) {
+            console.error("Failed to delete agent:", err);
+        }
     };
 
     const getAgent = (id: number) => agents.find(p => p.id === id);
 
-    const addRequest = (requestData: Omit<AgentRequest, 'id' | 'timestamp' | 'status'>) => {
-        const newRequest: AgentRequest = {
+    const addRequest = async (requestData: Omit<AgentRequest, 'id' | 'timestamp' | 'status'>) => {
+        const newRequestData = {
             ...requestData,
-            id: Date.now().toString(36) + Math.random().toString(36).substr(2),
             timestamp: new Date().toISOString(),
             status: 'pending'
         };
-        saveRequests([...requests, newRequest]);
+
+        try {
+            const res = await axios.post('/api/agents/requests', newRequestData);
+            setRequests([...requests, res.data]);
+        } catch (err) {
+            console.error("Failed to add request:", err);
+        }
     };
 
-    const updateRequestStatus = (id: string, status: AgentRequest['status']) => {
-        saveRequests(requests.map(r => r.id === id ? { ...r, status } : r));
+    const updateRequestStatus = async (id: string, status: AgentRequest['status']) => {
+        try {
+            const res = await axios.put(`/api/agents/requests/${id}`, { status });
+            setRequests(requests.map(r => r.id === id ? res.data : r));
+        } catch (err) {
+            console.error("Failed to update request status:", err);
+        }
     };
 
-    const updateRequest = (id: string, updates: Partial<AgentRequest>) => {
-        saveRequests(requests.map(r => r.id === id ? { ...r, ...updates } : r));
+    const updateRequest = async (id: string, updates: Partial<AgentRequest>) => {
+        try {
+            const res = await axios.put(`/api/agents/requests/${id}`, updates);
+            setRequests(requests.map(r => r.id === id ? res.data : r));
+        } catch (err) {
+            console.error("Failed to update request:", err);
+        }
     };
 
-    const deleteRequest = (id: string) => {
-        saveRequests(requests.filter(r => r.id !== id));
+    const deleteRequest = async (id: string) => {
+        try {
+            await axios.delete(`/api/agents/requests/${id}`);
+            setRequests(requests.filter(r => r.id !== id));
+        } catch (err) {
+            console.error("Failed to delete request:", err);
+        }
     };
 
     return (
