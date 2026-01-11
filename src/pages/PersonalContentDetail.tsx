@@ -73,6 +73,14 @@ export default function PersonalContentDetail() {
             }
             return;
         }
+
+        // Repurchase Confirmation
+        if (isPurchased) {
+            if (!window.confirm('이미 구매하신 컨텐츠입니다. 추가로 구매하시겠습니까?\n(구매 시 거래 내역이 새로 생성됩니다.)')) {
+                return;
+            }
+        }
+
         setPaymentStep('confirm');
     };
 

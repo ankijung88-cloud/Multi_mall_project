@@ -104,18 +104,7 @@ router.post('/:id/purchase', async (req, res) => {
         const { id } = req.params;
         const { userId, amount } = req.body;
 
-        // Check if already purchased
-        const existing = await prisma.contentPurchase.findFirst({
-            where: {
-                contentId: id,
-                userId: userId
-            }
-        });
-
-        if (existing) {
-            return res.json({ message: "Already purchased", purchase: existing });
-        }
-
+        // Create new purchase record (Always allow repurchase)
         const purchase = await prisma.contentPurchase.create({
             data: {
                 contentId: id,
@@ -123,6 +112,51 @@ router.post('/:id/purchase', async (req, res) => {
                 amount: Number(amount)
             }
         });
+
+        // Create ContentRequest for Admin visibility
+        const content = await prisma.content.findUnique({ where: { id } });
+        let buyerName = 'Unknown';
+        let buyerContact = '';
+        let buyerType = 'personal';
+
+        // Try to fetch buyer details (assuming Member)
+        try {
+            const member = await prisma.member.findUnique({ where: { id: Number(userId) } });
+            if (member) {
+                buyerName = member.name;
+                buyerContact = member.email;
+                buyerType = member.type.toLowerCase();
+            }
+        } catch (e) {
+            console.log("Could not fetch member details for request creation", e);
+        }
+
+        console.log(`[Purchase] Creating request for user ${userId}, content ${id}`);
+
+        if (content) {
+            try {
+                // Always create a new request for every purchase
+                const newRequest = await prisma.contentRequest.create({
+                    data: {
+                        freelancerId: content.userId,
+                        freelancerName: content.userName,
+                        userId: userId,
+                        userName: buyerName,
+                        contactInfo: buyerContact,
+                        message: `Paid Content Purchase: ${content.title}`,
+                        requesterType: buyerType,
+                        status: 'Paid',
+                        date: new Date().toISOString()
+                    }
+                });
+                console.log(`[Purchase] Request created: ${newRequest.id}`);
+            } catch (createError) {
+                console.error("[Purchase] Failed to create ContentRequest:", createError);
+            }
+        } else {
+            console.error("[Purchase] Content not found for request creation");
+        }
+
         res.json(purchase);
     } catch (error) {
         console.error("Purchase failed:", error);

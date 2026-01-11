@@ -108,7 +108,8 @@ export default function AdminContentRequests() {
                                         <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full
                                             ${req.status === 'Approved' ? 'bg-green-100 text-green-800' :
                                                 req.status === 'Rejected' ? 'bg-red-100 text-red-800' :
-                                                    'bg-yellow-100 text-yellow-800'}`}>
+                                                    req.status === 'Paid' ? 'bg-blue-100 text-blue-800' :
+                                                        'bg-yellow-100 text-yellow-800'}`}>
                                             {req.status}
                                         </span>
                                     </td>
@@ -127,8 +128,8 @@ export default function AdminContentRequests() {
                                             )}
                                             {req.requesterType && (
                                                 <span className={`text-[10px] px-1.5 py-0.5 rounded border ${req.requesterType === 'company'
-                                                        ? 'bg-blue-50 text-blue-600 border-blue-100'
-                                                        : 'bg-emerald-50 text-emerald-600 border-emerald-100'
+                                                    ? 'bg-blue-50 text-blue-600 border-blue-100'
+                                                    : 'bg-emerald-50 text-emerald-600 border-emerald-100'
                                                     }`}>
                                                     {req.requesterType === 'company' ? 'Company' : 'Personal'}
                                                 </span>
@@ -144,7 +145,7 @@ export default function AdminContentRequests() {
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                         <div className="flex items-center justify-end gap-2">
-                                            {req.status === 'Pending' && (
+                                            {(req.status === 'Pending') && (
                                                 <>
                                                     <button
                                                         onClick={() => handleApprove(req.id)}
@@ -161,6 +162,9 @@ export default function AdminContentRequests() {
                                                         <X size={16} />
                                                     </button>
                                                 </>
+                                            )}
+                                            {req.status === 'Paid' && (
+                                                <span className="text-xs text-blue-600 font-bold px-2">Completed</span>
                                             )}
                                             {adminRole === 'super' && (
                                                 <button

@@ -24,7 +24,7 @@ export interface ContentRequest {
     contactInfo?: string; // Phone or Email
     message: string;
     requesterType: 'personal' | 'company' | 'admin' | 'guest'; // Type of user making request
-    status: 'Pending' | 'Approved' | 'Rejected';
+    status: 'Pending' | 'Approved' | 'Rejected' | 'Paid';
     date: string;
 }
 
