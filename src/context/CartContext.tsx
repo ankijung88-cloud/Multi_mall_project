@@ -18,6 +18,9 @@ interface CartContextType {
     toggleCart: () => void;
     totalAmount: number;
     totalItems: number;
+    isCheckoutPending: boolean;
+    openCheckout: () => void;
+    resetCheckoutPending: () => void;
 }
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
@@ -25,6 +28,7 @@ const CartContext = createContext<CartContextType | undefined>(undefined);
 export function CartProvider({ children }: { children: ReactNode }) {
     const [items, setItems] = useState<CartItem[]>([]);
     const [isCartOpen, setIsCartOpen] = useState(false);
+    const [isCheckoutPending, setIsCheckoutPending] = useState(false);
 
     const addToCart = (product: Omit<CartItem, 'quantity'>) => {
         setItems(prev => {
@@ -60,6 +64,15 @@ export function CartProvider({ children }: { children: ReactNode }) {
         setIsCartOpen(prev => !prev);
     };
 
+    const openCheckout = () => {
+        setIsCartOpen(true);
+        setIsCheckoutPending(true);
+    };
+
+    const resetCheckoutPending = () => {
+        setIsCheckoutPending(false);
+    };
+
     const totalAmount = items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
     const totalItems = items.reduce((sum, item) => sum + item.quantity, 0);
 
@@ -73,7 +86,10 @@ export function CartProvider({ children }: { children: ReactNode }) {
             isCartOpen,
             toggleCart,
             totalAmount,
-            totalItems
+            totalItems,
+            isCheckoutPending,
+            openCheckout,
+            resetCheckoutPending
         }}>
             {children}
         </CartContext.Provider>

@@ -7,7 +7,7 @@ export default {
         primary: "#1263D5", // 원하는 색
       },
       fontFamily: {
-        sans: ["'Plus Jakarta Sans'", "system-ui", "sans-serif"],
+        sans: ["system-ui", "sans-serif"],
       },
     },
   },

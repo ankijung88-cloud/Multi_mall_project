@@ -120,8 +120,22 @@ export default function ScheduleDetail() {
         }, 1500);
     };
 
-    const handleCompleteBooking = (amount: number) => {
-        if (!selectedSchedule || !user) {
+    const handleCompleteBooking = async (amount: number) => {
+        console.log("handleCompleteBooking:", { selectedSchedule, user, amount });
+
+        if (!selectedSchedule) {
+            alert("오류: 선택된 스케줄 정보를 찾을 수 없습니다. (selectedSchedule is null)");
+            setApplicationStep('idle');
+            return;
+        }
+        if (!user) {
+            alert("오류: 로그인 정보가 확인되지 않습니다. 다시 로그인해주세요. (user is null)");
+            setApplicationStep('idle');
+            return;
+        }
+
+        const confirmMsg = `[Debug Check]\nUser: ${user.name}\nSchedule: ${selectedSchedule.title}\n진행하시겠습니까?`;
+        if (!window.confirm(confirmMsg)) {
             setApplicationStep('idle');
             return;
         }
@@ -140,11 +154,16 @@ export default function ScheduleDetail() {
                 paymentDate: new Date().toISOString(),
                 paymentMethod: amount > 0 ? (paymentMethod === 'card' ? 'Credit Card' : paymentMethod === 'account' ? 'Bank Transfer' : 'On-site Payment') : 'Free',
                 userType: isCompany ? 'Company' : 'Personal'
+            }).then(() => {
+                alert("Debug: 요청이 서버로 전송되었습니다. 관리자 페이지를 확인하세요.");
+                setApplicationStep('success');
+            }).catch(e => {
+                alert(`Debug Failure: ${e.message || JSON.stringify(e)}`);
+                setApplicationStep('idle');
             });
-            setApplicationStep('success');
-        } catch (error) {
+        } catch (error: any) {
             console.error("Booking Error:", error);
-            alert('신청 처리 중 오류가 발생했습니다.');
+            alert(`신청 처리 중 오류가 발생했습니다: ${error.message}`);
             setApplicationStep('idle');
         }
     };
@@ -295,7 +314,7 @@ export default function ScheduleDetail() {
                                         onClick={handleProceedToPayment}
                                         className="flex-1 bg-blue-600 text-white py-3 rounded-lg font-bold hover:bg-blue-700 transition-colors"
                                     >
-                                        다음 (결제)
+                                        {(partner.category?.includes('Audition') || partner.category?.includes('오디션') || partner.id === 4) ? '신청' : '다음 (결제)'}
                                     </button>
                                 </div>
                             </div>

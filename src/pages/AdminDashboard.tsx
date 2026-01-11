@@ -1,9 +1,12 @@
 import { useState, useEffect } from 'react';
+import axios from 'axios';
 import { motion } from 'framer-motion';
-import { Users, ShoppingBag, DollarSign, Clock, FileSpreadsheet, Handshake, Briefcase, MessageCircle, TrendingUp } from 'lucide-react';
+import { Users, ShoppingBag, DollarSign, Clock, Handshake, Briefcase, MessageCircle, TrendingUp } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/useAuthStore';
 import { usePartners } from '../context/PartnerContext';
+import { useAgents } from '../context/AgentContext';
+import { useFreelancers } from '../context/FreelancerContext';
 import { useBoard } from '../context/BoardContext';
 import { Trash } from 'lucide-react';
 import clsx from 'clsx';
@@ -11,102 +14,19 @@ import clsx from 'clsx';
 export default function AdminDashboard() {
     const navigate = useNavigate();
     const { adminRole } = useAuthStore();
-    const { requests, deleteRequest } = usePartners();
+    const { partners, requests: partnerRequests, deleteRequest: deletePartnerRequest, refreshRequests } = usePartners();
+    const { requests: agentRequests } = useAgents();
+    const { requests: freelancerRequests, freelancers } = useFreelancers();
     const { posts, deletePost } = useBoard();
 
-    useEffect(() => {
-        if (adminRole === 'partner') {
-            navigate('/admin/partner-requests', { replace: true });
-        } else if (adminRole === 'agent') {
-            navigate('/admin/agent-requests', { replace: true });
-        }
-    }, [adminRole, navigate]);
-
-    // ... (existing state)
-
-    // Merge Inquiries
-    const mergedInquiries = [
-        ...requests.filter(r => r.scheduleTitle === '1:1 문의' || !!r.inquiryContent).map(r => ({
-            id: r.id,
-            date: r.timestamp,
-            author: r.userName,
-            title: r.inquiryContent || r.scheduleTitle,
-            contact: r.contact,
-            status: r.status,
-            source: 'Partner Detail',
-            originalObj: r
-        })),
-        ...posts.filter(p => p.type === 'partner-inquiry').map(p => ({
-            id: p.id,
-            date: p.date, // Note: Board posts might currently store date as YYYY-MM-DD vs ISO timestamp in Request
-            author: p.author,
-            title: p.title,
-            contact: p.contactInfo,
-            status: p.status,
-            source: 'Inquiry Board',
-            originalObj: p
-        }))
-    ].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()).slice(0, 10); // Show top 10
-
-    // ... (rest of component until return) ...
-
-    // IN THE RENDER:
-    {
-        mergedInquiries.length === 0 ? (
-            <tr>
-                <td colSpan={7} className="px-4 py-8 text-center text-gray-400 text-sm">신규 문의 내역이 없습니다. (No new inquiries)</td>
-            </tr>
-        ) : (
-            mergedInquiries.map((inq) => (
-                <tr key={inq.id} className="hover:bg-gray-50">
-                    <td className="px-4 py-3 text-xs text-gray-500">
-                        {new Date(inq.date).toLocaleDateString()}
-                    </td>
-                    <td className="px-4 py-3 text-sm font-medium text-gray-800">
-                        {inq.author}
-                        <span className="block text-[10px] text-gray-400">{inq.source}</span>
-                    </td>
-                    <td className="px-4 py-3 text-sm text-gray-600 truncate max-w-[200px]">
-                        {inq.title}
-                    </td>
-                    <td className="px-4 py-3 text-xs text-gray-500">{inq.contact || '-'}</td>
-                    <td className="px-4 py-3">
-                        <span className={clsx(
-                            "text-[10px] px-2 py-0.5 rounded font-medium",
-                            inq.status === 'approved' || inq.status === 'Resolved' ? "bg-green-100 text-green-700" :
-                                "bg-yellow-50 text-yellow-700"
-                        )}>
-                            {inq.status || 'Pending'}
-                        </span>
-                    </td>
-                    <td className="px-4 py-3 text-right">
-                        <button
-                            onClick={() => {
-                                if (window.confirm('정말 삭제하시겠습니까?')) {
-                                    if (inq.source === 'Inquiry Board') {
-                                        deletePost(inq.id);
-                                    } else {
-                                        deleteRequest(inq.id);
-                                    }
-                                }
-                            }}
-                            className="text-gray-400 hover:text-red-500 transition-colors"
-                            title="Delete"
-                        >
-                            <Trash size={16} />
-                        </button>
-                    </td>
-                </tr>
-            ))
-        )
-    }
-
+    // Stats State
     const [stats, setStats] = useState({
         revenue: 0,
         ordersMonthly: 0,
         ordersDaily: 0,
         users: 0,
         growth: '+12%',
+        orderCycleLabel: 'Loading...'
     });
 
     const [appStats, setAppStats] = useState({
@@ -119,67 +39,101 @@ export default function AdminDashboard() {
     const [newMembers, setNewMembers] = useState<any[]>([]);
 
     useEffect(() => {
-        const storedMembers = localStorage.getItem('mall_members');
-        const storedOrders = localStorage.getItem('mall_orders');
-        const storedPartnerReqs = localStorage.getItem('mall_partner_requests');
-        const storedAgentReqs = localStorage.getItem('mall_agent_requests');
-        const storedContentReqs = localStorage.getItem('mall_content_requests');
-        const storedPartners = localStorage.getItem('mall_partners');
-        const storedFreelancers = localStorage.getItem('mall_freelancers');
+        if (adminRole === 'partner') {
+            navigate('/admin/partner-requests', { replace: true });
+        } else if (adminRole === 'agent') {
+            navigate('/admin/agent-requests', { replace: true });
+        }
+    }, [adminRole, navigate]);
 
+    // Real-time polling for partner requests
+    useEffect(() => {
+        const interval = setInterval(() => {
+            if (refreshRequests) refreshRequests();
+        }, 5000);
+        return () => clearInterval(interval);
+    }, [refreshRequests]);
+
+    // Data Migration Logic
+    const [localCount, setLocalCount] = useState(0);
+    const [isMigrating, setIsMigrating] = useState(false);
+
+    useEffect(() => {
+        const local = localStorage.getItem('mall_orders');
+        if (local) {
+            try {
+                const parsed = JSON.parse(local);
+                if (Array.isArray(parsed)) {
+                    setLocalCount(parsed.length);
+                }
+            } catch (e) {
+                console.error("Local data check failed", e);
+            }
+        }
+    }, []);
+
+    const migrateLocalData = async () => {
+        if (!confirm(`Found ${localCount} orders in your browser storage. Do you want to upload them to the server? This may take a moment.`)) return;
+
+        setIsMigrating(true);
+        const local = localStorage.getItem('mall_orders');
+        if (!local) return;
+
+        try {
+            const parsed = JSON.parse(local);
+            let successCount = 0;
+            let failCount = 0;
+
+            for (const order of parsed) {
+                try {
+                    // Ensure payload matches API expectation
+                    const payload = {
+                        id: order.id,
+                        customerName: order.customerName,
+                        customerEmail: order.customerEmail,
+                        totalAmount: order.totalAmount,
+                        currency: order.currency,
+                        paymentMethod: order.paymentMethod,
+                        status: order.status,
+                        date: order.date,
+                        items: Array.isArray(order.items) ? order.items : []
+                    };
+                    await axios.post('/api/orders', payload);
+                    successCount++;
+                } catch (err: any) {
+                    // Ignore duplicate key errors (409 or 500 with unique constraint)
+                    console.warn(`Failed to migrate order ${order.id}:`, err);
+                    failCount++;
+                }
+            }
+            alert(`Migration Complete.\nSuccess: ${successCount}\nSkipped/Failed: ${failCount}`);
+            loadData(); // Refresh View
+        } catch (e) {
+            alert("Migration failed critically");
+        } finally {
+            setIsMigrating(false);
+        }
+    };
+
+    const loadData = async () => {
         let members: any[] = [];
         try {
-            const parsed = storedMembers ? JSON.parse(storedMembers) : [];
-            members = Array.isArray(parsed) ? parsed : [];
+            const { data } = await axios.get('/api/auth/admin/members');
+            members = Array.isArray(data) ? data : [];
         } catch (e) {
-            console.error("Failed to parse members", e);
+            console.error("Failed to fetch members", e);
         }
 
         let orders: any[] = [];
         try {
-            const parsed = storedOrders ? JSON.parse(storedOrders) : [];
-            orders = Array.isArray(parsed) ? parsed : [];
+            // Fetch from API
+            const { data } = await axios.get('/api/orders');
+            orders = Array.isArray(data) ? data : [];
         } catch (e) {
-            console.error("Failed to parse orders", e);
+            console.error("Failed to fetch orders from API", e);
         }
 
-        // --- App Stats Logic ---
-        const partnerReqs = storedPartnerReqs ? (JSON.parse(storedPartnerReqs) as any[]) : [];
-        const agentReqs = storedAgentReqs ? (JSON.parse(storedAgentReqs) as any[]) : [];
-        const contentReqs = storedContentReqs ? (JSON.parse(storedContentReqs) as any[]) : [];
-        const partners = storedPartners ? (JSON.parse(storedPartners) as any[]) : [];
-        const freelancers = storedFreelancers ? (JSON.parse(storedFreelancers) as any[]) : [];
-
-        // Partner Breakdown
-        const partnerBreakdown: Record<string, number> = {};
-        partnerReqs.forEach(req => {
-            const partner = partners.find(p => p.id === req.partnerId);
-            const category = partner?.category || 'Uncategorized';
-            partnerBreakdown[category] = (partnerBreakdown[category] || 0) + 1;
-        });
-
-        // Agent Breakdown (by UserType)
-        const agentBreakdown: Record<string, number> = {};
-        agentReqs.forEach(req => {
-            const type = req.userType || 'Personal'; // Default to Personal if missing
-            agentBreakdown[type] = (agentBreakdown[type] || 0) + 1;
-        });
-
-        // Content Breakdown (by Freelancer Title)
-        const contentBreakdown: Record<string, number> = {};
-        contentReqs.forEach(req => {
-            const freelancer = freelancers.find(f => f.id === req.freelancerId);
-            const title = freelancer?.title || 'General';
-            contentBreakdown[title] = (contentBreakdown[title] || 0) + 1;
-        });
-
-        setAppStats({
-            partner: { total: partnerReqs.length, breakdown: partnerBreakdown },
-            agent: { total: agentReqs.length, breakdown: agentBreakdown },
-            content: { total: contentReqs.length, breakdown: contentBreakdown }
-        });
-
-        // 1. Calculate Revenue
+        // 1. Calculate Revenue (Total Accumulated)
         const totalRevenue = orders.reduce((sum: number, order: any) => sum + (Number(order.totalAmount) || 0), 0);
 
         // 2. Count Orders (Monthly vs Daily)
@@ -193,85 +147,116 @@ export default function AdminDashboard() {
             return d.getMonth() === currentMonth && d.getFullYear() === currentYear;
         }).length;
 
-        // Daily Count (Yesterday 12:01 PM ~ Today 12:00 PM OR Today 12:01 ~ Tomorrow 12:00)
+        // Daily Count (Today 00:00 ~ 23:59)
         const cycleStart = new Date(now);
-        if (now.getHours() >= 12 && now.getMinutes() >= 1) {
-            cycleStart.setHours(12, 1, 0, 0);
-        } else {
-            cycleStart.setDate(cycleStart.getDate() - 1);
-            cycleStart.setHours(12, 1, 0, 0);
-        }
+        cycleStart.setHours(0, 0, 0, 0);
 
-        const cycleEnd = new Date(cycleStart);
-        cycleEnd.setDate(cycleEnd.getDate() + 1);
+        const cycleEnd = new Date(now);
+        cycleEnd.setHours(23, 59, 59, 999);
 
         const dailyFiltered = orders.filter((o: any) => {
             const d = new Date(o.date);
-            return d >= cycleStart && d < cycleEnd;
+            return d >= cycleStart && d <= cycleEnd;
         });
 
-        const dailySorted = dailyFiltered.sort((a: any, b: any) => new Date(b.date).getTime() - new Date(a.date).getTime());
+        const dailyCount = dailyFiltered.length;
+
+        // "Recent Orders" List: User requested to show only "Today's Orders"
+        const todaysOrdersSorted = dailyFiltered.sort((a: any, b: any) => new Date(b.date).getTime() - new Date(a.date).getTime());
+        setDailyOrders(todaysOrdersSorted);
+
+        const cycleLabel = `Today's Orders (${cycleStart.toLocaleDateString()})`;
 
         setStats({
             revenue: totalRevenue,
             ordersMonthly: monthlyCount,
-            ordersDaily: dailyFiltered.length,
+            ordersDaily: dailyCount,
             users: members.length,
             growth: '+12%',
+            orderCycleLabel: cycleLabel
         });
 
-        setDailyOrders(dailySorted);
-        setNewMembers([...members].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()).slice(0, 5));
+        // New Members (Top 10 Recently Registered)
+        const recentMembers = [...members]
+            .sort((a: any, b: any) => new Date(b.date).getTime() - new Date(a.date).getTime())
+            .slice(0, 10);
 
-    }, []);
-
-    const downloadCSV = () => {
-        if (dailyOrders.length === 0) {
-            alert("No orders to export for this period.");
-            return;
-        }
-
-        const headers = ["Order ID", "Date", "Customer Name", "Email", "Items", "Total Amount", "Status"];
-        const rows = dailyOrders.map(order => [
-            order.id,
-            new Date(order.date).toLocaleString(),
-            `"${order.customerName}"`,
-            order.customerEmail,
-            `"${order.items.map((i: any) => `${i.name} (x${i.quantity})`).join(', ')}"`,
-            order.totalAmount,
-            order.status
-        ]);
-
-        const csvContent = [headers.join(','), ...rows.map(row => row.join(','))].join('\n');
-        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.setAttribute('href', url);
-        link.setAttribute('download', `daily_orders_${new Date().toISOString().slice(0, 10)}.csv`);
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
+        setNewMembers(recentMembers);
     };
 
+    // Load data on mount and listen for storage changes
+    useEffect(() => {
+        loadData();
+
+        const handleStorageChange = () => {
+            loadData();
+        };
+
+        window.addEventListener('storage', handleStorageChange);
+        window.addEventListener('mall_orders_updated', handleStorageChange);
+
+        return () => {
+            window.removeEventListener('storage', handleStorageChange);
+            window.removeEventListener('mall_orders_updated', handleStorageChange);
+        };
+    }, []);
+
+    // Partner/Agent/Content Context Stats
+    useEffect(() => {
+        const partnerBreakdown: Record<string, number> = {};
+        // Exclude 'Partnership Inquiry' from Partner Apps stats
+        partnerRequests
+            .filter(req => req.scheduleTitle !== 'Partnership Inquiry')
+            .forEach(req => {
+                const partner = partners.find(p => p.id === req.partnerId);
+                const category = partner?.category || 'Uncategorized';
+                partnerBreakdown[category] = (partnerBreakdown[category] || 0) + 1;
+            });
+
+        // Also update the total count for partner apps
+        const validPartnerRequests = partnerRequests.filter(req => req.scheduleTitle !== 'Partnership Inquiry');
+
+        const agentBreakdown: Record<string, number> = {};
+        agentRequests.forEach(req => {
+            const type = req.userType || 'Personal';
+            agentBreakdown[type] = (agentBreakdown[type] || 0) + 1;
+        });
+
+        const contentBreakdown: Record<string, number> = {};
+        freelancerRequests.forEach(req => {
+            const freelancer = freelancers.find(f => f.id === req.freelancerId);
+            const title = freelancer?.title || 'General';
+            contentBreakdown[title] = (contentBreakdown[title] || 0) + 1;
+        });
+
+        setAppStats({
+            partner: { total: validPartnerRequests.length, breakdown: partnerBreakdown },
+            agent: { total: agentRequests.length, breakdown: agentBreakdown },
+            content: { total: freelancerRequests.length, breakdown: contentBreakdown }
+        });
+    }, [partners, partnerRequests, agentRequests, freelancerRequests, freelancers]);
+
+
+
     const statCards = [
-        { label: 'Total Revenue', value: `$${stats.revenue.toLocaleString()}`, icon: DollarSign, color: 'bg-green-500' },
+        { label: '총 매출 (Revenue)', value: `$${stats.revenue.toLocaleString()}`, icon: DollarSign, color: 'bg-green-500' },
         {
-            label: 'Total Orders',
+            label: '총 주문수 (Orders)',
             isMultiLine: true,
             lines: [
-                { label: 'This Month (월)', value: stats.ordersMonthly },
-                { label: 'Today (일)', value: stats.ordersDaily, sub: '12:01PM~' }
+                { label: '이번 달 (Monthly)', value: stats.ordersMonthly },
+                { label: '오늘 (Daily)', value: stats.ordersDaily, sub: stats.orderCycleLabel }
             ],
             icon: ShoppingBag,
             color: 'bg-blue-500'
         },
-        { label: 'Total Users', value: stats.users.toLocaleString(), icon: Users, color: 'bg-indigo-500' },
-        { label: 'Growth', value: stats.growth, icon: TrendingUp, color: 'bg-purple-500' },
+        { label: '총 회원수 (Users)', value: stats.users.toLocaleString(), icon: Users, color: 'bg-indigo-500' },
+        { label: '성장률 (Growth)', value: stats.growth, icon: TrendingUp, color: 'bg-purple-500' },
     ];
 
     const appCards = [
         {
-            label: 'Partner Apps',
+            label: '파트너 신청 (Partner Apps)',
             count: appStats.partner.total,
             breakdown: appStats.partner.breakdown,
             icon: Handshake,
@@ -279,7 +264,7 @@ export default function AdminDashboard() {
             textColor: 'text-orange-600'
         },
         {
-            label: 'Agent Apps',
+            label: '에이전시 신청 (Agent Apps)',
             count: appStats.agent.total,
             breakdown: appStats.agent.breakdown,
             icon: Briefcase,
@@ -287,7 +272,7 @@ export default function AdminDashboard() {
             textColor: 'text-teal-600'
         },
         {
-            label: 'Content Apps',
+            label: '콘텐츠 신청 (Content Apps)',
             count: appStats.content.total,
             breakdown: appStats.content.breakdown,
             icon: MessageCircle,
@@ -299,9 +284,32 @@ export default function AdminDashboard() {
     return (
         <div>
             <div className="flex justify-between items-center mb-6">
-                <h2 className="text-2xl font-bold text-gray-800">Dashboard Overview</h2>
-                <div className="text-sm text-gray-500">
-                    Auto-refreshing live data
+                <div>
+                    <h2 className="text-2xl font-bold text-gray-800">대시보드 개요 (Dashboard Overview)</h2>
+                    {localCount > 0 && (
+                        <button
+                            onClick={migrateLocalData}
+                            disabled={isMigrating}
+                            className="mt-1 text-xs bg-red-100 text-red-700 px-3 py-1 rounded hover:bg-red-200 transition-colors flex items-center gap-1"
+                        >
+                            <span>⚠️ Found Legacy Data ({localCount}) - Click to Sync</span>
+                        </button>
+                    )}
+                </div>
+                <div className="flex items-center gap-2">
+                    <button
+                        onClick={() => {
+                            console.log("Manual Refresh Clicked");
+                            loadData();
+                            if (refreshRequests) refreshRequests();
+                        }}
+                        className="px-3 py-1 bg-blue-100 text-blue-700 rounded-md text-sm font-medium hover:bg-blue-200"
+                    >
+                        강제 새로고침 (Force Refresh)
+                    </button>
+                    <div className="text-sm text-gray-500">
+                        실시간 데이터 자동 갱신
+                    </div>
                 </div>
             </div>
 
@@ -348,17 +356,11 @@ export default function AdminDashboard() {
             <div className="mb-8 bg-white rounded-xl shadow-sm border border-gray-200 flex flex-col">
                 <div className="p-6 border-b border-gray-100 flex justify-between items-center">
                     <div>
-                        <h3 className="font-bold text-gray-800">Daily Order List (금일 주문 집계)</h3>
-                        <p className="text-xs text-gray-500 mt-1">From 12:01 PM ~ To 12:00 PM</p>
+                        <h3 className="font-bold text-gray-800">Recent Orders (최근 주문 내역)</h3>
+                        <p className="text-xs text-gray-500 mt-1">{stats.orderCycleLabel}</p>
                     </div>
                     <div className="flex gap-2">
-                        <button
-                            onClick={downloadCSV}
-                            className="flex items-center gap-2 px-3 py-2 bg-green-600 hover:bg-green-700 text-white text-sm rounded-lg transition-colors shadow-sm"
-                        >
-                            <FileSpreadsheet size={16} />
-                            <span>Download CSV</span>
-                        </button>
+
                         <Link to="/admin/orders" className="flex items-center gap-2 px-3 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm rounded-lg transition-colors">
                             View All
                         </Link>
@@ -444,7 +446,6 @@ export default function AdminDashboard() {
                 ))}
             </div>
 
-
             {/* Partnership Inquiries (Full Width) */}
             <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200 mb-8">
                 <div className="flex justify-between items-center mb-4">
@@ -470,8 +471,8 @@ export default function AdminDashboard() {
                         <tbody className="divide-y divide-gray-100">
                             {(() => {
                                 // 1. Partner Requests (from Detail Page)
-                                const partnerInquiries = requests
-                                    .filter(r => r.scheduleTitle === '1:1 문의' || !!r.inquiryContent)
+                                const partnerInquiries = partnerRequests
+                                    .filter(r => r.scheduleTitle === 'Partnership Inquiry')
                                     .map(r => ({
                                         id: r.id,
                                         date: r.timestamp,
@@ -481,7 +482,7 @@ export default function AdminDashboard() {
                                         status: r.status,
                                         source: 'Partner Detail',
                                         isBoard: false,
-                                        inquirerType: r.userType || 'Personal' // 'Personal' | 'Company'
+                                        inquirerType: r.userType || 'Personal'
                                     }));
 
                                 // 2. Board Inquiries (from K-Culture Menu)
@@ -489,7 +490,7 @@ export default function AdminDashboard() {
                                     .filter(p => p.type === 'partner-inquiry')
                                     .map(p => ({
                                         id: p.id,
-                                        date: p.date, // Usually YYYY-MM-DD
+                                        date: p.date,
                                         author: p.author,
                                         title: p.title,
                                         contact: p.contactInfo,
@@ -553,7 +554,7 @@ export default function AdminDashboard() {
                                                         if (inq.isBoard) {
                                                             deletePost(inq.id);
                                                         } else {
-                                                            deleteRequest(inq.id);
+                                                            deletePartnerRequest(inq.id);
                                                         }
                                                     }
                                                 }}

@@ -11,7 +11,7 @@ import clsx from 'clsx';
 
 export default function Shop() {
     const { products } = useProducts();
-    const { addToCart } = useCart();
+    const { addToCart, openCheckout } = useCart();
     const { isAuthenticated, userType: authUserType } = useAuthStore();
     const navigate = useNavigate();
     const location = useLocation();
@@ -112,15 +112,37 @@ export default function Shop() {
                                                 <span className="text-xs text-blue-500 font-medium">기업 전용가</span>
                                             )}
                                         </div>
-                                        <button
-                                            onClick={(e) => handleAddToCart(e, product)}
-                                            className={clsx(
-                                                "p-3 rounded-lg text-white transition-colors shadow-sm",
-                                                viewType === 'company' ? "bg-blue-600 hover:bg-blue-700" : "bg-emerald-600 hover:bg-emerald-700"
-                                            )}
-                                        >
-                                            <ShoppingCart size={20} />
-                                        </button>
+                                        <div className="flex space-x-2">
+                                            <button
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    handleAddToCart(e, product);
+                                                }}
+                                                className={clsx(
+                                                    "p-3 rounded-lg text-white transition-colors shadow-sm",
+                                                    viewType === 'company' ? "bg-blue-600 hover:bg-blue-700" : "bg-emerald-600 hover:bg-emerald-700"
+                                                )}
+                                            >
+                                                <ShoppingCart size={20} />
+                                            </button>
+                                            <button
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    if (!isAuthenticated) {
+                                                        navigate(`/login?type=${viewType}`);
+                                                        return;
+                                                    }
+                                                    handleAddToCart(e, product);
+                                                    openCheckout();
+                                                }}
+                                                className={clsx(
+                                                    "p-3 rounded-lg text-white transition-colors shadow-sm font-bold text-sm",
+                                                    viewType === 'company' ? "bg-gray-800 hover:bg-gray-900" : "bg-gray-800 hover:bg-gray-900"
+                                                )}
+                                            >
+                                                주문하기
+                                            </button>
+                                        </div>
                                     </div>
                                 </div>
                             </motion.div>
@@ -128,7 +150,7 @@ export default function Shop() {
                     </div>
                 )}
             </div>
-        </section>
+        </section >
     );
 
     return (
@@ -151,10 +173,25 @@ export default function Shop() {
                 </div>
 
                 <div className="bg-white">
-                    <ProductGrid title="추천 상품" id="recommended" items={recommendedProducts} />
-                    <ProductGrid title="신상품" id="new" items={newProducts} />
-                    <ProductGrid title="브랜드 컬렉션" id="brand" items={brandProducts} />
-                    <ProductGrid title="세일 & 특가" id="sale" items={saleProducts} />
+                    {searchParams.get('search') ? (
+                        <ProductGrid
+                            title={`'${searchParams.get('search')}' 검색 결과`}
+                            id="search-results"
+                            items={products.filter(p => {
+                                const query = searchParams.get('search')?.toLowerCase() || '';
+                                const matchesSearch = p.name.toLowerCase().includes(query);
+                                const matchesViewType = viewType === 'company' ? p.companyPrice : p.personalPrice;
+                                return matchesSearch && matchesViewType;
+                            })}
+                        />
+                    ) : (
+                        <>
+                            <ProductGrid title="추천 상품" id="recommended" items={recommendedProducts} />
+                            <ProductGrid title="신상품" id="new" items={newProducts} />
+                            <ProductGrid title="브랜드 컬렉션" id="brand" items={brandProducts} />
+                            <ProductGrid title="세일 & 특가" id="sale" items={saleProducts} />
+                        </>
+                    )}
                 </div>
             </div>
         </MainLayout>

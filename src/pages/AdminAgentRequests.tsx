@@ -125,8 +125,8 @@ export default function AdminAgentRequests() {
                                         {request.agentName}
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap">
-                                        <div className="text-sm font-medium text-gray-900">{request.scheduleTitle}</div>
-                                        <div className="text-sm text-gray-500">{request.scheduleDate}</div>
+                                        <div className="text-sm font-medium text-gray-900">{request.date}</div>
+                                        <div className="text-sm text-gray-500">{request.time}</div>
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap text-center">
                                         <span className={clsx(
@@ -157,7 +157,7 @@ export default function AdminAgentRequests() {
                                                     </button>
                                                     {adminRole !== 'agent' && (
                                                         <button
-                                                            onClick={() => handleSendToAgent(request.id, request.agentName)}
+                                                            onClick={() => handleSendToAgent(request.id, request.agentName || '')}
                                                             className="text-blue-600 hover:text-blue-900"
                                                             title="에이전트 전송"
                                                         >
@@ -168,7 +168,7 @@ export default function AdminAgentRequests() {
                                             )}
                                             {request.status === 'approved' && adminRole !== 'agent' && (
                                                 <button
-                                                    onClick={() => handleSendToAgent(request.id, request.agentName)}
+                                                    onClick={() => handleSendToAgent(request.id, request.agentName || '')}
                                                     className="text-blue-600 hover:text-blue-900 flex items-center"
                                                     title="에이전트 전송"
                                                 >

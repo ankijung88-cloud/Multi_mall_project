@@ -56,10 +56,11 @@ interface PartnerContextType {
     updatePartner: (id: number, updates: Partial<Omit<Partner, 'id'>>) => void;
     deletePartner: (id: number) => void;
     getPartner: (id: number) => Partner | undefined;
-    addRequest: (request: Omit<PartnerRequest, 'id' | 'timestamp' | 'status'> & { scheduleId?: string, scheduleTitle?: string, scheduleDate?: string }) => void;
+    addRequest: (request: Omit<PartnerRequest, 'id' | 'timestamp' | 'status'> & { scheduleId?: string, scheduleTitle?: string, scheduleDate?: string }) => Promise<void>;
     updateRequestStatus: (id: string, status: PartnerRequest['status']) => void;
     deleteRequest: (id: string) => void;
     updateRequest: (id: string, updates: Partial<PartnerRequest>) => void;
+    refreshRequests: () => Promise<void>;
 }
 
 const PartnerContext = createContext<PartnerContextType | undefined>(undefined);
@@ -70,6 +71,15 @@ export function PartnerProvider({ children }: { children: ReactNode }) {
     const [partners, setPartners] = useState<Partner[]>([]);
     const [requests, setRequests] = useState<PartnerRequest[]>([]);
 
+    const fetchRequests = async () => {
+        try {
+            const res = await axios.get('/api/partners/requests');
+            setRequests(res.data);
+        } catch (err) {
+            console.error("Failed to load partner requests:", err);
+        }
+    };
+
     useEffect(() => {
         // Load Partners
         axios.get('/api/partners')
@@ -77,10 +87,12 @@ export function PartnerProvider({ children }: { children: ReactNode }) {
             .catch(err => console.error("Failed to load partners:", err));
 
         // Load Requests
-        axios.get('/api/partners/requests')
-            .then(res => setRequests(res.data))
-            .catch(err => console.error("Failed to load partner requests:", err));
+        fetchRequests();
     }, []);
+
+    const refreshRequests = async () => {
+        await fetchRequests();
+    };
 
     const addPartner = async (partnerData: Omit<Partner, 'id'>) => {
         try {
@@ -120,6 +132,8 @@ export function PartnerProvider({ children }: { children: ReactNode }) {
             scheduleTitle: scheduleTitle || 'Inquiry',
             scheduleDate: scheduleDate || new Date().toISOString().split('T')[0],
             ...rest,
+            partnerId: Number(rest.partnerId), // Ensure partnerId is a Number
+            userId: String(rest.userId), // Ensure userId is a String (Schema expects String)
             timestamp: new Date().toISOString(),
             status: 'pending',
         };
@@ -129,6 +143,7 @@ export function PartnerProvider({ children }: { children: ReactNode }) {
             setRequests([...requests, res.data]);
         } catch (err) {
             console.error("Failed to add request:", err);
+            throw err; // Re-throw to let compopnent handle UI feedback
         }
     };
 
@@ -170,7 +185,8 @@ export function PartnerProvider({ children }: { children: ReactNode }) {
             addRequest,
             updateRequestStatus,
             deleteRequest,
-            updateRequest
+            updateRequest,
+            refreshRequests
         }}>
             {children}
         </PartnerContext.Provider>

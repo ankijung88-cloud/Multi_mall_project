@@ -2,6 +2,7 @@ import { useState } from 'react';
 import MainLayout from '../layouts/MainLayout';
 import { useAuthStore } from '../store/useAuthStore';
 import { useNavigate } from 'react-router-dom';
+import { usePartners } from '../context/PartnerContext';
 
 const InquiryBoard = () => {
     const { user } = useAuthStore();
@@ -10,18 +11,40 @@ const InquiryBoard = () => {
     const [content, setContent] = useState('');
     const [category, setCategory] = useState('alliance'); // alliance, marketing, other
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const { addRequest } = usePartners(); // Import addRequest
+
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!user) {
             alert('로그인이 필요합니다.');
             navigate('/login?type=company');
             return;
         }
-        // In a real app, this would send data to backend
-        alert('제휴 문의가 접수되었습니다.\n담당자 검토 후 연락드리겠습니다.');
-        setTitle('');
-        setContent('');
-        setCategory('alliance');
+
+        try {
+            await addRequest({
+                partnerId: 0, // 0 for System/General Inquiry
+                partnerName: 'System (Inquiry)',
+                userId: String(user.id),
+                userName: user.name || user.email || 'Anonymous',
+                scheduleId: `inquiry-${Date.now()}`,
+                scheduleTitle: 'Partnership Inquiry', // Key tagging for filtering
+                scheduleDate: new Date().toISOString().split('T')[0],
+                inquiryContent: `[${category}] ${title}\n\n${content}`,
+                contact: user.email,
+                paymentStatus: 'pending',
+                paymentAmount: 0,
+                userType: 'Company'
+            });
+            alert('제휴 문의가 접수되었습니다.\n담당자 검토 후 연락드리겠습니다.');
+            setTitle('');
+            setContent('');
+            setCategory('alliance');
+            navigate('/'); // Redirect to home or stay? User usually expects redirect or clear. Stay is fine with alert.
+        } catch (error) {
+            console.error('Inquiry Error:', error);
+            alert('문의 접수 중 오류가 발생했습니다.');
+        }
     };
 
     return (

@@ -107,4 +107,53 @@ router.post('/admin/setup', async (req, res) => {
     }
 });
 
+// Secure Admin Password Update
+router.post('/admin/update', async (req, res) => {
+    const { id, currentPassword, newPassword, name } = req.body;
+    try {
+        // 1. Verify Current Password
+        const admin = await prisma.admin.findFirst({
+            where: { id, password: currentPassword }
+        });
+
+        if (!admin) {
+            return res.status(401).json({ success: false, message: 'Current password is incorrect' });
+        }
+
+        // 2. Update with New Password
+        const updated = await prisma.admin.update({
+            where: { id },
+            data: {
+                password: newPassword || admin.password,
+                name: name || admin.name
+            }
+        });
+
+        res.json({ success: true, user: updated });
+    } catch (error) {
+        console.error("Admin update error:", error);
+        res.status(500).json({ success: false, error: 'Update failed' });
+    }
+});
+
+router.get('/admin/members', async (req, res) => {
+    try {
+        const members = await prisma.member.findMany({
+            orderBy: { createdAt: 'desc' }
+        });
+
+        // Map to match frontend expectations (date field)
+        const formatted = members.map(m => ({
+            ...m,
+            date: m.createdAt, // Pass Date object or use .toISOString() if needed. Express handles Date serialization.
+            status: 'Active' // Default status since schema doesn't have it yet, or map if added later.
+        }));
+
+        res.json(formatted);
+    } catch (error) {
+        console.error("Fetch members error:", error);
+        res.status(500).json({ error: 'Failed to fetch members' });
+    }
+});
+
 export default router;

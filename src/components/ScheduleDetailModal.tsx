@@ -261,7 +261,7 @@ export default function ScheduleDetailModal({ partner, schedule, isOpen, onClose
                                     onClick={handleProceedToPayment}
                                     className="flex-1 bg-blue-600 text-white py-3 rounded-lg font-bold hover:bg-blue-700 transition-colors"
                                 >
-                                    다음 (결제)
+                                    {(partner.category?.includes('Audition') || partner.category?.includes('오디션') || partner.id === 4) ? '신청' : '다음 (결제)'}
                                 </button>
                             </div>
                         </div>

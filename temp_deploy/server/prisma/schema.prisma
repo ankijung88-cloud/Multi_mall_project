@@ -1,0 +1,191 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// Product Model
+model Product {
+  id                    Int     @id @default(autoincrement())
+  name                  String
+  description           String
+  image                 String
+  personalPrice         Float
+  companyPrice          Float
+  category              String
+  isRecommendedPersonal Boolean @default(false)
+  isRecommendedCompany  Boolean @default(false)
+  isNewPersonal         Boolean @default(false)
+  isNewCompany          Boolean @default(false)
+  isBrandPersonal       Boolean @default(false)
+  isBrandCompany        Boolean @default(false)
+  isSalePersonal        Boolean @default(false)
+  isSaleCompany         Boolean @default(false)
+  detailImages          String  @default("[]") // Stored as JSON string
+}
+
+// Partner Model
+model Partner {
+  id          Int        @id @default(autoincrement())
+  name        String
+  image       String
+  detailImage String?
+  description String
+  category    String?
+  username    String?
+  password    String?
+  schedules   Schedule[]
+}
+
+model Schedule {
+  id            String  @id @default(uuid())
+  partnerId     Int
+  partner       Partner @relation(fields: [partnerId], references: [id], onDelete: Cascade)
+  date          String
+  time          String
+  title         String
+  description   String
+  maxSlots      Int
+  currentSlots  Int
+  personalPrice Float?
+  companyPrice  Float?
+  detailImage   String?
+}
+
+model PartnerRequest {
+  id            String  @id @default(uuid())
+  partnerId     Int
+  partnerName   String
+  userId        String
+  userName      String
+  scheduleId    String
+  scheduleTitle String
+  scheduleDate  String
+  status        String  @default("pending") // pending, approved, sent_to_partner, confirmation_sent
+  timestamp     String
+  paymentStatus String?
+  paymentAmount Float?
+  paymentDate   String?
+  paymentMethod String?
+  userType      String?
+  inquiryContent String?
+  contact       String?
+}
+
+// Agent Model
+model Agent {
+  id          Int             @id @default(autoincrement())
+  name        String
+  image       String
+  detailImages String?
+  description String
+  username    String?
+  password    String?
+  schedules   AgentSchedule[]
+  requests    AgentRequest[]
+  defaultPersonalPrice Float?
+  defaultCompanyPrice  Float?
+}
+
+model AgentSchedule {
+  id            String @id @default(uuid())
+  agentId       Int
+  agent         Agent  @relation(fields: [agentId], references: [id], onDelete: Cascade)
+  date          String
+  time          String
+  title         String
+  description   String
+  maxSlots      Int
+  currentSlots  Int
+  personalPrice Float?
+  companyPrice  Float?
+  isAvailable   Boolean @default(true)
+}
+
+model AgentRequest {
+  id            String  @id @default(uuid())
+  agentId       Int
+  agent         Agent   @relation(fields: [agentId], references: [id], onDelete: Cascade)
+  userId        String
+  userName      String
+  date          String
+  time          String
+  flightInfo    String?
+  content       String?
+  status        String  @default("pending") // pending, approved, paid, confirmed
+  timestamp     String
+  paymentStatus String?
+  paymentAmount Float?
+  paymentMethod String?
+}
+
+
+
+// Freelancer Model
+model Freelancer {
+  id              String   @id // Keeping String ID as per frontend
+  name            String
+  title           String
+  image           String
+  description     String
+  portfolioImages String   @default("[]") // JSON
+  authorId        String?
+  username        String?
+  password        String?
+}
+
+model ContentRequest {
+  id             String @id @default(uuid())
+  freelancerId   String
+  freelancerName String
+  userId         String
+  userName       String?
+  contactInfo    String?
+  message        String
+  requesterType  String
+  status         String @default("Pending")
+  date           String
+}
+
+model ContentFavorite {
+  id        Int    @id @default(autoincrement())
+  userId    String
+  contentId String
+  
+  @@unique([userId, contentId])
+}
+
+// Admin Credentials (Super Admin)
+model Admin {
+  id       String @id
+  password String
+  name     String
+}
+
+model Member {
+  id             Int      @id @default(autoincrement())
+  email          String   @unique
+  password       String
+  name           String
+  type           String
+  companyName    String?
+  businessNumber String?
+  createdAt      DateTime @default(now())
+}
+
+model Order {
+  id            String   @id
+  customerName  String
+  customerEmail String
+  totalAmount   Float
+  currency      String
+  paymentMethod String
+  status        String   @default("Pending")
+  date          DateTime @default(now())
+  items         String   @default("[]") // JSON string of items
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}

@@ -2,7 +2,7 @@ import { usePartners } from '../context/PartnerContext';
 import { useAuthStore } from '../store/useAuthStore';
 import { Send, CheckCircle, Trash, Edit, X, Save, FileCheck } from 'lucide-react';
 import clsx from 'clsx';
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import type { PartnerRequest } from '../context/PartnerContext';
 import UserDetailModal from '../components/UserDetailModal';
@@ -12,7 +12,8 @@ const CATEGORY_MAP: Record<string, string> = {
     beauty: '뷰티 & 성형',
     performance: '공연 & 전시',
     audition: '오디션',
-    fashion: '패션'
+    fashion: '패션',
+    inquiry: '제휴/입점 문의'
 };
 
 const REVERSE_CATEGORY_MAP: Record<string, string> = {
@@ -20,15 +21,24 @@ const REVERSE_CATEGORY_MAP: Record<string, string> = {
     '뷰티 & 성형': 'Beauty & Plastic Surgery',
     '공연 & 전시': 'Performance & Exhibition',
     '오디션': 'Audition',
-    '패션': 'Fashion'
+    '패션': 'Fashion',
+    '제휴/입점 문의': 'General Inquiry'
 };
 
 export default function AdminPartnerRequests() {
-    const { partners, requests, updateRequestStatus, deleteRequest, updateRequest } = usePartners();
+    const { partners, requests, updateRequestStatus, deleteRequest, updateRequest, refreshRequests } = usePartners();
     const adminRole = useAuthStore(state => state.adminRole);
     const adminTargetId = useAuthStore(state => state.adminTargetId);
     const { category } = useParams<{ category: string }>();
     const currentCategoryName = category ? CATEGORY_MAP[category] : undefined;
+
+    // Real-time updates: Poll every 5 seconds
+    useEffect(() => {
+        const interval = setInterval(() => {
+            refreshRequests();
+        }, 5000);
+        return () => clearInterval(interval);
+    }, [refreshRequests]);
 
     const [editingRequest, setEditingRequest] = useState<PartnerRequest | null>(null);
 
@@ -38,6 +48,14 @@ export default function AdminPartnerRequests() {
     const displayedRequests = useMemo(() => {
         if (!currentCategoryName) return [];
 
+        // Special Handling for 'Inquiry' (General Partnership Inquiries)
+        if (category === 'inquiry') {
+            let filtered = requests.filter(r => r.scheduleTitle === 'Partnership Inquiry');
+            console.log(`[AdminPartnerRequests] Category: Inquiry, Total Requests: ${requests.length} -> Filtered: ${filtered.length}`);
+            return filtered;
+        }
+
+        // Standard Category Filtering
         // 1. Filter partners by category
         const categoryPartnerIds = partners
             .filter(p => {
@@ -47,15 +65,18 @@ export default function AdminPartnerRequests() {
             .map(p => p.id);
 
         // 2. Filter requests belonging to those partners
-        let filtered = requests.filter(r => categoryPartnerIds.includes(r.partnerId));
+        // Ensure type safety (Number vs String)
+        let filtered = requests.filter(r => categoryPartnerIds.includes(Number(r.partnerId)));
+
+        console.log(`[AdminPartnerRequests] Category: ${currentCategoryName}, Partners: ${categoryPartnerIds.length}, Requests: ${requests.length} -> Filtered: ${filtered.length}`);
 
         // 3. Apply Role Filtering (if Partner Admin)
         if (adminRole === 'partner' && adminTargetId) {
-            filtered = filtered.filter(r => r.partnerId === adminTargetId);
+            filtered = filtered.filter(r => Number(r.partnerId) === Number(adminTargetId));
         }
 
         return filtered;
-    }, [requests, partners, currentCategoryName, adminRole, adminTargetId]);
+    }, [requests, partners, currentCategoryName, category, adminRole, adminTargetId]);
 
     const handleSendToPartner = (id: string, partnerName: string) => {
         if (window.confirm(`Send this request detailed to ${partnerName}?`)) {

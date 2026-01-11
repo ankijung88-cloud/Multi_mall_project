@@ -13,7 +13,7 @@ export default function ProductDetail() {
     const location = useLocation();
     const { getProduct } = useProducts();
     const { userType, isAuthenticated } = useAuthStore();
-    const { addToCart } = useCart();
+    const { addToCart, openCheckout } = useCart();
 
     const product = getProduct(Number(id));
 
@@ -99,29 +99,55 @@ export default function ProductDetail() {
                                 </div>
                             </div>
 
-                            <motion.button
-                                whileHover={{ scale: 1.02 }}
-                                whileTap={{ scale: 0.98 }}
-                                onClick={() => {
-                                    if (!isAuthenticated) {
-                                        navigate(`/login?type=${isCompany ? 'company' : 'personal'}`);
-                                        return;
-                                    }
-                                    addToCart({
-                                        id: product.id,
-                                        name: product.name,
-                                        price: currentPrice,
-                                        image: product.image
-                                    });
-                                }}
-                                className={`w-full py-4 rounded-xl text-white font-bold text-lg shadow-lg flex items-center justify-center transition-all ${isCompany
-                                    ? 'bg-gray-900 hover:bg-gray-800 shadow-gray-200'
-                                    : 'bg-emerald-500 hover:bg-emerald-600 shadow-emerald-200'
-                                    }`}
-                            >
-                                {isCompany ? <ShoppingBag className="mr-2" /> : <ShoppingCart className="mr-2" />}
-                                {isCompany ? '대량 주문 담기' : '장바구니 담기'}
-                            </motion.button>
+                            <div className="flex gap-4">
+                                <motion.button
+                                    whileHover={{ scale: 1.02 }}
+                                    whileTap={{ scale: 0.98 }}
+                                    onClick={() => {
+                                        if (!isAuthenticated) {
+                                            navigate(`/login?type=${isCompany ? 'company' : 'personal'}`);
+                                            return;
+                                        }
+                                        addToCart({
+                                            id: product.id,
+                                            name: product.name,
+                                            price: currentPrice,
+                                            image: product.image
+                                        });
+                                    }}
+                                    className={`flex-1 py-4 rounded-xl font-bold text-lg shadow-lg flex items-center justify-center transition-all ${isCompany
+                                        ? 'bg-white text-gray-900 border-2 border-gray-900 hover:bg-gray-50'
+                                        : 'bg-white text-emerald-600 border-2 border-emerald-500 hover:bg-emerald-50'
+                                        }`}
+                                >
+                                    {isCompany ? <ShoppingBag className="mr-2" /> : <ShoppingCart className="mr-2" />}
+                                    {isCompany ? '대량 주문 담기' : '장바구니 담기'}
+                                </motion.button>
+
+                                <motion.button
+                                    whileHover={{ scale: 1.02 }}
+                                    whileTap={{ scale: 0.98 }}
+                                    onClick={() => {
+                                        if (!isAuthenticated) {
+                                            navigate(`/login?type=${isCompany ? 'company' : 'personal'}`);
+                                            return;
+                                        }
+                                        addToCart({
+                                            id: product.id,
+                                            name: product.name,
+                                            price: currentPrice,
+                                            image: product.image
+                                        });
+                                        openCheckout();
+                                    }}
+                                    className={`flex-1 py-4 rounded-xl text-white font-bold text-lg shadow-lg flex items-center justify-center transition-all ${isCompany
+                                        ? 'bg-gray-900 hover:bg-gray-800 shadow-gray-200'
+                                        : 'bg-emerald-500 hover:bg-emerald-600 shadow-emerald-200'
+                                        }`}
+                                >
+                                    <span>바로 주문하기</span>
+                                </motion.button>
+                            </div>
 
                             <div className="mt-2 text-center text-xs text-red-500 font-medium">
                                 * 결제시 결제하려는 화폐를 선택하세요

@@ -1,0 +1,12 @@
+{
+    "watch": [
+        "src"
+    ],
+    "ext": "ts",
+    "ignore": [
+        "src/**/*.spec.ts",
+        "prisma/*.db",
+        "prisma/*.db-journal"
+    ],
+    "exec": "ts-node ./src/server.ts"
+}

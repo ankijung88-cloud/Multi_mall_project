@@ -52,6 +52,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
         { path: '/admin/partner-requests/fashion', label: 'Fashion Requests' },
         { path: '/admin/partner-requests/travel-company', label: 'Travel Corp Requests' },
         { path: '/admin/partner-requests/food-company', label: 'Food Corp Requests' },
+        { path: '/admin/partner-requests/inquiry', label: 'Inquiry (문의/제휴)' },
     ];
 
     // State for toggling menus

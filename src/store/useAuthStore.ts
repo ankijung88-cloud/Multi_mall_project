@@ -46,36 +46,7 @@ export const useAuthStore = create<AuthState>()(
     }),
     {
       name: 'mall-auth-storage',
-      storage: createJSONStorage(() => ({
-        getItem: (name) => {
-          // Check session first, then local
-          const session = sessionStorage.getItem(name);
-          if (session) return session;
-          return localStorage.getItem(name);
-        },
-        setItem: (name, value) => {
-          try {
-            const parsed = JSON.parse(value);
-            // Check if login as admin
-            if (parsed.state?.userType === 'admin') {
-              sessionStorage.setItem(name, value);
-              // Clean up local if exists to avoid confusion/stale data
-              localStorage.removeItem(name);
-            } else {
-              // Personal/Company -> LocalStorage
-              localStorage.setItem(name, value);
-              sessionStorage.removeItem(name);
-            }
-          } catch (err) {
-            // Fallback
-            localStorage.setItem(name, value);
-          }
-        },
-        removeItem: (name) => {
-          sessionStorage.removeItem(name);
-          localStorage.removeItem(name);
-        },
-      })),
+      storage: createJSONStorage(() => sessionStorage),
     }
   )
 );

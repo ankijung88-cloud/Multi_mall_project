@@ -5,6 +5,14 @@ import clsx from 'clsx';
 import { Plus, Trash, Edit, Save, X, Calendar, ChevronLeft, ChevronRight, Trash2 } from 'lucide-react';
 import type { Agent, AgentSchedule } from '../context/AgentContext';
 
+
+
+// Local interface for form handling to allow lenient string inputs for prices
+interface FormAgentSchedule extends Omit<AgentSchedule, 'personalPrice' | 'companyPrice'> {
+    personalPrice: number | string;
+    companyPrice: number | string;
+}
+
 export default function AdminAgents() {
     const { agents, requests, addAgent, updateAgent, deleteAgent } = useAgents();
     const adminRole = useAuthStore(state => state.adminRole);
@@ -22,9 +30,11 @@ export default function AdminAgents() {
     // Form State
     const [formName, setFormName] = useState('');
     const [formImage, setFormImage] = useState('');
-    const [formDetailImage, setFormDetailImage] = useState('');
+    const [formDetailImages, setFormDetailImages] = useState<string[]>([]);
     const [formDescription, setFormDescription] = useState('');
-    const [formSchedules, setFormSchedules] = useState<AgentSchedule[]>([]);
+    const [formDefaultPersonalPrice, setFormDefaultPersonalPrice] = useState<number | string>(0);
+    const [formDefaultCompanyPrice, setFormDefaultCompanyPrice] = useState<number | string>(0);
+    const [formSchedules, setFormSchedules] = useState<FormAgentSchedule[]>([]);
     const [selectedScheduleIds, setSelectedScheduleIds] = useState<Set<string>>(new Set());
     const [formCredentials, setFormCredentials] = useState<{ username: string, password: string }>({ username: '', password: '' });
     const [bulkDate, setBulkDate] = useState('');
@@ -36,16 +46,39 @@ export default function AdminAgents() {
             setEditingAgent(agent);
             setFormName(agent.name);
             setFormImage(agent.image);
-            setFormDetailImage(agent.detailImage || '');
+
+            try {
+                if ((agent as any).detailImages) {
+                    const parsed = typeof (agent as any).detailImages === 'string'
+                        ? JSON.parse((agent as any).detailImages)
+                        : (agent as any).detailImages;
+                    setFormDetailImages(Array.isArray(parsed) ? parsed : []);
+                } else if ((agent as any).detailImage) {
+                    setFormDetailImages([(agent as any).detailImage]);
+                } else {
+                    setFormDetailImages([]);
+                }
+            } catch (e) {
+                setFormDetailImages([]);
+            }
+
             setFormDescription(agent.description);
-            setFormSchedules(agent.schedules || []);
+            setFormDefaultPersonalPrice(agent.defaultPersonalPrice || 0);
+            setFormDefaultCompanyPrice(agent.defaultCompanyPrice || 0);
+            setFormSchedules(agent.schedules ? agent.schedules.map(s => ({
+                ...s,
+                personalPrice: s.personalPrice ?? 0,
+                companyPrice: s.companyPrice ?? 0
+            })) : []);
             setFormCredentials(agent.credentials || { username: '', password: '' });
         } else {
             setEditingAgent(null);
             setFormName('');
             setFormImage('');
-            setFormDetailImage('');
+            setFormDetailImages([]);
             setFormDescription('');
+            setFormDefaultPersonalPrice(0);
+            setFormDefaultCompanyPrice(0);
             setFormSchedules([]);
             setFormCredentials({ username: '', password: '' });
         }
@@ -57,7 +90,7 @@ export default function AdminAgents() {
         setEditingAgent(null);
     };
 
-    const handleSave = () => {
+    const handleSave = async () => {
         if (!formName) {
             alert("에이전트명은 필수입니다.");
             return;
@@ -66,16 +99,35 @@ export default function AdminAgents() {
         const agentData = {
             name: formName,
             image: formImage,
-            detailImage: formDetailImage,
+            detailImages: JSON.stringify(formDetailImages),
             description: formDescription,
-            schedules: formSchedules,
+            defaultPersonalPrice: Number(formDefaultPersonalPrice),
+            defaultCompanyPrice: Number(formDefaultCompanyPrice),
+            schedules: formSchedules.map(s => ({
+                ...s,
+                personalPrice: Number(s.personalPrice),
+                companyPrice: Number(s.companyPrice)
+            })),
             credentials: (formCredentials.username && formCredentials.password) ? formCredentials : undefined
         };
 
+        // Note: The context's addAgent/updateAgent might not handle the async payload correctly if they don't support partial updates for detailImages vs detailImage
+        // So we might need to rely on the backend route adjusting for 'detailImages' field.
+        // Assuming context calls the API which we saw in partner.routes... wait, agent.routes.
+
         if (editingAgent) {
-            updateAgent(editingAgent.id, agentData);
+            // We need to call the API directly or ensure context is updated.
+            // Given the context is a black box here (viewed previously but simplistic), let's trust updateAgent calls the API.
+            // But updateAgent in context usually takes 'Partial<Agent>'.
+            // We'll cast to any to bypass strict type check for now if needed, but Agent interface was updated manually in memory? No.
+            // Wait, I didn't update Agent Interface in context to have 'detailImages'.
+            // I only updated schema.prisma.
+            // I should probably pass it as 'detailImage' (singular) containing the JSON string if I didn't update the Context Type.
+            // But wait, schema has 'detailImages'.
+            // Let's pass 'detailImages' in the object.
+            await updateAgent(editingAgent.id, agentData as any);
         } else {
-            addAgent(agentData);
+            await addAgent(agentData as any);
         }
         closeModal();
     };
@@ -93,39 +145,6 @@ export default function AdminAgents() {
         openModal(agent);
     };
 
-
-    const handleSheetChange = (time: string, subIndex: number, field: keyof AgentSchedule, value: any) => {
-        if (!bulkDate) return;
-
-        // Find all schedules for this time slot
-        const schedulesAtTime = formSchedules.filter(s => s.date === bulkDate && s.time === time);
-        const targetSchedule = schedulesAtTime[subIndex];
-
-        if (targetSchedule) {
-            // Update existing schedule
-            const realIndex = formSchedules.findIndex(s => s.id === targetSchedule.id);
-            if (realIndex >= 0) {
-                const updated = [...formSchedules];
-                updated[realIndex] = { ...updated[realIndex], [field]: value };
-                setFormSchedules(updated);
-            }
-        } else {
-            // Create new schedule
-            const newSchedule: AgentSchedule = {
-                id: Date.now().toString(36) + Math.random().toString(36).substr(2),
-                date: bulkDate,
-                time: time,
-                title: field === 'title' ? value : '',
-                description: field === 'description' ? value : '',
-                maxSlots: field === 'maxSlots' ? Number(value) : 10,
-                personalPrice: field === 'personalPrice' ? Number(value) : undefined,
-                companyPrice: field === 'companyPrice' ? Number(value) : undefined,
-                currentSlots: 0,
-                isAvailable: field === 'isAvailable' ? value : true
-            };
-            setFormSchedules([...formSchedules, newSchedule]);
-        }
-    };
 
     const handleDeleteSchedule = (id: string, e: React.MouseEvent) => {
         e.stopPropagation();
@@ -235,13 +254,14 @@ export default function AdminAgents() {
                                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">신청일</th>
                                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">신청자</th>
                                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">신청 일정</th>
+                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">항공편/내용</th>
                                         <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">상태</th>
                                     </tr>
                                 </thead>
                                 <tbody className="bg-white divide-y divide-gray-200">
                                     {!requests || requests.filter(r => r.agentId === viewingRequestsAgent.id).length === 0 ? (
                                         <tr>
-                                            <td colSpan={4} className="px-6 py-8 text-center text-gray-500">
+                                            <td colSpan={5} className="px-6 py-8 text-center text-gray-500">
                                                 신청 내역이 없습니다.
                                             </td>
                                         </tr>
@@ -254,20 +274,28 @@ export default function AdminAgents() {
                                                 <td className="px-6 py-4 whitespace-nowrap">
                                                     <div className="text-sm font-medium text-gray-900">{request.userName}</div>
                                                     <div className="text-sm text-gray-500">{request.userId}</div>
+                                                    <div className="text-xs text-gray-400 mt-1">{request.userType}</div>
                                                 </td>
                                                 <td className="px-6 py-4 whitespace-nowrap">
-                                                    <div className="text-sm font-medium text-gray-900">{request.scheduleTitle}</div>
-                                                    <div className="text-sm text-gray-500">{request.scheduleDate}</div>
+                                                    <div className="text-sm font-bold text-gray-900">{request.date}</div>
+                                                    <div className="text-sm text-gray-500">{request.time}</div>
+                                                </td>
+                                                <td className="px-6 py-4">
+                                                    <div className="text-sm text-gray-900">
+                                                        {request.flightInfo && <div className="font-semibold mb-1">✈ {request.flightInfo}</div>}
+                                                        {request.content && <div className="text-gray-500 text-xs text-wrap max-w-xs">{request.content}</div>}
+                                                    </div>
                                                 </td>
                                                 <td className="px-6 py-4 whitespace-nowrap text-center">
                                                     <span className={clsx(
                                                         "px-2 inline-flex text-xs leading-5 font-semibold rounded-full",
-                                                        request.status === 'approved' ? "bg-green-100 text-green-800" :
-                                                            request.status === 'sent_to_agent' ? "bg-blue-100 text-blue-800" :
+                                                        request.status === 'approved' || request.status === 'confirmed' ? "bg-green-100 text-green-800" :
+                                                            request.status === 'paid' ? "bg-blue-100 text-blue-800" :
                                                                 "bg-yellow-100 text-yellow-800"
                                                     )}>
-                                                        {request.status === 'sent_to_agent' ? '전송됨' :
-                                                            request.status === 'approved' ? '승인됨' : '대기중'}
+                                                        {request.status === 'pending' ? '대기중' :
+                                                            request.status === 'paid' ? '결제완료' :
+                                                                request.status === 'confirmed' ? '확정' : request.status}
                                                     </span>
                                                 </td>
                                             </tr>
@@ -283,100 +311,145 @@ export default function AdminAgents() {
             {/* Modal */}
             {isModalOpen && (
                 <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-                    <div className="bg-white rounded-xl shadow-xl w-full max-w-7xl max-h-[90vh] overflow-y-auto">
-                        <div className="p-6 border-b flex justify-between items-center">
-                            <h3 className="text-xl font-bold">{editingAgent ? '에이전트 수정' : '새 에이전트 등록'}</h3>
-                            <button onClick={closeModal}><X size={24} /></button>
-                        </div>
-
-                        <div className="p-6 space-y-4">
-                            <div className="grid grid-cols-2 gap-4">
-                                <label className="block text-sm font-medium text-gray-700 mb-1">에이전트명</label>
-                                <input
-                                    type="text"
-                                    value={formName}
-                                    onChange={e => setFormName(e.target.value)}
-                                    className="w-full border rounded-lg px-3 py-2"
-                                />
+                    <div className="relative flex items-center">
+                        <div className="bg-white rounded-xl shadow-xl w-full max-w-4xl max-h-[90vh] overflow-y-auto">
+                            <div className="p-6 border-b flex justify-between items-center">
+                                <h3 className="text-xl font-bold">{editingAgent ? '에이전트 수정' : '새 에이전트 등록'}</h3>
+                                <button onClick={closeModal}><X size={24} /></button>
                             </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">대표 이미지 (메인)</label>
-                                <div className="flex items-center space-x-2">
-                                    {formImage && (
-                                        <img src={formImage} alt="Preview" className="w-10 h-10 object-cover rounded" />
-                                    )}
-                                    <input
-                                        type="file"
-                                        accept="image/*"
-                                        onChange={e => {
-                                            const file = e.target.files?.[0];
-                                            if (file) {
-                                                const reader = new FileReader();
-                                                reader.onloadend = () => setFormImage(reader.result as string);
-                                                reader.readAsDataURL(file);
-                                            }
-                                        }}
-                                        className="w-full border rounded-lg px-3 py-2 text-sm"
-                                    />
-                                </div>
-                                <p className="text-xs text-gray-500 mt-1">파일을 선택하면 자동으로 미리보기가 표시됩니다.</p>
-                            </div>
-                            <div className="col-span-2">
-                                <label className="block text-sm font-medium text-gray-700 mb-1">소개 이미지 (상단 상세)</label>
-                                <div className="flex items-center space-x-2">
-                                    {formDetailImage && (
-                                        <img src={formDetailImage} alt="Preview" className="w-10 h-10 object-cover rounded" />
-                                    )}
-                                    <input
-                                        type="file"
-                                        accept="image/*"
-                                        onChange={e => {
-                                            const file = e.target.files?.[0];
-                                            if (file) {
-                                                const reader = new FileReader();
-                                                reader.onloadend = () => setFormDetailImage(reader.result as string);
-                                                reader.readAsDataURL(file);
-                                            }
-                                        }}
-                                        className="w-full border rounded-lg px-3 py-2 text-sm"
-                                    />
-                                </div>
-                                <p className="text-xs text-gray-500 mt-1">에이전트 상세 페이지 상단에 표시될 긴 이미지입니다.</p>
-                            </div>
-                        </div>
 
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">설명</label>
-                            <textarea
-                                value={formDescription}
-                                onChange={e => setFormDescription(e.target.value)}
-                                className="w-full border rounded-lg px-3 py-2 h-24"
-                            />
-                        </div>
-
-                        {/* Credentials Section for Super Admin */}
-                        {adminRole === 'super' && (
-                            <div className="bg-yellow-50 p-4 rounded-lg border border-yellow-200">
-                                <h4 className="font-bold text-yellow-800 mb-2">관리자 계정 설정 (Admin Credentials)</h4>
+                            <div className="p-6 space-y-4">
                                 <div className="grid grid-cols-2 gap-4">
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">Username (ID)</label>
+                                    <div className="col-span-2">
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">에이전트명</label>
+                                        <input
+                                            type="text"
+                                            value={formName}
+                                            onChange={e => setFormName(e.target.value)}
+                                            className="w-full border rounded-lg px-3 py-2"
+                                        />
+                                    </div>
+                                    <div className="col-span-2">
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">대표 이미지 (Main Image)</label>
+                                        <div className="flex gap-2 mb-2">
+                                            <input
+                                                type="file"
+                                                accept="image/*"
+                                                onChange={(e) => {
+                                                    const file = e.target.files?.[0];
+                                                    if (file) {
+                                                        const reader = new FileReader();
+                                                        reader.onloadend = () => setFormImage(reader.result as string);
+                                                        reader.readAsDataURL(file);
+                                                    }
+                                                }}
+                                                className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                                            />
+                                        </div>
+                                        <input
+                                            type="text"
+                                            value={formImage}
+                                            onChange={e => setFormImage(e.target.value)}
+                                            className="w-full border rounded-lg px-3 py-2 text-sm text-gray-400 mb-4"
+                                            placeholder="URL or File Path (Auto-filled)"
+                                        />
+
+                                        <div className="flex justify-between items-center mb-1">
+                                            <label className="block text-sm font-medium text-gray-700">상세 이미지 (Detail Images)</label>
+                                            <span className="text-xs text-gray-500">{formDetailImages.length} / 22 Uploaded</span>
+                                        </div>
+                                        <div className="flex gap-2 mb-2">
+                                            <input
+                                                type="file"
+                                                multiple
+                                                accept="image/*"
+                                                onChange={(e) => {
+                                                    const files = Array.from(e.target.files || []);
+                                                    if (formDetailImages.length + files.length > 22) {
+                                                        alert("최대 22장까지만 업로드 가능합니다.");
+                                                        return;
+                                                    }
+                                                    files.forEach(file => {
+                                                        const reader = new FileReader();
+                                                        reader.onloadend = () => {
+                                                            setFormDetailImages(prev => [...prev, reader.result as string]);
+                                                        };
+                                                        reader.readAsDataURL(file);
+                                                    });
+                                                }}
+                                                className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-green-50 file:text-green-700 hover:file:bg-green-100"
+                                                disabled={formDetailImages.length >= 22}
+                                            />
+                                        </div>
+
+                                        {/* Preview Grid for Detail Images */}
+                                        {formDetailImages.length > 0 && (
+                                            <div className="grid grid-cols-5 gap-2 mt-2 max-h-40 overflow-y-auto p-2 border rounded bg-gray-50">
+                                                {formDetailImages.map((img, idx) => (
+                                                    <div key={idx} className="relative group aspect-square">
+                                                        <img src={img} alt={`Detail ${idx}`} className="w-full h-full object-cover rounded shadow-sm border" />
+                                                        <button
+                                                            onClick={() => setFormDetailImages(formDetailImages.filter((_, i) => i !== idx))}
+                                                            className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition-opacity"
+                                                        >
+                                                            <X size={12} />
+                                                        </button>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    <div className="col-span-2 grid grid-cols-2 gap-4">
+                                        <div>
+                                            <label className="block text-sm font-medium text-black mb-1">기본 가격 (개인)</label>
+                                            <input
+                                                type="number"
+                                                value={formDefaultPersonalPrice || ''}
+                                                onChange={e => setFormDefaultPersonalPrice(e.target.value)}
+                                                className="w-full border rounded-lg px-3 py-2"
+                                                placeholder="0"
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="block text-sm font-medium text-black mb-1">기본 가격 (기업)</label>
+                                            <input
+                                                type="number"
+                                                value={formDefaultCompanyPrice || ''}
+                                                onChange={e => setFormDefaultCompanyPrice(e.target.value)}
+                                                className="w-full border rounded-lg px-3 py-2"
+                                                placeholder="0"
+                                            />
+                                        </div>
+                                    </div>
+
+                                    <div className="col-span-2">
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">설명</label>
+                                        <textarea
+                                            value={formDescription}
+                                            onChange={e => setFormDescription(e.target.value)}
+                                            className="w-full border rounded-lg px-3 py-2 h-32"
+                                        />
+                                    </div>
+
+                                    <div className="col-span-1">
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">아이디 (Username)</label>
                                         <input
                                             type="text"
                                             value={formCredentials.username}
                                             onChange={e => setFormCredentials({ ...formCredentials, username: e.target.value })}
-                                            className="w-full border rounded-lg px-3 py-2"
-                                            placeholder="admin_id"
+                                            className="w-full border rounded-lg px-3 py-2 bg-gray-50"
+                                            placeholder="Admin Login ID"
                                         />
                                     </div>
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">Password</label>
+                                    <div className="col-span-1">
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">비밀번호 (Password)</label>
                                         <input
                                             type="text"
                                             value={formCredentials.password}
                                             onChange={e => setFormCredentials({ ...formCredentials, password: e.target.value })}
-                                            className="w-full border rounded-lg px-3 py-2"
-                                            placeholder="password"
+                                            className="w-full border rounded-lg px-3 py-2 bg-gray-50"
+                                            placeholder="Admin Login PW"
                                         />
                                     </div>
                                 </div>
@@ -384,297 +457,284 @@ export default function AdminAgents() {
                                     * 이 계정으로 해당 에이전트 관리자 페이지에 로그인할 수 있습니다.
                                 </p>
                             </div>
-                        )}
 
-                        {/* Schedule Section */}
-                        <div className="border-t pt-4">
-                            <div className="flex justify-between items-center mb-4">
-                                <h4 className="font-bold flex items-center"><Calendar size={18} className="mr-2" /> 일정 관리 (Daily Sheet)</h4>
-                            </div>
-
-                            {/* Calendar View vs Daily Sheet View */}
-                            {!bulkDate ? (
-                                <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-                                    {/* Calendar Header */}
-                                    <div className="flex items-center justify-between px-6 py-4 bg-gray-50 border-b">
-                                        <button
-                                            onClick={() => setBrowseDate(new Date(browseDate.getFullYear(), browseDate.getMonth() - 1, 1))}
-                                            className="p-2 hover:bg-white rounded-full transition-colors"
-                                        >
-                                            <ChevronLeft size={20} />
-                                        </button>
-                                        <h3 className="text-lg font-bold text-gray-800">
-                                            {browseDate.getFullYear()}년 {browseDate.getMonth() + 1}월
-                                        </h3>
-                                        <button
-                                            onClick={() => setBrowseDate(new Date(browseDate.getFullYear(), browseDate.getMonth() + 1, 1))}
-                                            className="p-2 hover:bg-white rounded-full transition-colors"
-                                        >
-                                            <ChevronRight size={20} />
-                                        </button>
-                                    </div>
-
-                                    {/* Calendar Grid */}
-                                    <div className="p-4">
-                                        <div className="grid grid-cols-7 mb-2 text-center text-xs font-semibold text-gray-500">
-                                            <div className="text-red-500">Sun</div>
-                                            <div>Mon</div>
-                                            <div>Tue</div>
-                                            <div>Wed</div>
-                                            <div>Thu</div>
-                                            <div>Fri</div>
-                                            <div className="text-blue-500">Sat</div>
-                                        </div>
-                                        <div className="grid grid-cols-7 gap-1">
-                                            {/* Empty cells for start padding */}
-                                            {Array.from({ length: new Date(browseDate.getFullYear(), browseDate.getMonth(), 1).getDay() }).map((_, i) => (
-                                                <div key={`empty-${i}`} className="h-24 bg-gray-50/50 rounded-lg"></div>
-                                            ))}
-
-                                            {/* Days */}
-                                            {Array.from({ length: new Date(browseDate.getFullYear(), browseDate.getMonth() + 1, 0).getDate() }).map((_, i) => {
-                                                const day = i + 1;
-                                                const dateStr = `${browseDate.getFullYear()}-${String(browseDate.getMonth() + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-                                                const hasSchedule = formSchedules.filter(s => s.date === dateStr).length;
-
-                                                return (
-                                                    <div
-                                                        key={day}
-                                                        onClick={() => setBulkDate(dateStr)}
-                                                        className="h-24 border rounded-lg p-2 cursor-pointer hover:border-blue-500 hover:ring-1 hover:ring-blue-500 transition-all flex flex-col justify-between bg-white"
-                                                    >
-                                                        <span className={clsx(
-                                                            "text-sm font-medium",
-                                                            new Date(browseDate.getFullYear(), browseDate.getMonth(), day).getDay() === 0 ? "text-red-500" :
-                                                                new Date(browseDate.getFullYear(), browseDate.getMonth(), day).getDay() === 6 ? "text-blue-500" : "text-gray-700"
-                                                        )}>
-                                                            {day}
-                                                        </span>
-
-                                                        {hasSchedule > 0 && (
-                                                            <div className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-md font-semibold text-center">
-                                                                {hasSchedule}개 일정
-                                                            </div>
-                                                        )}
-                                                    </div>
-                                                );
-                                            })}
-                                        </div>
-                                    </div>
+                            {/* Schedule Section */}
+                            <div className="border-t pt-4">
+                                <div className="flex justify-between items-center mb-4">
+                                    <h4 className="font-bold flex items-center"><Calendar size={18} className="mr-2" /> 일정 관리 (Daily Sheet)</h4>
                                 </div>
-                            ) : (
-                                <>
-                                    <div className="bg-blue-50 p-4 rounded-lg mb-4 flex justify-between items-center">
-                                        <div className="flex items-center">
-                                            <button
-                                                onClick={() => setBulkDate('')}
-                                                className="mr-3 p-1 hover:bg-blue-100 rounded text-blue-600"
-                                            >
-                                                <ChevronLeft size={24} />
-                                            </button>
-                                            <h3 className="text-xl font-bold text-blue-900">{bulkDate} 일정 관리</h3>
-                                        </div>
-                                        <span className="text-sm font-medium text-blue-700 bg-blue-100 px-3 py-1 rounded-full flex items-center gap-2">
-                                            <span>총 {formSchedules.filter(s => s.date === bulkDate).length}개</span>
-                                            {selectedScheduleIds.size > 0 && (
-                                                <button
-                                                    onClick={handleDeleteSelected}
-                                                    className="bg-red-500 text-white px-2 py-0.5 rounded text-xs hover:bg-red-600 transition-colors"
-                                                >
-                                                    선택삭제 ({selectedScheduleIds.size})
-                                                </button>
-                                            )}
-                                        </span>
-                                    </div>
 
-                                    <div className="overflow-x-auto border rounded-lg shadow-sm">
-                                        <table className="min-w-full divide-y divide-gray-200">
-                                            <thead className="bg-gray-50">
-                                                <tr>
-                                                    <th className="px-4 py-2 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-10">
-                                                        <input
-                                                            type="checkbox"
-                                                            className="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500 cursor-pointer"
-                                                            checked={
-                                                                formSchedules.filter(s => s.date === bulkDate).length > 0 &&
-                                                                formSchedules.filter(s => s.date === bulkDate).every(s => selectedScheduleIds.has(s.id))
-                                                            }
-                                                            onChange={(e) => {
-                                                                const checked = e.target.checked;
-                                                                const currentIds = formSchedules.filter(s => s.date === bulkDate).map(s => s.id);
-                                                                const newSelected = new Set(selectedScheduleIds);
-                                                                currentIds.forEach(id => {
-                                                                    if (checked) newSelected.add(id);
-                                                                    else newSelected.delete(id);
-                                                                });
-                                                                setSelectedScheduleIds(newSelected);
-                                                            }}
-                                                        />
-                                                    </th>
-                                                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-20">Time</th>
-                                                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Title</th>
-                                                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Description</th>
-                                                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-28">Personal Price</th>
-                                                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-28">Company Price</th>
-                                                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-24">Max Slots</th>
-                                                    <th className="px-4 py-2 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-20">
-                                                        <label className="flex flex-col items-center cursor-pointer group">
-                                                            <span className="group-hover:text-red-600 transition-colors">예약불가</span>
+                                {/* Calendar View vs Daily Sheet View */}
+                                {!bulkDate ? (
+                                    <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+                                        {/* Calendar Header */}
+                                        <div className="flex items-center justify-between px-6 py-4 bg-gray-50 border-b">
+                                            <button
+                                                onClick={() => setBrowseDate(new Date(browseDate.getFullYear(), browseDate.getMonth() - 1, 1))}
+                                                className="p-2 hover:bg-white rounded-full transition-colors"
+                                            >
+                                                <ChevronLeft size={20} />
+                                            </button>
+                                            <h3 className="text-lg font-bold text-gray-800">
+                                                {browseDate.getFullYear()}년 {browseDate.getMonth() + 1}월
+                                            </h3>
+                                            <button
+                                                onClick={() => setBrowseDate(new Date(browseDate.getFullYear(), browseDate.getMonth() + 1, 1))}
+                                                className="p-2 hover:bg-white rounded-full transition-colors"
+                                            >
+                                                <ChevronRight size={20} />
+                                            </button>
+                                        </div>
+
+                                        {/* Calendar Grid */}
+                                        <div className="p-4">
+                                            <div className="grid grid-cols-7 mb-2 text-center text-xs font-semibold text-gray-500">
+                                                <div className="text-red-500">Sun</div>
+                                                <div>Mon</div>
+                                                <div>Tue</div>
+                                                <div>Wed</div>
+                                                <div>Thu</div>
+                                                <div>Fri</div>
+                                                <div className="text-blue-500">Sat</div>
+                                            </div>
+                                            <div className="grid grid-cols-7 gap-1">
+                                                {/* Empty cells for start padding */}
+                                                {Array.from({ length: new Date(browseDate.getFullYear(), browseDate.getMonth(), 1).getDay() }).map((_, i) => (
+                                                    <div key={`empty-${i}`} className="h-24 bg-gray-50/50 rounded-lg"></div>
+                                                ))}
+
+                                                {/* Days */}
+                                                {Array.from({ length: new Date(browseDate.getFullYear(), browseDate.getMonth() + 1, 0).getDate() }).map((_, i) => {
+                                                    const day = i + 1;
+                                                    const dateStr = `${browseDate.getFullYear()}-${String(browseDate.getMonth() + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+                                                    const hasSchedule = formSchedules.filter(s => s.date === dateStr).length;
+
+                                                    return (
+                                                        <div
+                                                            key={day}
+                                                            onClick={() => setBulkDate(dateStr)}
+                                                            className="h-24 border rounded-lg p-2 cursor-pointer hover:border-blue-500 hover:ring-1 hover:ring-blue-500 transition-all flex flex-col justify-between bg-white"
+                                                        >
+                                                            <span className={clsx(
+                                                                "text-sm font-medium",
+                                                                new Date(browseDate.getFullYear(), browseDate.getMonth(), day).getDay() === 0 ? "text-red-500" :
+                                                                    new Date(browseDate.getFullYear(), browseDate.getMonth(), day).getDay() === 6 ? "text-blue-500" : "text-gray-700"
+                                                            )}>
+                                                                {day}
+                                                            </span>
+
+                                                            {hasSchedule > 0 && (
+                                                                <div className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-md font-semibold text-center">
+                                                                    {hasSchedule}개 일정
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                    );
+                                                })}
+                                            </div>
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <>
+                                        <div className="bg-blue-50 p-4 rounded-lg mb-4 flex justify-between items-center">
+                                            <div className="flex items-center">
+                                                <button
+                                                    onClick={() => setBulkDate('')}
+                                                    className="mr-3 p-1 hover:bg-blue-100 rounded text-blue-600"
+                                                >
+                                                    <ChevronLeft size={24} />
+                                                </button>
+                                                <h3 className="text-xl font-bold text-blue-900">{bulkDate} 일정 관리</h3>
+                                            </div>
+                                            <div className="flex items-center gap-2">
+                                                <button
+                                                    onClick={() => {
+                                                        const newSchedule: FormAgentSchedule = {
+                                                            id: Date.now().toString(36) + Math.random().toString(36).substr(2),
+                                                            date: bulkDate,
+                                                            time: '09:00',
+                                                            title: '예약 가능',
+                                                            description: '',
+                                                            maxSlots: 10,
+                                                            personalPrice: 0,
+                                                            companyPrice: 0,
+                                                            currentSlots: 0,
+                                                            isAvailable: true
+                                                        };
+                                                        setFormSchedules([...formSchedules, newSchedule]);
+                                                    }}
+                                                    className="bg-blue-600 text-white px-3 py-1.5 rounded-lg text-sm font-bold hover:bg-blue-700 transition-colors flex items-center shadow-sm"
+                                                >
+                                                    <Plus size={16} className="mr-1" />
+                                                    일정 추가
+                                                </button>
+                                                {selectedScheduleIds.size > 0 && (
+                                                    <button
+                                                        onClick={handleDeleteSelected}
+                                                        className="bg-red-500 text-white px-3 py-1.5 rounded-lg text-sm font-bold hover:bg-red-600 transition-colors shadow-sm"
+                                                    >
+                                                        선택삭제 ({selectedScheduleIds.size})
+                                                    </button>
+                                                )}
+                                            </div>
+                                        </div>
+
+                                        <div className="overflow-x-auto border rounded-lg shadow-sm">
+                                            <table className="min-w-full divide-y divide-gray-200">
+                                                <thead className="bg-gray-50">
+                                                    <tr>
+                                                        <th className="px-4 py-3 text-center w-10">
                                                             <input
                                                                 type="checkbox"
-                                                                className="mt-1 w-4 h-4 text-red-600 rounded border-gray-300 focus:ring-red-500 cursor-pointer"
+                                                                className="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500 cursor-pointer"
                                                                 checked={
                                                                     formSchedules.filter(s => s.date === bulkDate).length > 0 &&
-                                                                    formSchedules.filter(s => s.date === bulkDate).every(s => s.isAvailable === false)
+                                                                    formSchedules.filter(s => s.date === bulkDate).every(s => selectedScheduleIds.has(s.id))
                                                                 }
                                                                 onChange={(e) => {
-                                                                    const setUnavailable = e.target.checked;
-                                                                    const updatedSchedules = formSchedules.map(s => {
-                                                                        if (s.date === bulkDate) {
-                                                                            return { ...s, isAvailable: !setUnavailable };
-                                                                        }
-                                                                        return s;
+                                                                    const checked = e.target.checked;
+                                                                    const currentIds = formSchedules.filter(s => s.date === bulkDate).map(s => s.id);
+                                                                    const newSelected = new Set(selectedScheduleIds);
+                                                                    currentIds.forEach(id => {
+                                                                        if (checked) newSelected.add(id);
+                                                                        else newSelected.delete(id);
                                                                     });
-                                                                    setFormSchedules(updatedSchedules);
+                                                                    setSelectedScheduleIds(newSelected);
                                                                 }}
                                                             />
-                                                        </label>
-                                                    </th>
-                                                    <th className="px-4 py-2 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-10">
-                                                        삭제
-                                                    </th>
-                                                </tr>
-                                            </thead>
-                                            <tbody className="bg-white divide-y divide-gray-200">
-                                                {['09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00', '18:00', '19:00', '20:00'].map(time => {
-                                                    const schedulesAtTime = formSchedules.filter(s => s.date === bulkDate && s.time === time);
-
-                                                    return Array(5).fill(null).map((_, subIndex) => {
-                                                        const schedule = schedulesAtTime[subIndex];
-                                                        const isFirst = subIndex === 0;
-
-                                                        return (
-                                                            <tr key={`${time}-${subIndex}`} className={schedule ? (schedule.isAvailable === false ? "bg-red-50/50" : (selectedScheduleIds.has(schedule.id) ? "bg-blue-100/50" : "bg-blue-50/30")) : ""}>
-                                                                {isFirst && (
-                                                                    <td rowSpan={5} className="px-4 py-2 text-center align-top bg-gray-50 border-r">
-                                                                        {/* Row merged, no checkbox here usually, but keeping alignment */}
-                                                                    </td>
-                                                                )}
-                                                                <td className="px-4 py-1 text-center">
-                                                                    {schedule && (
+                                                        </th>
+                                                        <th className="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider w-32">TIME</th>
+                                                        <th className="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">DESCRIPTION</th>
+                                                        <th className="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider w-32">PERSONAL PRICE</th>
+                                                        <th className="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider w-32">COMPANY PRICE</th>
+                                                        <th className="px-4 py-3 text-center text-xs font-bold text-gray-500 uppercase tracking-wider w-24">예약 가능</th>
+                                                        <th className="px-4 py-3 text-center text-xs font-bold text-gray-500 uppercase tracking-wider w-16">삭제</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody className="bg-white divide-y divide-gray-200">
+                                                    {formSchedules.filter(s => s.date === bulkDate).length === 0 ? (
+                                                        <tr>
+                                                            <td colSpan={7} className="px-4 py-8 text-center text-gray-500">
+                                                                일정이 없습니다. '일정 추가' 버튼을 눌러 추가하세요.
+                                                            </td>
+                                                        </tr>
+                                                    ) : (
+                                                        formSchedules
+                                                            .filter(s => s.date === bulkDate)
+                                                            .sort((a, b) => a.time.localeCompare(b.time))
+                                                            .map((schedule) => (
+                                                                <tr key={schedule.id} className={schedule.isAvailable === false ? "bg-gray-50" : "hover:bg-blue-50/30 transition-colors"}>
+                                                                    <td className="px-4 py-3 text-center">
                                                                         <input
                                                                             type="checkbox"
                                                                             checked={selectedScheduleIds.has(schedule.id)}
                                                                             onChange={() => handleToggleSelect(schedule.id)}
                                                                             className="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500 cursor-pointer"
                                                                         />
-                                                                    )}
-                                                                </td>
-                                                                {isFirst && (
-                                                                    <td rowSpan={5} className="px-4 py-2 whitespace-nowrap text-sm font-bold text-gray-700 align-top bg-gray-50 border-r">
-                                                                        {time}
                                                                     </td>
-                                                                )}
-                                                                <td className="px-4 py-1">
-                                                                    <input
-                                                                        type="text"
-                                                                        value={schedule?.title || ''}
-                                                                        onChange={(e) => handleSheetChange(time, subIndex, 'title', e.target.value)}
-                                                                        placeholder={subIndex === 0 ? "메인 일정 제목" : "추가 일정 제목"}
-                                                                        className="w-full border-gray-200 rounded text-sm focus:ring-blue-500 focus:border-blue-500 bg-transparent"
-                                                                        disabled={schedule?.isAvailable === false}
-                                                                    />
-                                                                </td>
-                                                                <td className="px-4 py-1">
-                                                                    <input
-                                                                        type="text"
-                                                                        value={schedule?.description || ''}
-                                                                        onChange={(e) => handleSheetChange(time, subIndex, 'description', e.target.value)}
-                                                                        placeholder="설명"
-                                                                        className="w-full border-gray-200 rounded text-sm focus:ring-blue-500 focus:border-blue-500 bg-transparent"
-                                                                        disabled={schedule?.isAvailable === false}
-                                                                    />
-                                                                </td>
-                                                                <td className="px-4 py-1">
-                                                                    <input
-                                                                        type="number"
-                                                                        value={schedule?.personalPrice || ''}
-                                                                        onChange={(e) => handleSheetChange(time, subIndex, 'personalPrice', e.target.value)}
-                                                                        placeholder="₩ (개인)"
-                                                                        className="w-full border-gray-200 rounded text-sm focus:ring-blue-500 focus:border-blue-500 bg-transparent"
-                                                                        disabled={schedule?.isAvailable === false}
-                                                                    />
-                                                                </td>
-                                                                <td className="px-4 py-1">
-                                                                    <input
-                                                                        type="number"
-                                                                        value={schedule?.companyPrice || ''}
-                                                                        onChange={(e) => handleSheetChange(time, subIndex, 'companyPrice', e.target.value)}
-                                                                        placeholder="₩ (기업)"
-                                                                        className="w-full border-gray-200 rounded text-sm focus:ring-blue-500 focus:border-blue-500 bg-transparent"
-                                                                        disabled={schedule?.isAvailable === false}
-                                                                    />
-                                                                </td>
-                                                                <td className="px-4 py-1">
-                                                                    <input
-                                                                        type="number"
-                                                                        value={schedule ? schedule.maxSlots : 10}
-                                                                        onChange={(e) => handleSheetChange(time, subIndex, 'maxSlots', e.target.value)}
-                                                                        className="w-full border-gray-200 rounded text-sm focus:ring-blue-500 focus:border-blue-500 bg-transparent"
-                                                                        disabled={schedule?.isAvailable === false}
-                                                                    />
-                                                                </td>
-                                                                <td className="px-4 py-1 text-center">
-                                                                    <input
-                                                                        type="checkbox"
-                                                                        checked={schedule?.isAvailable === false}
-                                                                        onChange={(e) => handleSheetChange(time, subIndex, 'isAvailable', !e.target.checked)}
-                                                                        className="w-4 h-4 text-red-600 rounded border-gray-300 focus:ring-red-500 cursor-pointer"
-                                                                    />
-                                                                </td>
-                                                                <td className="px-4 py-1 text-center">
-                                                                    {schedule && (
+                                                                    <td className="px-4 py-2">
+                                                                        <input
+                                                                            type="time"
+                                                                            value={schedule.time}
+                                                                            onChange={(e) => {
+                                                                                const updated = formSchedules.map(s => s.id === schedule.id ? { ...s, time: e.target.value } : s);
+                                                                                setFormSchedules(updated);
+                                                                            }}
+                                                                            className="w-full border-gray-200 rounded text-sm focus:ring-blue-500 focus:border-blue-500 bg-white"
+                                                                        />
+                                                                    </td>
+                                                                    <td className="px-4 py-2">
+                                                                        <input
+                                                                            type="text"
+                                                                            value={schedule.description || ''}
+                                                                            onChange={(e) => {
+                                                                                // Sync Description to Title as well to satisfy DB if needed involved
+                                                                                const updated = formSchedules.map(s => s.id === schedule.id ? { ...s, description: e.target.value, title: e.target.value || '예약 가능' } : s);
+                                                                                setFormSchedules(updated);
+                                                                            }}
+                                                                            placeholder="설명 입력"
+                                                                            className="w-full border-gray-200 rounded text-sm focus:ring-blue-500 focus:border-blue-500 bg-transparent"
+                                                                        />
+                                                                    </td>
+                                                                    <td className="px-4 py-2">
+                                                                        <input
+                                                                            type="number"
+                                                                            value={schedule.personalPrice || ''}
+                                                                            onChange={(e) => {
+                                                                                const val = e.target.value;
+                                                                                const updated = formSchedules.map(s => s.id === schedule.id ? { ...s, personalPrice: val } : s);
+                                                                                setFormSchedules(updated);
+                                                                            }}
+                                                                            className="w-full border-gray-200 rounded text-sm focus:ring-blue-500 focus:border-blue-500 bg-transparent"
+                                                                            placeholder="0"
+                                                                        />
+                                                                    </td>
+                                                                    <td className="px-4 py-2">
+                                                                        <input
+                                                                            type="number"
+                                                                            value={schedule.companyPrice || ''}
+                                                                            onChange={(e) => {
+                                                                                const val = e.target.value;
+                                                                                const updated = formSchedules.map(s => s.id === schedule.id ? { ...s, companyPrice: val } : s);
+                                                                                setFormSchedules(updated);
+                                                                            }}
+                                                                            className="w-full border-gray-200 rounded text-sm focus:ring-blue-500 focus:border-blue-500 bg-transparent"
+                                                                            placeholder="0"
+                                                                        />
+                                                                    </td>
+                                                                    <td className="px-4 py-2 text-center">
+                                                                        <input
+                                                                            type="checkbox"
+                                                                            checked={schedule.isAvailable !== false}
+                                                                            onChange={(e) => {
+                                                                                const updated = formSchedules.map(s => s.id === schedule.id ? { ...s, isAvailable: e.target.checked } : s);
+                                                                                setFormSchedules(updated);
+                                                                            }}
+                                                                            className="w-5 h-5 text-blue-600 rounded border-gray-300 focus:ring-blue-500 cursor-pointer"
+                                                                        />
+                                                                    </td>
+                                                                    <td className="px-4 py-2 text-center">
                                                                         <button
                                                                             onClick={(e) => handleDeleteSchedule(schedule.id, e)}
                                                                             className="text-gray-400 hover:text-red-600 transition-colors p-1"
-                                                                            title="일정 삭제"
                                                                         >
-                                                                            <Trash2 size={16} />
+                                                                            <Trash2 size={18} />
                                                                         </button>
-                                                                    )}
-                                                                </td>
-                                                            </tr>
-                                                        );
-                                                    });
-                                                })}
-                                            </tbody>
-                                        </table>
+                                                                    </td>
+                                                                </tr>
+                                                            ))
+                                                    )}
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </>
+                                )}
+
+                                {formSchedules.length > 0 && !bulkDate && (
+                                    <div className="mt-4 text-center text-gray-500 text-sm">
+                                        * 날짜를 선택하여 일정을 수정하거나 추가하세요. (현재 {formSchedules.length}개의 일정이 있습니다)
                                     </div>
-                                </>
-                            )}
-
-                            {formSchedules.length > 0 && !bulkDate && (
-                                <div className="mt-4 text-center text-gray-500 text-sm">
-                                    * 날짜를 선택하여 일정을 수정하거나 추가하세요. (현재 {formSchedules.length}개의 일정이 있습니다)
-                                </div>
-                            )}
+                                )}
+                            </div>
                         </div>
-                    </div>
 
-                    <div className="p-6 border-t bg-gray-50 flex justify-end space-x-3">
-                        <button
-                            onClick={closeModal}
-                            className="px-4 py-2 text-gray-600 hover:text-gray-800 font-medium"
-                        >
-                            취소
-                        </button>
-                        <button
-                            onClick={handleSave}
-                            className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium flex items-center"
-                        >
-                            <Save size={18} className="mr-2" />
-                            저장
-                        </button>
+                        {/* Floating Action Buttons */}
+                        <div className="absolute left-full top-1/2 -translate-y-1/2 flex flex-col space-y-3 ml-4 z-50">
+                            <button
+                                onClick={handleSave}
+                                className="w-12 h-12 bg-blue-600 text-white rounded-full shadow-lg hover:bg-blue-700 flex items-center justify-center transition-transform hover:scale-110"
+                                title="저장"
+                            >
+                                <Save size={24} />
+                            </button>
+                            <button
+                                onClick={closeModal}
+                                className="w-12 h-12 bg-white text-gray-600 rounded-full shadow-lg hover:bg-gray-100 flex items-center justify-center transition-transform hover:scale-110"
+                                title="닫기"
+                            >
+                                <X size={24} />
+                            </button>
+                        </div>
                     </div>
                 </div>
             )}

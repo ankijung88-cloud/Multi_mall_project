@@ -19,9 +19,11 @@ export interface Agent {
     id: number;
     name: string;
     image: string;
-    detailImage?: string;
+    detailImages?: string[]; // Parsed from JSON
     description: string;
     schedules: AgentSchedule[];
+    defaultPersonalPrice?: number;
+    defaultCompanyPrice?: number;
     credentials?: {
         username: string;
         password: string;
@@ -31,13 +33,14 @@ export interface Agent {
 export interface AgentRequest {
     id: string;
     agentId: number;
-    agentName: string;
+    agentName?: string; // Optional (frontend convenience)
     userId: string;
     userName: string;
-    scheduleId: string;
-    scheduleTitle: string;
-    scheduleDate: string;
-    status: 'pending' | 'approved' | 'sent_to_agent' | 'confirmation_sent';
+    date: string;       // YYYY-MM-DD
+    time: string;       // HH:MM
+    flightInfo?: string;
+    content?: string;
+    status: 'pending' | 'approved' | 'sent_to_agent' | 'confirmation_sent' | 'paid' | 'confirmed';
     timestamp: string;
     paymentStatus?: 'pending' | 'paid';
     paymentAmount?: number;
@@ -72,10 +75,17 @@ export function AgentProvider({ children }: { children: ReactNode }) {
             .then(res => setAgents(res.data))
             .catch(err => console.error("Failed to load agents:", err));
 
-        // Load Requests
-        axios.get('/api/agents/requests')
-            .then(res => setRequests(res.data))
-            .catch(err => console.error("Failed to load agent requests:", err));
+        // Load Requests & Poll
+        const fetchRequests = () => {
+            axios.get('/api/agents/requests')
+                .then(res => setRequests(res.data))
+                .catch(err => console.error("Failed to load agent requests:", err));
+        };
+
+        fetchRequests(); // Initial fetch
+        const intervalId = setInterval(fetchRequests, 5000); // Poll every 5 seconds
+
+        return () => clearInterval(intervalId); // Cleanup
     }, []);
 
 
@@ -120,6 +130,7 @@ export function AgentProvider({ children }: { children: ReactNode }) {
             setRequests([...requests, res.data]);
         } catch (err) {
             console.error("Failed to add request:", err);
+            throw err;
         }
     };
 

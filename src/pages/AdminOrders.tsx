@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { ShoppingBag, Calendar, FileSpreadsheet, Truck, CheckSquare, Square, RotateCcw } from 'lucide-react';
+import axios from 'axios';
 import { Link } from 'react-router-dom';
 
 interface OrderItem {
@@ -20,65 +21,38 @@ interface Order {
 }
 
 export default function AdminOrders() {
-    const [orders, setOrders] = useState<Order[]>([]);
+
     const [dailyBatch, setDailyBatch] = useState<Order[]>([]);
     const [unshippedBacklog, setUnshippedBacklog] = useState<Order[]>([]);
 
 
     // Refresh Data
-    const loadOrders = () => {
-        const stored = localStorage.getItem('mall_orders');
-        if (stored) {
-            let allOrders: Order[] = [];
-            try {
-                const parsed = JSON.parse(stored);
-                if (Array.isArray(parsed)) {
-                    allOrders = parsed;
-                } else {
-                    console.error("Orders data is not an array:", parsed);
-                }
-            } catch (error) {
-                console.error("Failed to parse orders data:", error);
-            }
+    const loadOrders = async () => {
+        try {
+            const { data } = await axios.get('/api/orders');
+            const allOrders: Order[] = Array.isArray(data) ? data : [];
 
-            // 1. Calculate Daily Batch Window (Yesterday 12:01 PM ~ Today 12:00 PM)
-            // Note: User asked for "Day before yesterday 12:01 ~ Today 12:00" in text, but seemingly implies the standard 24h window?
-            // "전전날 오후12시01분 부터 다음날 오후12시00분까지" -> That is a 48 hour window basically?
-            // Let's implement a wider window to be safe: [Now - 2 days (approx)] ~ [Now].
-            // To be precise based on request: (Yesterday - 1 day) 12:01 PM ~ (Today) 12:00 PM.
-            // Let's set the "Cycle End" as Today 12:00 PM (or Tomorrow 12:00 if currently PM).
+            // 1. "Recent Orders" - Just show the latest 50 orders
+            const batch = allOrders
+                .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+                .slice(0, 50);
 
-            const now = new Date();
-            let cycleEnd = new Date(now);
-            if (now.getHours() >= 12 && now.getMinutes() >= 1) {
-                // Current cycle ends Tomorrow 12:00 PM
-                cycleEnd.setDate(cycleEnd.getDate() + 1);
-                cycleEnd.setHours(12, 0, 0, 0);
-            } else {
-                // Current cycle ends Today 12:00 PM
-                cycleEnd.setHours(12, 0, 0, 0);
-            }
+            // 2. Unshipped Backlog (ALL Pending/Processing)
+            // Assuming "Unshipped" means not Shipped, Delivered, or Cancelled?
+            // User likely means "Pending" or "Processing" or "Paid".
+            // Let's explicitly include 'Pending' and 'Processing' (and 'Paid' if used). 
+            // Exclude 'Shipped', 'Delivered', 'Cancelled'.
+            const backlog = allOrders.filter(o =>
+                o.status !== 'Shipped' &&
+                o.status !== 'Delivered' &&
+                o.status !== 'Cancelled'
+            ).sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 
-            // Start date: "전전날" -> 2 days before the 'End'? 
-            // Usually "Daily" = 24h. "전전날" implies 48h or 72h window.
-            // Let's set start = End - 48 Hours. (Covering "Yesterday" and "Day before Yesterday").
-            const cycleStart = new Date(cycleEnd);
-            cycleStart.setDate(cycleStart.getDate() - 2);
-            cycleStart.setMinutes(1); // 12:01 PM roughly
 
-            // Filter Daily Batch
-            const batch = allOrders.filter(o => {
-                const d = new Date(o.date);
-                return d >= cycleStart && d <= cycleEnd;
-            }).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-
-            // 2. Unshipped Backlog (ALL Pending/Processing, regardless of date)
-            const backlog = allOrders.filter(o => o.status === 'Pending' || o.status === 'Processing')
-                .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()); // Oldest first?
-
-            setOrders(allOrders);
             setDailyBatch(batch);
             setUnshippedBacklog(backlog);
+        } catch (error) {
+            console.error("Failed to load orders:", error);
         }
     };
 
@@ -87,14 +61,16 @@ export default function AdminOrders() {
         loadOrders();
     }, []);
 
-    const toggleStatus = (order: Order) => {
+    const toggleStatus = async (order: Order) => {
         const newStatus = (order.status === 'Pending' || order.status === 'Processing') ? 'Shipped' : 'Pending';
 
-        // Update LocalStorage
-        const updatedOrders = orders.map(o => o.id === order.id ? { ...o, status: newStatus } : o);
-        localStorage.setItem('mall_orders', JSON.stringify(updatedOrders));
-
-        loadOrders(); // Refresh lists
+        try {
+            await axios.put(`/api/orders/${order.id}/status`, { status: newStatus });
+            loadOrders(); // Refresh lists
+        } catch (error) {
+            console.error("Failed to update status:", error);
+            alert("Failed to update status");
+        }
     };
 
     const downloadUnshippedCSV = () => {
@@ -158,10 +134,10 @@ export default function AdminOrders() {
                 <div className="p-6 border-b border-gray-100 bg-blue-50/50">
                     <h3 className="font-bold text-gray-900 text-lg flex items-center gap-2">
                         <Calendar className="text-blue-600" size={20} />
-                        Processing Window (주문 집계)
+                        Recent Orders (최근 주문 내역)
                     </h3>
                     <p className="text-sm text-gray-500 mt-1">
-                        Orders from <span className="font-semibold text-gray-700">Day before Yesterday 12:01 PM</span> to <span className="font-semibold text-gray-700">Today 12:00 PM</span>
+                        Displaying latest 50 orders
                     </p>
                 </div>
                 <div className="overflow-x-auto max-h-[400px]">

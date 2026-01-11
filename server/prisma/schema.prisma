@@ -80,11 +80,14 @@ model Agent {
   id          Int             @id @default(autoincrement())
   name        String
   image       String
-  detailImage String?
+  detailImages String?
   description String
   username    String?
   password    String?
   schedules   AgentSchedule[]
+  requests    AgentRequest[]
+  defaultPersonalPrice Float?
+  defaultCompanyPrice  Float?
 }
 
 model AgentSchedule {
@@ -105,20 +108,22 @@ model AgentSchedule {
 model AgentRequest {
   id            String  @id @default(uuid())
   agentId       Int
-  agentName     String
+  agent         Agent   @relation(fields: [agentId], references: [id], onDelete: Cascade)
   userId        String
   userName      String
-  scheduleId    String
-  scheduleTitle String
-  scheduleDate  String
-  status        String  @default("pending")
+  date          String
+  time          String
+  flightInfo    String?
+  content       String?
+  status        String  @default("pending") // pending, approved, paid, confirmed
   timestamp     String
   paymentStatus String?
   paymentAmount Float?
-  paymentDate   String?
   paymentMethod String?
   userType      String?
 }
+
+
 
 // Freelancer Model
 model Freelancer {
@@ -170,4 +175,41 @@ model Member {
   companyName    String?
   businessNumber String?
   createdAt      DateTime @default(now())
+}
+
+model Order {
+  id            String   @id
+  customerName  String
+  customerEmail String
+  totalAmount   Float
+  currency      String
+  paymentMethod String
+  status        String   @default("Pending")
+  date          DateTime @default(now())
+  items         String   @default("[]") // JSON string of items
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+// Paid Content System
+model Content {
+  id          String   @id @default(uuid())
+  userId      String
+  userName    String
+  title       String
+  description String
+  thumbnailUrl String
+  contentUrl  String
+  detailImages String   @default("[]") // JSON string for portfolio images
+  price       Float
+  createdAt   DateTime @default(now())
+  purchases   ContentPurchase[]
+}
+
+model ContentPurchase {
+  id        String   @id @default(uuid())
+  userId    String
+  contentId String
+  content   Content  @relation(fields: [contentId], references: [id], onDelete: Cascade)
+  amount    Float
+  purchaseDate DateTime @default(now())
 }

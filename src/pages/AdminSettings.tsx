@@ -4,10 +4,11 @@ import { useAuthStore } from '../store/useAuthStore';
 import { usePartners } from '../context/PartnerContext';
 import { useAgents } from '../context/AgentContext';
 import { useFreelancers } from '../context/FreelancerContext';
+import axios from 'axios';
 
 export default function AdminSettings() {
     const [isLoading, setIsLoading] = useState(false);
-    const { adminRole, adminTargetId } = useAuthStore();
+    const { adminRole, adminTargetId, user } = useAuthStore();
     const { partners, updatePartner, deletePartner } = usePartners();
     const { agents, updateAgent, deleteAgent } = useAgents();
     const { freelancers, updateFreelancer, deleteFreelancer } = useFreelancers();
@@ -45,12 +46,8 @@ export default function AdminSettings() {
 
     // Load Data
     useEffect(() => {
-        if (adminRole === 'super') {
-            const stored = localStorage.getItem('mall_admin_creds');
-            if (stored) {
-                const { name, id } = JSON.parse(stored);
-                setFormData(prev => ({ ...prev, name, id }));
-            }
+        if (adminRole === 'super' && user) {
+            setFormData(prev => ({ ...prev, name: user.name, id: user.id }));
         } else if (adminRole === 'partner' && adminTargetId) {
             const p = partners.find(i => i.id === adminTargetId);
             if (p && p.credentials) {
@@ -89,15 +86,7 @@ export default function AdminSettings() {
         e.preventDefault();
         setIsLoading(true);
 
-        const stored = localStorage.getItem('mall_admin_creds');
-        const creds = stored ? JSON.parse(stored) : null;
-
-        if (!creds || formData.currentPassword !== creds.password) {
-            alert('Current password is incorrect.');
-            setIsLoading(false);
-            return;
-        }
-
+        // 1. Validate inputs locally
         if (formData.newPassword) {
             if (formData.newPassword !== formData.confirmPassword) {
                 alert('New passwords do not match.');
@@ -105,24 +94,36 @@ export default function AdminSettings() {
                 return;
             }
             if (formData.newPassword.length < 4) {
-                alert('Password too short.');
+                alert('Password must be at least 4 characters.');
                 setIsLoading(false);
                 return;
             }
         }
 
-        await new Promise(resolve => setTimeout(resolve, 500));
+        try {
+            // 2. Call Backend API
+            const res = await axios.post('/api/auth/admin/update', {
+                id: formData.id,
+                currentPassword: formData.currentPassword,
+                newPassword: formData.newPassword || undefined,
+                name: formData.name
+            });
 
-        const newCreds = {
-            ...creds,
-            name: formData.name,
-            id: formData.id,
-            password: formData.newPassword || creds.password
-        };
-        localStorage.setItem('mall_admin_creds', JSON.stringify(newCreds));
-        alert('Super Admin info updated.');
-        setFormData(prev => ({ ...prev, currentPassword: '', newPassword: '', confirmPassword: '' }));
-        setIsLoading(false);
+
+            if (res.data.success) {
+                alert('Super Admin info updated successfully.');
+                setFormData(prev => ({ ...prev, currentPassword: '', newPassword: '', confirmPassword: '' }));
+            }
+        } catch (error: any) {
+            if (error.response && error.response.status === 401) {
+                alert('Current password is incorrect. Please try again.');
+            } else {
+                console.error("Update failed:", error);
+                alert('Failed to update admin info. Please check server connection.');
+            }
+        } finally {
+            setIsLoading(false);
+        }
     };
 
     // Partner/Agent/Freelancer Update Handler

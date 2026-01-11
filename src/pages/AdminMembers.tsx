@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import axios from 'axios';
 import { Search, Mail, Shield, Trash2 } from 'lucide-react';
 import clsx from 'clsx';
 
@@ -17,30 +18,22 @@ export default function AdminMembers() {
     const [searchTerm, setSearchTerm] = useState('');
     const [members, setMembers] = useState<Member[]>([]);
 
-    // Initial Load & Seeding
+    // Initial Load from API
     useEffect(() => {
-        const stored = localStorage.getItem('mall_members');
-        if (stored) {
-            setMembers(JSON.parse(stored));
-        } else {
-            // Seed Mock Data if empty
-            const mockMembers: Member[] = [
-                { id: 1, name: 'John Doe', email: 'john@example.com', type: 'Personal', status: 'Active', date: '2023-01-15' },
-                { id: 2, name: 'Acme Corp', email: 'contact@acme.com', type: 'Company', status: 'Verified', date: '2023-02-20', companyName: 'Acme Inc.', businessNumber: '123-45-67890' },
-                { id: 3, name: 'Jane Smith', email: 'jane@test.com', type: 'Personal', status: 'Inactive', date: '2023-03-10' },
-                { id: 4, name: 'Global Tech', email: 'support@global.tech', type: 'Company', status: 'Pending', date: '2023-04-05', companyName: 'Global Technology', businessNumber: '987-65-43210' },
-            ];
-            localStorage.setItem('mall_members', JSON.stringify(mockMembers));
-            setMembers(mockMembers);
-        }
+        const fetchMembers = async () => {
+            try {
+                const { data } = await axios.get('/api/auth/admin/members');
+                setMembers(Array.isArray(data) ? data : []);
+            } catch (error) {
+                console.error("Failed to fetch members", error);
+            }
+        };
+        fetchMembers();
     }, []);
 
     const handleDelete = (id: number) => {
-        if (window.confirm('Are you sure you want to delete this member? This action cannot be undone.')) {
-            const updatedMembers = members.filter(m => m.id !== id);
-            setMembers(updatedMembers);
-            localStorage.setItem('mall_members', JSON.stringify(updatedMembers));
-        }
+        console.log("Attempt to delete member:", id);
+        alert("Member deletion is currently managed directly in the database.");
     };
 
     const filteredMembers = members.filter(m =>

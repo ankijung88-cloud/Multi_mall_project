@@ -1,13 +1,15 @@
 import { useState, useEffect } from 'react';
 import { useCart } from '../context/CartContext';
-import { X, Minus, Plus, Trash2, CreditCard, CheckCircle } from 'lucide-react';
+import axios from 'axios';
+import { X, Minus, Plus, Trash2, CreditCard, CheckCircle, Banknote } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/useAuthStore';
 import { motion, AnimatePresence } from 'framer-motion';
 import { PriceDisplay, convertToKrw } from './PriceDisplay';
+import clsx from 'clsx';
 
 export default function CartModal() {
-    const { isCartOpen, toggleCart, items, removeFromCart, updateQuantity, totalAmount, clearCart } = useCart();
+    const { isCartOpen, toggleCart, items, removeFromCart, updateQuantity, totalAmount, clearCart, isCheckoutPending, resetCheckoutPending } = useCart();
     const [step, setStep] = useState<'cart' | 'checkout' | 'success'>('cart');
     const [isProcessing, setIsProcessing] = useState(false);
     const { isAuthenticated, user } = useAuthStore();
@@ -18,6 +20,16 @@ export default function CartModal() {
     const [address, setAddress] = useState('');
     const [saveAddress, setSaveAddress] = useState(false);
     const [currency, setCurrency] = useState<'USD' | 'KRW'>('USD');
+    const [paymentMethod, setPaymentMethod] = useState<'card' | 'bank'>('card');
+    const [lastOrder, setLastOrder] = useState<any>(null);
+
+    // Handle Direct Checkout Signal
+    useEffect(() => {
+        if (isCartOpen && isCheckoutPending) {
+            setStep('checkout');
+            resetCheckoutPending();
+        }
+    }, [isCartOpen, isCheckoutPending, resetCheckoutPending]);
 
     // Initialize Checkout Data
     useEffect(() => {
@@ -30,7 +42,7 @@ export default function CartModal() {
             const savedAddr = localStorage.getItem('mall_saved_address');
             if (savedAddr) {
                 setAddress(savedAddr);
-                setSaveAddress(true); // Assuming if they saved it before, they might want to keep saving it, or just show it's loaded.
+                setSaveAddress(true);
             }
         }
     }, [isCartOpen, step, user]);
@@ -38,10 +50,11 @@ export default function CartModal() {
     // Reset step when closing
     const handleClose = () => {
         toggleCart();
-        setTimeout(() => setStep('cart'), 300);
+        setStep('cart');
+        setLastOrder(null);
     };
 
-    const handleCheckout = () => {
+    const handleCheckout = async () => {
         setIsProcessing(true);
 
         // Save Address
@@ -49,29 +62,40 @@ export default function CartModal() {
             localStorage.setItem('mall_saved_address', address);
         }
 
-        // Simulate Processing Time
-        setTimeout(() => {
-            // Create Order Object
-            const newOrder = {
-                id: `ORD-${new Date().getFullYear()}-${Math.floor(Math.random() * 10000)}`,
+        // Send to API
+        try {
+            const orderId = `ORD-${new Date().getFullYear()}-${Math.floor(Math.random() * 100000).toString().padStart(6, '0')}`;
+            const newOrderPayload = {
+                id: orderId,
                 customerName: fullName || (user?.name || 'Guest'),
                 customerEmail: user?.email || 'guest@example.com',
                 totalAmount: totalAmount,
                 currency: currency,
                 paymentAmount: currency === 'KRW' ? convertToKrw(totalAmount) : totalAmount,
+                paymentMethod: paymentMethod,
                 status: 'Pending',
                 date: new Date().toISOString(),
-                items: items
+                items: items ? items : []
             };
 
-            // Save to LocalStorage
-            const existingOrders = JSON.parse(localStorage.getItem('mall_orders') || '[]');
-            localStorage.setItem('mall_orders', JSON.stringify([...existingOrders, newOrder]));
+            const response = await axios.post('/api/orders', newOrderPayload);
+            const savedOrder = response.data;
 
-            setIsProcessing(false);
+            // Update local storage for redundancy if needed, but primary is DB now.
+
+            // Force Event Dispatch for Admin Dashboard Update
+            window.dispatchEvent(new Event('mall_orders_updated'));
+
+            setLastOrder(savedOrder);
             setStep('success');
             clearCart();
-        }, 1500);
+
+        } catch (error: any) {
+            console.error("Checkout Error:", error);
+            alert(`결제 처리 중 문제가 발생했습니다: ${error.message}`);
+        } finally {
+            setIsProcessing(false);
+        }
     };
 
     return (
@@ -89,12 +113,36 @@ export default function CartModal() {
 
                     {/* Modal Panel */}
                     <motion.div
-                        initial={{ x: '100%' }}
-                        animate={{ x: 0 }}
-                        exit={{ x: '100%' }}
+                        initial={step === 'cart'
+                            ? { x: '100%', opacity: 1, scale: 1 }
+                            : { x: '-50%', y: '-50%', opacity: 0, scale: 0.95 }
+                        }
+                        animate={step === 'cart'
+                            ? { x: 0, opacity: 1, scale: 1 }
+                            : { x: '-50%', y: '-50%', opacity: 1, scale: 1 }
+                        }
+                        exit={step === 'cart'
+                            ? { x: '100%', opacity: 1, scale: 1 }
+                            : { x: '-50%', y: '-50%', opacity: 0, scale: 0.95 }
+                        }
                         transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-                        className="fixed inset-y-0 right-0 w-full max-w-md bg-white shadow-2xl z-[70] flex flex-col h-full"
+                        className={clsx(
+                            "fixed bg-white shadow-2xl z-[70] flex flex-col transition-all duration-500",
+                            step === 'cart'
+                                ? "inset-y-0 right-0 w-full max-w-md h-full rounded-l-2xl"
+                                : "top-1/2 left-1/2 w-full max-w-lg h-auto max-h-[90vh] rounded-2xl"
+                        )}
                     >
+                        {/* Processing Overlay */}
+                        {isProcessing && (
+                            <div className="absolute inset-0 bg-white/90 z-[80] flex flex-col items-center justify-center backdrop-blur-sm">
+                                <div className="w-16 h-16 border-4 border-gray-200 border-t-blue-600 rounded-full animate-spin mb-6"></div>
+                                <h3 className="text-xl font-bold text-gray-900 mb-2">결제 진행 중...</h3>
+                                <p className="text-gray-500">안전하게 결제 정보를 처리하고 있습니다.</p>
+                                <p className="text-xs text-gray-400 mt-4">창을 닫지 마세요.</p>
+                            </div>
+                        )}
+
                         {/* Header */}
                         <div className="flex items-center justify-between p-6 border-b border-gray-100">
                             <h2 className="text-xl font-bold text-gray-900">
@@ -104,7 +152,8 @@ export default function CartModal() {
                             </h2>
                             <button
                                 onClick={handleClose}
-                                className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+                                disabled={isProcessing}
+                                className="p-2 hover:bg-gray-100 rounded-full transition-colors disabled:opacity-50"
                             >
                                 <X size={20} className="text-gray-500" />
                             </button>
@@ -277,16 +326,77 @@ export default function CartModal() {
                                     <div className="space-y-4">
                                         <h4 className="font-medium text-gray-900">결제 수단</h4>
                                         <div className="grid grid-cols-2 gap-3">
-                                            <button className="flex items-center justify-center space-x-2 px-4 py-3 border-2 border-blue-600 bg-blue-50 text-blue-700 rounded-lg font-medium">
+                                            <button
+                                                onClick={() => setPaymentMethod('card')}
+                                                className={`flex items-center justify-center space-x-2 px-4 py-3 border-2 rounded-lg font-medium transition-all ${paymentMethod === 'card' ? 'border-blue-600 bg-blue-50 text-blue-700' : 'border-gray-200 text-gray-600 hover:bg-gray-50'}`}
+                                            >
                                                 <CreditCard size={18} />
                                                 <span>신용카드</span>
                                             </button>
-                                            <button className="flex items-center justify-center space-x-2 px-4 py-3 border border-gray-200 text-gray-600 rounded-lg font-medium hover:bg-gray-50">
+                                            <button
+                                                onClick={() => setPaymentMethod('bank')}
+                                                className={`flex items-center justify-center space-x-2 px-4 py-3 border-2 rounded-lg font-medium transition-all ${paymentMethod === 'bank' ? 'border-blue-600 bg-blue-50 text-blue-700' : 'border-gray-200 text-gray-600 hover:bg-gray-50'}`}
+                                            >
+                                                <Banknote size={18} />
                                                 <span>무통장 입금</span>
                                             </button>
                                         </div>
-                                        <div className="text-xs text-gray-400 text-center">
-                                            이 데모에서는 결제 처리가 시뮬레이션됩니다.
+
+                                        {/* Dynamic Payment Content */}
+                                        <div className="pt-2">
+                                            {paymentMethod === 'card' ? (
+                                                <div className="space-y-3 bg-gray-50 p-4 rounded-lg border border-gray-100 animate-in fade-in slide-in-from-top-2 duration-300">
+                                                    <div>
+                                                        <label className="block text-xs font-medium text-gray-500 mb-1">카드 번호</label>
+                                                        <input
+                                                            type="text"
+                                                            placeholder="0000 0000 0000 0000"
+                                                            className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+                                                        />
+                                                    </div>
+                                                    <div className="grid grid-cols-2 gap-3">
+                                                        <div>
+                                                            <label className="block text-xs font-medium text-gray-500 mb-1">유효기간 (MM/YY)</label>
+                                                            <input
+                                                                type="text"
+                                                                placeholder="MM/YY"
+                                                                className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+                                                            />
+                                                        </div>
+                                                        <div>
+                                                            <label className="block text-xs font-medium text-gray-500 mb-1">CVC</label>
+                                                            <input
+                                                                type="text"
+                                                                placeholder="123"
+                                                                className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+                                                            />
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            ) : (
+                                                <div className="bg-blue-50 p-4 rounded-lg border border-blue-100 animate-in fade-in slide-in-from-top-2 duration-300">
+                                                    <h5 className="font-bold text-blue-900 mb-2 flex items-center gap-2">
+                                                        <Banknote size={16} /> 입금 계좌 정보
+                                                    </h5>
+                                                    <div className="space-y-2 text-sm text-blue-800">
+                                                        <div className="flex justify-between border-b border-blue-200 pb-1">
+                                                            <span className="text-blue-600">은행명</span>
+                                                            <span className="font-bold">우리은행 (Woori Bank)</span>
+                                                        </div>
+                                                        <div className="flex justify-between border-b border-blue-200 pb-1">
+                                                            <span className="text-blue-600">계좌번호</span>
+                                                            <span className="font-bold">1002-123-456789</span>
+                                                        </div>
+                                                        <div className="flex justify-between">
+                                                            <span className="text-blue-600">예금주</span>
+                                                            <span className="font-bold">(주) 멀티몰</span>
+                                                        </div>
+                                                    </div>
+                                                    <p className="text-xs text-blue-600 mt-3 pt-2 border-t border-blue-200">
+                                                        * 주문 후 24시간 이내에 입금해 주시기 바랍니다.
+                                                    </p>
+                                                </div>
+                                            )}
                                         </div>
                                     </div>
                                 </div>
@@ -306,7 +416,11 @@ export default function CartModal() {
                                     <div className="w-full bg-gray-50 p-4 rounded-lg border border-gray-100">
                                         <div className="flex justify-between text-sm text-gray-600 mb-1">
                                             <span>주문 번호</span>
-                                            <span className="font-mono font-medium">#ORD-{Math.floor(Math.random() * 10000)}</span>
+                                            <span className="font-mono font-medium text-blue-600">{lastOrder?.id}</span>
+                                        </div>
+                                        <div className="flex justify-between text-sm text-gray-600 mb-1">
+                                            <span>주문 일시</span>
+                                            <span className="font-medium">{lastOrder ? new Date(lastOrder.date).toLocaleDateString() : '-'}</span>
                                         </div>
                                         <div className="flex justify-between text-sm text-gray-600">
                                             <span>예상 배송일</span>
@@ -359,7 +473,8 @@ export default function CartModal() {
                                     <div className="flex gap-3">
                                         <button
                                             onClick={() => setStep('cart')}
-                                            className="flex-1 py-3 px-4 border border-gray-200 text-gray-700 rounded-lg hover:bg-gray-100 transition-colors font-medium"
+                                            disabled={isProcessing}
+                                            className="flex-1 py-3 px-4 border border-gray-200 text-gray-700 rounded-lg hover:bg-gray-100 transition-colors font-medium disabled:opacity-50"
                                         >
                                             뒤로
                                         </button>
@@ -368,11 +483,7 @@ export default function CartModal() {
                                             disabled={isProcessing}
                                             className="flex-[2] py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium shadow-lg shadow-blue-500/30 flex items-center justify-center"
                                         >
-                                            {isProcessing ? (
-                                                <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                                            ) : (
-                                                '결제하기'
-                                            )}
+                                            결제하기
                                         </button>
                                     </div>
                                 )}

@@ -16,7 +16,8 @@ export default function AgentDetail() {
     const searchParams = new URLSearchParams(location.search);
     const queryType = searchParams.get('type');
 
-    const isCompany = (user?.type === 'Company' || user?.type === 'company') || (!user && (viewMode === 'company' || queryType === 'company'));
+    // Mofidied: queryType === 'company' takes precedence or is inclusive to ensure company view
+    const isCompany = queryType === 'company' || (user?.type === 'Company' || user?.type === 'company') || (!user && viewMode === 'company');
 
     const agent = getAgent(Number(id));
     const [selectedSchedule, setSelectedSchedule] = useState<AgentSchedule | null>(null);
@@ -25,6 +26,13 @@ export default function AgentDetail() {
     const [cardExpiry, setCardExpiry] = useState('');
     const [cardCVC, setCardCVC] = useState('');
     const [paymentMethod, setPaymentMethod] = useState<'card' | 'account' | 'cash'>('card');
+
+    // Calendar State
+    const [browseDate, setBrowseDate] = useState(new Date());
+    const [selectedDate, setSelectedDate] = useState<string | null>(null);
+    const [customTime, setCustomTime] = useState('09:00');
+    const [customFlightInfo, setCustomFlightInfo] = useState('');
+    const [customContent, setCustomContent] = useState('');
 
     const handleCardNumberChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const value = e.target.value.replace(/\D/g, '');
@@ -66,14 +74,36 @@ export default function AgentDetail() {
             navigate(`/login?type=${redirectType}`, { state: { from: location.pathname + location.search } });
             return;
         }
-        if (!selectedSchedule) return;
 
-        // Start flow
+        // Validate
+        if (selectedSchedule) {
+            // Existing schedule validation
+            if (selectedSchedule.currentSlots >= selectedSchedule.maxSlots) {
+                alert("신청 가능한 정원이 가득 찼습니다.");
+                return;
+            }
+        } else {
+            // Custom request validation
+            if (!selectedDate || !customTime) {
+                alert("날짜와 시간을 선택해주세요.");
+                return;
+            }
+            // Enforce all fields for custom request
+            if (!customFlightInfo || customFlightInfo.trim() === '') {
+                alert("항공편명을 입력해주세요.");
+                return;
+            }
+            if (!customContent || customContent.trim() === '') {
+                alert("문의/요청 사항을 입력해주세요.");
+                return;
+            }
+        }
+
         setApplicationStep('checking');
 
         // Simulate API check delay
         setTimeout(() => {
-            if (selectedSchedule.currentSlots >= selectedSchedule.maxSlots) {
+            if (selectedSchedule && selectedSchedule.currentSlots >= selectedSchedule.maxSlots) {
                 alert("신청 가능한 정원이 가득 찼습니다.");
                 setApplicationStep('idle');
             } else {
@@ -83,9 +113,9 @@ export default function AgentDetail() {
     };
 
     const handleProceedToPayment = () => {
-        if (!selectedSchedule) return;
-
-        const price = isCompany ? selectedSchedule.companyPrice : selectedSchedule.personalPrice;
+        const price = selectedSchedule
+            ? (isCompany ? selectedSchedule.companyPrice : selectedSchedule.personalPrice)
+            : (isCompany ? agent.defaultCompanyPrice : agent.defaultPersonalPrice);
 
         if (price && price > 0) {
             setApplicationStep('payment');
@@ -99,39 +129,51 @@ export default function AgentDetail() {
         setApplicationStep('processing');
 
         setTimeout(() => {
-            const price = isCompany ? selectedSchedule?.companyPrice : selectedSchedule?.personalPrice;
+            const price = selectedSchedule
+                ? (isCompany ? selectedSchedule.companyPrice : selectedSchedule.personalPrice)
+                : (isCompany ? agent.defaultCompanyPrice : agent.defaultPersonalPrice);
             handleCompleteBooking(price || 0);
         }, 1500);
     };
 
-    const handleCompleteBooking = (amout: number) => {
-        if (!selectedSchedule || !user) return;
+    const handleCompleteBooking = async (amount: number) => {
+        if (!user) return;
 
-        addRequest({
+        const requestData = {
             agentId: agent.id,
-            agentName: agent.name,
-            userId: user.id,
-            userName: user.name || user.id,
-            scheduleId: selectedSchedule.id,
-            scheduleTitle: selectedSchedule.title,
-            scheduleDate: selectedSchedule.date,
-            paymentStatus: amout > 0 ? 'paid' : 'pending',
-            paymentAmount: amout,
-            paymentDate: new Date().toISOString(),
-            paymentMethod: amout > 0 ? (paymentMethod === 'card' ? 'Credit Card' : paymentMethod === 'account' ? 'Bank Transfer' : 'On-site Payment') : 'Free',
-            userType: isCompany ? 'Company' : 'Personal'
-        });
-        setApplicationStep('success');
+            userId: String(user.id),
+            userName: user.name || String(user.id),
+            date: selectedSchedule ? selectedSchedule.date : selectedDate!,
+            time: selectedSchedule ? selectedSchedule.time : customTime,
+            flightInfo: selectedSchedule ? undefined : customFlightInfo,
+            content: selectedSchedule ? selectedSchedule.description : customContent,
+            status: 'pending',
+            paymentStatus: (amount > 0 ? 'paid' : 'pending') as 'paid' | 'pending',
+            paymentAmount: amount,
+            paymentMethod: amount > 0 ? (paymentMethod === 'card' ? 'Credit Card' : paymentMethod === 'account' ? 'Bank Transfer' : 'On-site Payment') : 'Free',
+            timestamp: new Date().toISOString(),
+            userType: (isCompany ? 'Company' : 'Personal') as 'Company' | 'Personal'
+        };
+
+        try {
+            await addRequest(requestData);
+            setApplicationStep('success');
+        } catch (error: any) {
+            console.error("Booking Error:", error);
+            alert("신청 처리 중 오류가 발생했습니다. 다시 시도해주세요.");
+            setApplicationStep('idle');
+        }
     };
 
     const handleCloseModal = () => {
         setApplicationStep('idle');
         setSelectedSchedule(null);
+        setCustomTime('09:00');
+        setCustomFlightInfo('');
+        setCustomContent('');
     };
 
-    // Calendar State
-    const [browseDate, setBrowseDate] = useState(new Date());
-    const [selectedDate, setSelectedDate] = useState<string | null>(null);
+
 
     return (
         <MainLayout>
@@ -154,11 +196,29 @@ export default function AgentDetail() {
                 <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 -mt-20 relative z-10">
                     <div className="bg-white rounded-xl shadow-xl p-8 mb-8">
                         {/* Detail Intro Image */}
-                        {agent.detailImage && (
-                            <div className="mb-8 rounded-xl overflow-hidden shadow-sm border border-gray-100">
-                                <img src={agent.detailImage} alt="Details" className="w-full h-auto" />
-                            </div>
-                        )}
+                        {/* Detail Intro Images */}
+                        {(() => {
+                            let images: string[] = [];
+                            try {
+                                if (agent.detailImages) {
+                                    const parsed = typeof agent.detailImages === 'string'
+                                        ? JSON.parse(agent.detailImages)
+                                        : agent.detailImages;
+                                    images = Array.isArray(parsed) ? parsed : [];
+                                } else if ((agent as any).detailImage) {
+                                    images = [(agent as any).detailImage];
+                                }
+                            } catch (e) {
+                                console.error("Failed to parse detail images", e);
+                                images = [];
+                            }
+
+                            return images.map((img: string, idx: number) => (
+                                <div key={idx} className="mb-8 rounded-xl overflow-hidden shadow-sm border border-gray-100">
+                                    <img src={img} alt={`Details ${idx}`} className="w-full h-auto" />
+                                </div>
+                            ));
+                        })()}
 
                         <div className="flex items-center space-x-2 mb-6">
                             <Calendar className="text-blue-600" size={24} />
@@ -217,15 +277,13 @@ export default function AgentDetail() {
                                                     <div
                                                         key={day}
                                                         onClick={() => {
-                                                            if (hasSchedule) {
-                                                                setSelectedDate(dateStr);
-                                                                setSelectedSchedule(null); // Reset specific slot selection
-                                                            }
+                                                            setSelectedDate(dateStr);
+                                                            setSelectedSchedule(null);
+                                                            setCustomTime('09:00'); // Reset custom time
                                                         }}
                                                         className={clsx(
                                                             "h-10 md:h-14 border rounded-lg flex flex-col items-center justify-center cursor-pointer transition-all relative",
                                                             isSelected ? "border-blue-500 ring-2 ring-blue-200 bg-blue-50" : "border-gray-100 hover:border-gray-300",
-                                                            !hasSchedule && "bg-gray-50 text-gray-300 cursor-default"
                                                         )}
                                                     >
                                                         <span className={clsx(
@@ -261,7 +319,50 @@ export default function AgentDetail() {
                                 ) : (
                                     <div className="space-y-3 max-h-[500px] overflow-y-auto pr-2">
                                         {(agent.schedules || []).filter(s => s.date === selectedDate).length === 0 ? (
-                                            <div className="text-center py-8 text-gray-500">예약 가능한 시간이 없습니다.</div>
+                                            <div className="bg-gray-50 p-6 rounded-xl border border-gray-200">
+                                                <h4 className="font-bold text-gray-800 mb-4">예약 신청 정보 입력</h4>
+
+                                                <div className="space-y-4">
+                                                    <div>
+                                                        <label className="block text-sm font-medium text-gray-700 mb-1">희망 시간</label>
+                                                        <input
+                                                            type="time"
+                                                            value={customTime}
+                                                            onChange={(e) => setCustomTime(e.target.value)}
+                                                            className="w-full border rounded-lg px-3 py-2"
+                                                        />
+                                                    </div>
+                                                    <div>
+                                                        <label className="block text-sm font-medium text-gray-700 mb-1">항공편명 (Flight No.)</label>
+                                                        <input
+                                                            type="text"
+                                                            value={customFlightInfo}
+                                                            onChange={(e) => setCustomFlightInfo(e.target.value)}
+                                                            placeholder="예: KE123 / 7C2204"
+                                                            className="w-full border rounded-lg px-3 py-2"
+                                                        />
+                                                    </div>
+                                                    <div>
+                                                        <label className="block text-sm font-medium text-gray-700 mb-1">문의/요청 사항</label>
+                                                        <textarea
+                                                            value={customContent}
+                                                            onChange={(e) => setCustomContent(e.target.value)}
+                                                            placeholder="추가 요청사항을 입력해주세요."
+                                                            className="w-full border rounded-lg px-3 py-2 h-24 resize-none"
+                                                        />
+                                                    </div>
+
+                                                    <div className="flex items-center justify-between pt-4 border-t border-gray-200 mt-2">
+                                                        <span className="text-sm font-bold text-gray-600">예상 비용</span>
+                                                        <div className="text-lg font-bold text-blue-600">
+                                                            {isCompany
+                                                                ? (agent.defaultCompanyPrice ? `₩${agent.defaultCompanyPrice.toLocaleString()}` : '문의 필요')
+                                                                : (agent.defaultPersonalPrice ? `₩${agent.defaultPersonalPrice.toLocaleString()}` : '문의 필요')
+                                                            }
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
                                         ) : (
                                             (agent.schedules || [])
                                                 .filter(s => s.date === selectedDate)
@@ -296,7 +397,7 @@ export default function AgentDetail() {
                                                                     schedule.currentSlots >= schedule.maxSlots ? "마감" : `${schedule.maxSlots - schedule.currentSlots}자리 남음`}
                                                             </span>
                                                         </div>
-                                                        <div className="text-sm text-gray-600 mb-2">{schedule.title}</div>
+                                                        <div className="text-sm text-gray-600 mb-2">{schedule.description || schedule.title}</div>
                                                         <div className="flex items-center justify-between mt-2 pt-2 border-t border-gray-100">
                                                             <span className="text-xs text-gray-500">참가비</span>
                                                             <div className="text-sm font-bold text-blue-600">
@@ -316,10 +417,10 @@ export default function AgentDetail() {
                                     <button
                                         type="button"
                                         onClick={handleInitialApply}
-                                        disabled={!selectedSchedule}
+                                        disabled={!selectedDate}
                                         className={clsx(
                                             "w-full py-4 rounded-xl font-bold text-lg transition-all shadow-lg flex items-center justify-center",
-                                            selectedSchedule
+                                            selectedDate
                                                 ? "bg-blue-600 hover:bg-blue-700 text-white transform hover:-translate-y-1"
                                                 : "bg-gray-200 text-gray-400 cursor-not-allowed"
                                         )}
@@ -352,8 +453,17 @@ export default function AgentDetail() {
                                     </div>
                                     <h3 className="text-xl font-bold text-gray-900 mb-2">신청 하시겠습니까?</h3>
                                     <p className="text-gray-600 mb-6">
-                                        선택하신 <strong>{selectedSchedule?.title}</strong><br />
-                                        ({selectedSchedule?.date}) 일정에<br />
+                                        {selectedSchedule ? (
+                                            <>
+                                                선택하신 <strong>{selectedSchedule.title || '일정'}</strong><br />
+                                                ({selectedSchedule.date} {selectedSchedule.time}) 일정에<br />
+                                            </>
+                                        ) : (
+                                            <>
+                                                선택하신 <strong>{selectedDate} {customTime}</strong><br />
+                                                일정에<br />
+                                            </>
+                                        )}
                                         참여를 신청합니다.
                                     </p>
                                     <div className="flex gap-3">
@@ -381,11 +491,17 @@ export default function AgentDetail() {
                                         <div className="flex justify-between items-center mb-2">
                                             <span className="text-gray-600">결제 금액</span>
                                             <span className="font-bold text-lg text-blue-600">
-                                                ₩{(isCompany ? selectedSchedule?.companyPrice : selectedSchedule?.personalPrice)?.toLocaleString() || 0}
+                                                {selectedSchedule
+                                                    ? `₩${(isCompany ? selectedSchedule.companyPrice : selectedSchedule.personalPrice)?.toLocaleString() || 0}`
+                                                    : `₩${(isCompany ? agent.defaultCompanyPrice : agent.defaultPersonalPrice)?.toLocaleString() || 0}`
+                                                }
                                             </span>
                                         </div>
                                         <div className="text-xs text-right text-gray-400">
-                                            (${((isCompany ? selectedSchedule?.companyPrice || 0 : selectedSchedule?.personalPrice || 0) / 1450).toFixed(2)})
+                                            (${selectedSchedule
+                                                ? ((isCompany ? selectedSchedule.companyPrice || 0 : selectedSchedule.personalPrice || 0) / 1450).toFixed(2)
+                                                : ((isCompany ? agent.defaultCompanyPrice || 0 : agent.defaultPersonalPrice || 0) / 1450).toFixed(2)
+                                            })
                                         </div>
                                     </div>
 

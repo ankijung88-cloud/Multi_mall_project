@@ -46,12 +46,12 @@ export default function OrderHistory() {
                 // Past: Delivered, Cancelled, Completed (Return completed)
 
                 const active = userOrders.filter(o =>
-                    ['Pending', 'Shipped'].includes(o.status) ||
+                    ['Pending', 'Processing', 'Paid', 'Shipped'].includes(o.status) ||
                     (o.returnStatus && o.returnStatus !== 'Completed')
                 );
 
                 const past = userOrders.filter(o =>
-                    ['Delivered', 'Cancelled'].includes(o.status) ||
+                    ['Delivered', 'Cancelled', 'Completed', 'Returned'].includes(o.status) ||
                     o.returnStatus === 'Completed'
                 );
 
@@ -200,8 +200,10 @@ export default function OrderHistory() {
                                             <span className="font-bold text-gray-900">{req.agentName}</span>
                                             <span className="text-xs text-gray-500">• {new Date(req.timestamp).toLocaleDateString()}</span>
                                         </div>
-                                        <div className="text-gray-700 font-medium">{req.scheduleTitle}</div>
-                                        <div className="text-sm text-gray-500">Scheduled: {req.scheduleDate}</div>
+                                        <div className="text-gray-700 font-medium">{req.date} {req.time}</div>
+                                        <div className="text-sm text-gray-500">
+                                            {req.flightInfo ? `Flight: ${req.flightInfo}` : req.content || 'No content'}
+                                        </div>
                                     </div>
                                     <div>
                                         <span className={clsx(

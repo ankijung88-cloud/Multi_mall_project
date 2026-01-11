@@ -80,8 +80,31 @@ router.post('/requests', async (req, res) => {
             data: req.body
         });
         res.json(request);
-    } catch (error) {
-        res.status(500).json({ error: 'Failed to create request' });
+    } catch (error: any) {
+        console.error("Agent Request Create Error:", error);
+        // Write error to log file for debugging
+        try {
+            const fs = require('fs');
+            const path = require('path');
+            fs.writeFileSync(path.join(process.cwd(), 'server_error_log.txt'),
+                JSON.stringify({
+                    message: error.message,
+                    code: error.code,
+                    meta: error.meta,
+                    stack: error.stack,
+                    body: req.body // Log the payload too!
+                }, null, 2)
+            );
+        } catch (e) {
+            console.error("Failed to write error log:", e);
+        }
+
+        res.status(500).json({
+            error: 'Failed to create request',
+            details: error.message,
+            code: error.code,
+            meta: error.meta
+        });
     }
 });
 

@@ -18,11 +18,16 @@ import partnerRoutes from './routes/partner.routes';
 import agentRoutes from './routes/agent.routes';
 import freelancerRoutes from './routes/freelancer.routes';
 
+import orderRoutes from './routes/order.routes';
+import contentRoutes from './routes/content.routes';
+
 app.use('/api/auth', authRoutes);
 app.use('/api/products', productRoutes);
 app.use('/api/partners', partnerRoutes);
 app.use('/api/agents', agentRoutes);
 app.use('/api/freelancers', freelancerRoutes);
+app.use('/api/orders', orderRoutes);
+app.use('/api/contents', contentRoutes);
 
 // Basic health check
 app.get('/api/health', (req, res) => {
@@ -35,6 +40,9 @@ import path from 'path';
 // Serve static files from the React frontend app
 const clientBuildPath = path.join(__dirname, '../../dist');
 app.use(express.static(clientBuildPath));
+
+// Serve uploaded files
+app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 
 // Anything that doesn't match the above, send back index.html
 app.get(/(.*)/, (req, res) => {
