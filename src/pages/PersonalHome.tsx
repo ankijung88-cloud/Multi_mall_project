@@ -5,8 +5,8 @@ import { useContents } from '../context/ContentContext';
 import { useAgents } from '../context/AgentContext';
 import { PriceDisplay } from '../components/PriceDisplay';
 import MainLayout from '../layouts/MainLayout';
-import { ShoppingCart } from 'lucide-react';
-import { useCart } from '../context/CartContext';
+// import { ShoppingCart } from 'lucide-react';
+// import { useCart } from '../context/CartContext';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuthStore } from '../store/useAuthStore';
 import KBeautySection from '../components/sections/KBeautySection';
@@ -17,7 +17,7 @@ import KCourseSection from '../components/sections/KCourseSection';
 
 export default function PersonalHome() {
     const { products } = useProducts();
-    const { addToCart } = useCart();
+    // const { addToCart } = useCart();
     const navigate = useNavigate();
     const { isAuthenticated, setViewMode } = useAuthStore();
 
@@ -44,22 +44,22 @@ export default function PersonalHome() {
         }, 100);
     };
 
-    const handleAddToCart = (e: React.MouseEvent, product: any) => {
-        e.stopPropagation(); // Stop bubbling to prevent parent clicks
-
-        if (!isAuthenticated) {
-            // Redirect to login with specific type query param
-            navigate('/login?type=personal');
-            return;
-        }
-
-        addToCart({
-            id: product.id,
-            name: product.name,
-            price: product.personalPrice,
-            image: product.image
-        });
-    };
+    // const handleAddToCart = (e: React.MouseEvent, product: any) => {
+    //     e.stopPropagation(); // Stop bubbling to prevent parent clicks
+    //
+    //     if (!isAuthenticated) {
+    //         // Redirect to login with specific type query param
+    //         navigate('/login?type=personal');
+    //         return;
+    //     }
+    //
+    //     addToCart({
+    //         id: product.id,
+    //         name: product.name,
+    //         price: product.personalPrice,
+    //         image: product.image
+    //     });
+    // };
 
     return (
         <div>
@@ -283,21 +283,7 @@ export default function PersonalHome() {
                                             </div>
                                         </div>
 
-                                        <div className="flex gap-2">
-                                            <button
-                                                onClick={(e) => handleAddToCart(e, product)}
-                                                className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white py-2 px-4 rounded-lg font-semibold transition-colors shadow-sm"
-                                            >
-                                                주문하기
-                                            </button>
-                                            <button
-                                                onClick={(e) => handleAddToCart(e, product)}
-                                                className="p-2 border border-gray-200 text-gray-600 rounded-lg hover:bg-gray-50 hover:text-emerald-600 transition-colors"
-                                                title="Add to Cart"
-                                            >
-                                                <ShoppingCart size={24} />
-                                            </button>
-                                        </div>
+                                        {/* Buttons removed as requested */}
                                     </div>
                                 </div>
                             </motion.div>

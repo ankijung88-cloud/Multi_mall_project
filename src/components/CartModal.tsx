@@ -8,6 +8,13 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { PriceDisplay, convertToKrw } from './PriceDisplay';
 import clsx from 'clsx';
 
+
+declare global {
+    interface Window {
+        IMP: any;
+    }
+}
+
 export default function CartModal() {
     const { isCartOpen, toggleCart, items, removeFromCart, updateQuantity, totalAmount, clearCart, isCheckoutPending, resetCheckoutPending } = useCart();
     const [step, setStep] = useState<'cart' | 'checkout' | 'success'>('cart');
@@ -54,7 +61,49 @@ export default function CartModal() {
         setLastOrder(null);
     };
 
-    const handleCheckout = async () => {
+    const handlePayment = () => {
+        if (!fullName || !address) {
+            alert("배송 정보를 모두 입력해주세요.");
+            return;
+        }
+
+        if (paymentMethod === 'bank') {
+            handleCheckout();
+            return;
+        }
+
+        // PortOne Payment Logic
+        const { IMP } = window;
+        // IMPORTANT: This 'imp43046522' is a common test ID.
+        // User must replace this with their own from admin.portone.io
+        IMP.init('imp43046522');
+
+        const merchantUid = `ORD-${new Date().getFullYear()}-${Math.floor(Math.random() * 1000000).toString().padStart(6, '0')}`; // More random digits
+
+        const data = {
+            pg: 'html5_inicis', // KG Inicis Standard
+            pay_method: 'card',
+            merchant_uid: merchantUid,
+            name: items.length > 1 ? `${items[0].name} 외 ${items.length - 1}건` : items[0].name,
+            amount: currency === 'KRW' ? convertToKrw(totalAmount) : totalAmount,
+            buyer_email: user?.email || 'guest@example.com',
+            buyer_name: fullName,
+            buyer_tel: '010-0000-0000', // Placeholder
+            buyer_addr: address,
+            buyer_postcode: '123-456'
+        };
+
+        IMP.request_pay(data, (rsp: any) => {
+            if (rsp.success) {
+                // Payment Successful -> Create Order
+                handleCheckout(rsp.imp_uid, rsp.merchant_uid);
+            } else {
+                alert(`결제에 실패하였습니다. 내용을 확인해주세요.\n(${rsp.error_msg})`);
+            }
+        });
+    };
+
+    const handleCheckout = async (paymentId?: string, merchantUid?: string) => {
         setIsProcessing(true);
 
         // Save Address
@@ -64,7 +113,9 @@ export default function CartModal() {
 
         // Send to API
         try {
-            const orderId = `ORD-${new Date().getFullYear()}-${Math.floor(Math.random() * 100000).toString().padStart(6, '0')}`;
+            // Use the merchant_uid from payment if available, otherwise generate new (for bank transfer)
+            const orderId = merchantUid || `ORD-${new Date().getFullYear()}-${Math.floor(Math.random() * 100000).toString().padStart(6, '0')}`;
+
             const newOrderPayload = {
                 id: orderId,
                 customerName: fullName || (user?.name || 'Guest'),
@@ -73,15 +124,14 @@ export default function CartModal() {
                 currency: currency,
                 paymentAmount: currency === 'KRW' ? convertToKrw(totalAmount) : totalAmount,
                 paymentMethod: paymentMethod,
-                status: 'Pending',
+                paymentId: paymentId || undefined, // Store PortOne Payment ID
+                status: paymentMethod === 'card' ? 'Processing' : 'Pending', // Card orders usually auto-approved or processing
                 date: new Date().toISOString(),
                 items: items ? items : []
             };
 
             const response = await axios.post('/api/orders', newOrderPayload);
             const savedOrder = response.data;
-
-            // Update local storage for redundancy if needed, but primary is DB now.
 
             // Force Event Dispatch for Admin Dashboard Update
             window.dispatchEvent(new Event('mall_orders_updated'));
@@ -92,7 +142,7 @@ export default function CartModal() {
 
         } catch (error: any) {
             console.error("Checkout Error:", error);
-            alert(`결제 처리 중 문제가 발생했습니다: ${error.message}`);
+            alert(`주문 처리 중 문제가 발생했습니다: ${error.message}`);
         } finally {
             setIsProcessing(false);
         }
@@ -113,24 +163,13 @@ export default function CartModal() {
 
                     {/* Modal Panel */}
                     <motion.div
-                        initial={step === 'cart'
-                            ? { x: '100%', opacity: 1, scale: 1 }
-                            : { x: '-50%', y: '-50%', opacity: 0, scale: 0.95 }
-                        }
-                        animate={step === 'cart'
-                            ? { x: 0, opacity: 1, scale: 1 }
-                            : { x: '-50%', y: '-50%', opacity: 1, scale: 1 }
-                        }
-                        exit={step === 'cart'
-                            ? { x: '100%', opacity: 1, scale: 1 }
-                            : { x: '-50%', y: '-50%', opacity: 0, scale: 0.95 }
-                        }
-                        transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+                        initial={{ x: '-50%', y: '-45%', opacity: 0, scale: 0.95 }}
+                        animate={{ x: '-50%', y: '-50%', opacity: 1, scale: 1 }}
+                        exit={{ x: '-50%', y: '-45%', opacity: 0, scale: 0.95 }}
+                        transition={{ type: 'spring', damping: 25, stiffness: 300 }}
                         className={clsx(
                             "fixed bg-white shadow-2xl z-[70] flex flex-col transition-all duration-500",
-                            step === 'cart'
-                                ? "inset-y-0 right-0 w-full max-w-md h-full rounded-l-2xl"
-                                : "top-1/2 left-1/2 w-full max-w-lg h-auto max-h-[90vh] rounded-2xl"
+                            "top-1/2 left-1/2 w-full max-w-lg h-auto max-h-[90vh] rounded-2xl"
                         )}
                     >
                         {/* Processing Overlay */}
@@ -338,7 +377,7 @@ export default function CartModal() {
                                                 className={`flex items-center justify-center space-x-2 px-4 py-3 border-2 rounded-lg font-medium transition-all ${paymentMethod === 'bank' ? 'border-blue-600 bg-blue-50 text-blue-700' : 'border-gray-200 text-gray-600 hover:bg-gray-50'}`}
                                             >
                                                 <Banknote size={18} />
-                                                <span>무통장 입금</span>
+                                                <span>계좌이체</span>
                                             </button>
                                         </div>
 
@@ -346,32 +385,14 @@ export default function CartModal() {
                                         <div className="pt-2">
                                             {paymentMethod === 'card' ? (
                                                 <div className="space-y-3 bg-gray-50 p-4 rounded-lg border border-gray-100 animate-in fade-in slide-in-from-top-2 duration-300">
-                                                    <div>
-                                                        <label className="block text-xs font-medium text-gray-500 mb-1">카드 번호</label>
-                                                        <input
-                                                            type="text"
-                                                            placeholder="0000 0000 0000 0000"
-                                                            className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
-                                                        />
+                                                    <div className="flex items-center gap-3 text-sm text-gray-600">
+                                                        <CheckCircle size={16} className="text-blue-600" />
+                                                        <span>PG사 보안 결제창이 호출됩니다.</span>
                                                     </div>
-                                                    <div className="grid grid-cols-2 gap-3">
-                                                        <div>
-                                                            <label className="block text-xs font-medium text-gray-500 mb-1">유효기간 (MM/YY)</label>
-                                                            <input
-                                                                type="text"
-                                                                placeholder="MM/YY"
-                                                                className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
-                                                            />
-                                                        </div>
-                                                        <div>
-                                                            <label className="block text-xs font-medium text-gray-500 mb-1">CVC</label>
-                                                            <input
-                                                                type="text"
-                                                                placeholder="123"
-                                                                className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
-                                                            />
-                                                        </div>
-                                                    </div>
+                                                    <p className="text-xs text-blue-500 pl-7">
+                                                        * KG이니시스 결제 모듈을 통해 안전하게 결제됩니다.<br />
+                                                        * 팝업 차단을 해제해 주세요.
+                                                    </p>
                                                 </div>
                                             ) : (
                                                 <div className="bg-blue-50 p-4 rounded-lg border border-blue-100 animate-in fade-in slide-in-from-top-2 duration-300">
@@ -479,7 +500,7 @@ export default function CartModal() {
                                             뒤로
                                         </button>
                                         <button
-                                            onClick={handleCheckout}
+                                            onClick={handlePayment}
                                             disabled={isProcessing}
                                             className="flex-[2] py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium shadow-lg shadow-blue-500/30 flex items-center justify-center"
                                         >

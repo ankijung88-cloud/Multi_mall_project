@@ -21,28 +21,15 @@ export default function ScheduleDetail() {
     const selectedSchedule = partner?.schedules.find(s => s.id === scheduleId) || null;
 
     const [applicationStep, setApplicationStep] = useState<'idle' | 'checking' | 'confirm' | 'payment' | 'processing' | 'success'>('idle');
-    const [cardNumber, setCardNumber] = useState('');
-    const [cardExpiry, setCardExpiry] = useState('');
-    const [cardCVC, setCardCVC] = useState('');
+    // const [cardNumber, setCardNumber] = useState('');
+    // const [cardExpiry, setCardExpiry] = useState('');
+    // const [cardCVC, setCardCVC] = useState('');
     const [paymentMethod, setPaymentMethod] = useState<'card' | 'account' | 'cash'>('card');
 
 
 
-    const handleCardNumberChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const value = e.target.value.replace(/\D/g, '');
-        const formatted = value.replace(/(\d{4})(?=\d)/g, '$1-').substr(0, 19);
-        setCardNumber(formatted);
-    };
-
-    const handleExpiryChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const value = e.target.value.replace(/\D/g, '');
-        if (value.length >= 2) {
-            const formatted = value.replace(/(\d{2})(?=\d)/g, '$1/').substr(0, 5);
-            setCardExpiry(formatted);
-        } else {
-            setCardExpiry(value);
-        }
-    };
+    // const handleCardNumberChange = (e: React.ChangeEvent<HTMLInputElement>) => { ... };
+    // const handleExpiryChange = (e: React.ChangeEvent<HTMLInputElement>) => { ... };
 
     const handleCloseModal = () => {
         setApplicationStep('idle');
@@ -113,6 +100,40 @@ export default function ScheduleDetail() {
 
     const handlePaymentSubmit = (e: React.FormEvent) => {
         e.preventDefault();
+
+        if (paymentMethod === 'card') {
+            // PortOne Integration
+            const { IMP } = window;
+            IMP.init('imp43046522'); // Test ID
+
+            const merchantUid = `SCH-${new Date().getFullYear()}-${Math.floor(Math.random() * 1000000).toString().padStart(6, '0')}`;
+            const amount = isCompany ? selectedSchedule?.companyPrice : selectedSchedule?.personalPrice;
+
+            const data = {
+                pg: 'html5_inicis',
+                pay_method: 'card',
+                merchant_uid: merchantUid,
+                name: selectedSchedule?.title || 'Schedule Booking',
+                amount: amount || 0,
+                buyer_email: user?.email || 'guest@example.com',
+                buyer_name: user?.name || 'Guest',
+                buyer_tel: '010-0000-0000',
+            };
+
+            IMP.request_pay(data, (rsp: any) => {
+                if (rsp.success) {
+                    setApplicationStep('processing');
+                    setTimeout(() => {
+                        handleCompleteBooking(amount || 0, rsp.imp_uid, rsp.merchant_uid);
+                    }, 1500);
+                } else {
+                    alert(`결제에 실패하였습니다.\n(${rsp.error_msg})`);
+                }
+            });
+            return;
+        }
+
+        // Other methods (account, cash)
         setApplicationStep('processing');
         setTimeout(() => {
             const price = isCompany ? selectedSchedule?.companyPrice : selectedSchedule?.personalPrice;
@@ -120,7 +141,7 @@ export default function ScheduleDetail() {
         }, 1500);
     };
 
-    const handleCompleteBooking = async (amount: number) => {
+    const handleCompleteBooking = async (amount: number, _paymentId?: string, _merchantUid?: string) => {
         console.log("handleCompleteBooking:", { selectedSchedule, user, amount });
 
         if (!selectedSchedule) {
@@ -134,11 +155,9 @@ export default function ScheduleDetail() {
             return;
         }
 
-        const confirmMsg = `[Debug Check]\nUser: ${user.name}\nSchedule: ${selectedSchedule.title}\n진행하시겠습니까?`;
-        if (!window.confirm(confirmMsg)) {
-            setApplicationStep('idle');
-            return;
-        }
+        // Remove debug confirm
+        // const confirmMsg = `[Debug Check]\nUser: ${user.name}\nSchedule: ${selectedSchedule.title}\n진행하시겠습니까?`;
+        // if (!window.confirm(confirmMsg)) { ... }
 
         try {
             addRequest({
@@ -153,12 +172,13 @@ export default function ScheduleDetail() {
                 paymentAmount: amount,
                 paymentDate: new Date().toISOString(),
                 paymentMethod: amount > 0 ? (paymentMethod === 'card' ? 'Credit Card' : paymentMethod === 'account' ? 'Bank Transfer' : 'On-site Payment') : 'Free',
-                userType: isCompany ? 'Company' : 'Personal'
+                userType: isCompany ? 'Company' : 'Personal',
+                // We should theoretically pass paymentId here if the backend/context supports it
             }).then(() => {
-                alert("Debug: 요청이 서버로 전송되었습니다. 관리자 페이지를 확인하세요.");
+                // alert("Debug: 요청이 서버로 전송되었습니다. 관리자 페이지를 확인하세요.");
                 setApplicationStep('success');
             }).catch(e => {
-                alert(`Debug Failure: ${e.message || JSON.stringify(e)}`);
+                alert(`요청 처리 실패: ${e.message || JSON.stringify(e)}`);
                 setApplicationStep('idle');
             });
         } catch (error: any) {
@@ -350,38 +370,15 @@ export default function ScheduleDetail() {
                                 </div>
 
                                 {paymentMethod === 'card' && (
-                                    <div className="space-y-3 mb-6">
-                                        <div>
-                                            <input
-                                                type="text"
-                                                placeholder="카드 번호 (0000-0000-0000-0000)"
-                                                className="w-full border border-gray-300 rounded p-3 text-sm"
-                                                value={cardNumber}
-                                                onChange={handleCardNumberChange}
-                                                maxLength={19}
-                                                required
-                                            />
+                                    <div className="space-y-3 mb-6 bg-gray-50 p-4 rounded-lg border border-gray-100 animate-in fade-in slide-in-from-top-2 duration-300">
+                                        <div className="flex items-center gap-3 text-sm text-gray-600">
+                                            <CheckCircle size={16} className="text-blue-600" />
+                                            <span>PG사 보안 결제창이 호출됩니다.</span>
                                         </div>
-                                        <div className="flex gap-3">
-                                            <input
-                                                type="text"
-                                                placeholder="MM/YY"
-                                                className="w-full border border-gray-300 rounded p-3 text-sm"
-                                                value={cardExpiry}
-                                                onChange={handleExpiryChange}
-                                                maxLength={5}
-                                                required
-                                            />
-                                            <input
-                                                type="text"
-                                                placeholder="CVC"
-                                                className="w-full border border-gray-300 rounded p-3 text-sm"
-                                                value={cardCVC}
-                                                onChange={(e) => setCardCVC(e.target.value.replace(/\D/g, '').substr(0, 3))}
-                                                maxLength={3}
-                                                required
-                                            />
-                                        </div>
+                                        <p className="text-xs text-blue-500 pl-7">
+                                            * KG이니시스(또는 설정된 PG사)를 통해 안전하게 결제됩니다.<br />
+                                            * 팝업 차단을 해제해 주세요.
+                                        </p>
                                     </div>
                                 )}
 

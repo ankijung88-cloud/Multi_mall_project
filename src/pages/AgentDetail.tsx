@@ -22,9 +22,9 @@ export default function AgentDetail() {
     const agent = getAgent(Number(id));
     const [selectedSchedule, setSelectedSchedule] = useState<AgentSchedule | null>(null);
     const [applicationStep, setApplicationStep] = useState<'idle' | 'checking' | 'confirm' | 'payment' | 'processing' | 'success'>('idle');
-    const [cardNumber, setCardNumber] = useState('');
-    const [cardExpiry, setCardExpiry] = useState('');
-    const [cardCVC, setCardCVC] = useState('');
+    // const [cardNumber, setCardNumber] = useState('');
+    // const [cardExpiry, setCardExpiry] = useState('');
+    // const [cardCVC, setCardCVC] = useState('');
     const [paymentMethod, setPaymentMethod] = useState<'card' | 'account' | 'cash'>('card');
 
     // Calendar State
@@ -34,21 +34,8 @@ export default function AgentDetail() {
     const [customFlightInfo, setCustomFlightInfo] = useState('');
     const [customContent, setCustomContent] = useState('');
 
-    const handleCardNumberChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const value = e.target.value.replace(/\D/g, '');
-        const formatted = value.replace(/(\d{4})(?=\d)/g, '$1-').substr(0, 19);
-        setCardNumber(formatted);
-    };
-
-    const handleExpiryChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const value = e.target.value.replace(/\D/g, '');
-        if (value.length >= 2) {
-            const formatted = value.replace(/(\d{2})(?=\d)/g, '$1/').substr(0, 5);
-            setCardExpiry(formatted);
-        } else {
-            setCardExpiry(value);
-        }
-    };
+    // const handleCardNumberChange...
+    // const handleExpiryChange...
 
     if (!agent) {
         return (
@@ -126,8 +113,46 @@ export default function AgentDetail() {
 
     const handlePaymentSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        setApplicationStep('processing');
 
+
+        if (paymentMethod === 'card') {
+            const { IMP } = window;
+            IMP.init('imp43046522'); // Replace with your actual PortOne 'imp_uid'
+
+            const merchantUid = `AGT-${new Date().getFullYear()}-${Math.floor(Math.random() * 1000000).toString().padStart(6, '0')}`;
+
+            // Re-calculate price
+            const price = selectedSchedule
+                ? (isCompany ? selectedSchedule.companyPrice : selectedSchedule.personalPrice)
+                : (isCompany ? agent.defaultCompanyPrice : agent.defaultPersonalPrice);
+            const amount = price || 0;
+
+            const data = {
+                pg: 'html5_inicis', // Or 'kcp', 'nice', etc.
+                pay_method: 'card',
+                merchant_uid: merchantUid,
+                name: `Agent Booking: ${agent.name}`,
+                amount: amount,
+                buyer_email: user?.email || 'guest@example.com',
+                buyer_name: user?.name || 'Guest',
+                buyer_tel: user?.phone || '010-0000-0000',
+            };
+
+            IMP.request_pay(data, (rsp: any) => {
+                if (rsp.success) {
+                    setApplicationStep('processing');
+                    setTimeout(() => {
+                        handleCompleteBooking(amount, rsp.imp_uid, rsp.merchant_uid);
+                    }, 1500);
+                } else {
+                    alert(`결제 실패: ${rsp.error_msg}`);
+                    setApplicationStep('payment');
+                }
+            });
+            return;
+        }
+
+        setApplicationStep('processing');
         setTimeout(() => {
             const price = selectedSchedule
                 ? (isCompany ? selectedSchedule.companyPrice : selectedSchedule.personalPrice)
@@ -136,7 +161,7 @@ export default function AgentDetail() {
         }, 1500);
     };
 
-    const handleCompleteBooking = async (amount: number) => {
+    const handleCompleteBooking = async (amount: number, paymentId?: string, merchantUid?: string) => {
         if (!user) return;
 
         const requestData = {
@@ -151,6 +176,8 @@ export default function AgentDetail() {
             paymentStatus: (amount > 0 ? 'paid' : 'pending') as 'paid' | 'pending',
             paymentAmount: amount,
             paymentMethod: amount > 0 ? (paymentMethod === 'card' ? 'Credit Card' : paymentMethod === 'account' ? 'Bank Transfer' : 'On-site Payment') : 'Free',
+            paymentId: paymentId, // Add paymentId from PortOne
+            merchantUid: merchantUid, // Add merchantUid from PortOne
             timestamp: new Date().toISOString(),
             userType: (isCompany ? 'Company' : 'Personal') as 'Company' | 'Personal'
         };
@@ -171,6 +198,7 @@ export default function AgentDetail() {
         setCustomTime('09:00');
         setCustomFlightInfo('');
         setCustomContent('');
+        // setQuote({ amount: null }); // Removed undefined setQuote
     };
 
 
@@ -546,45 +574,9 @@ export default function AgentDetail() {
                                     </div>
 
                                     {paymentMethod === 'card' && (
-                                        <div className="space-y-3 mb-6">
-                                            <div>
-                                                <label className="block text-xs font-semibold text-gray-500 mb-1">카드 번호</label>
-                                                <input
-                                                    type="text"
-                                                    placeholder="0000-0000-0000-0000"
-                                                    className="w-full border border-gray-300 rounded p-2 text-sm"
-                                                    value={cardNumber}
-                                                    onChange={handleCardNumberChange}
-                                                    maxLength={19}
-                                                    required
-                                                />
-                                            </div>
-                                            <div className="flex gap-3">
-                                                <div className="flex-1">
-                                                    <label className="block text-xs font-semibold text-gray-500 mb-1">유효기간</label>
-                                                    <input
-                                                        type="text"
-                                                        placeholder="MM/YY"
-                                                        className="w-full border border-gray-300 rounded p-2 text-sm"
-                                                        value={cardExpiry}
-                                                        onChange={handleExpiryChange}
-                                                        maxLength={5}
-                                                        required
-                                                    />
-                                                </div>
-                                                <div className="w-1/3">
-                                                    <label className="block text-xs font-semibold text-gray-500 mb-1">CVC</label>
-                                                    <input
-                                                        type="text"
-                                                        placeholder="123"
-                                                        className="w-full border border-gray-300 rounded p-2 text-sm"
-                                                        value={cardCVC}
-                                                        onChange={(e) => setCardCVC(e.target.value.replace(/\D/g, '').substr(0, 3))}
-                                                        maxLength={3}
-                                                        required
-                                                    />
-                                                </div>
-                                            </div>
+                                        <div className="bg-blue-50 p-4 rounded-lg border border-blue-200 mb-6 text-sm text-blue-700">
+                                            <p className="font-bold mb-1">카드 결제 안내</p>
+                                            <p>아래 '결제하기' 버튼을 누르시면 안전한 결제창으로 이동합니다.</p>
                                         </div>
                                     )}
 

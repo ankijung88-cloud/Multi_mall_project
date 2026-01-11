@@ -1,4 +1,4 @@
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useContents } from '../context/ContentContext';
 import { useAuthStore } from '../store/useAuthStore';
 import MainLayout from '../layouts/MainLayout';
@@ -17,16 +17,23 @@ export default function PersonalContentDetail() {
     const [hasPaid, setHasPaid] = useState(false);
     const [paymentStep, setPaymentStep] = useState<'idle' | 'checking' | 'confirm' | 'payment' | 'processing' | 'success'>('idle');
     const [previewImage, setPreviewImage] = useState<string | null>(null);
-    const [cardNumber, setCardNumber] = useState('');
-    const [cardExpiry, setCardExpiry] = useState('');
-    const [cardCVC, setCardCVC] = useState('');
+    // const [cardNumber, setCardNumber] = useState('');
+    // const [cardExpiry, setCardExpiry] = useState('');
+    // const [cardCVC, setCardCVC] = useState('');
     const [paymentMethod, setPaymentMethod] = useState<'card' | 'account' | 'cash'>('card');
 
     // Find content
     const content = contents.find(c => c.id === id);
 
+    const location = useLocation();
+
     // Initial check for purchase status (DB based + local session based)
     const isPurchased = (isAuthenticated && content?.purchases?.some(p => p.userId === String(user?.id))) || content?.userId === String(user?.id);
+
+    // Check if we are incorrectly in the "my" path but not owner (shouldn't happen with correct links, but safe to check)
+    const isMyContentPath = location.pathname.includes('/contents/my/');
+
+    const isOwner = Boolean((user?.id && content?.userId && String(content.userId) === String(user.id)) || isMyContentPath);
 
     if (!content) {
         return (
@@ -88,28 +95,16 @@ export default function PersonalContentDetail() {
         setPaymentStep('payment');
     };
 
-    const handleCardNumberChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const value = e.target.value.replace(/\D/g, '');
-        const formatted = value.replace(/(\d{4})(?=\d)/g, '$1-').substr(0, 19);
-        setCardNumber(formatted);
-    };
+    // const handleCardNumberChange...
+    // const handleExpiryChange...
 
-    const handleExpiryChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const value = e.target.value.replace(/\D/g, '');
-        if (value.length >= 2) {
-            const formatted = value.replace(/(\d{2})(?=\d)/g, '$1/').substr(0, 5);
-            setCardExpiry(formatted);
-        } else {
-            setCardExpiry(value);
-        }
-    };
-
-    const handleCompleteBooking = async (amount: number) => {
+    const handleCompleteBooking = async (amount: number, _paymentId?: string, _merchantUid?: string) => {
         try {
+            // Note: purchaseContent might need update to accept paymentId/merchantUid if we want to store them
             await purchaseContent(content.id, String(user?.id), amount);
-            setHasPaid(true); // Enable download button
-            setPaymentStep('success'); // Show download modal
-            alert("결제가 완료되었습니다. 다운로드 버튼이 활성화되었습니다.");
+            setHasPaid(true);
+            setPaymentStep('success');
+            // alert("결제가 완료되었습니다. 다운로드 버튼이 활성화되었습니다.");
         } catch (error) {
             console.error(error);
             alert('결제에 실패했습니다.');
@@ -119,6 +114,37 @@ export default function PersonalContentDetail() {
 
     const handlePaymentSubmit = (e: React.FormEvent) => {
         e.preventDefault();
+
+        if (paymentMethod === 'card') {
+            const { IMP } = window;
+            IMP.init('imp43046522');
+
+            const merchantUid = `CNT-${new Date().getFullYear()}-${Math.floor(Math.random() * 1000000).toString().padStart(6, '0')}`;
+
+            const data = {
+                pg: 'html5_inicis',
+                pay_method: 'card',
+                merchant_uid: merchantUid,
+                name: `Content: ${content.title}`,
+                amount: content.price,
+                buyer_email: user?.email || 'guest@example.com',
+                buyer_name: user?.name || 'Guest',
+                buyer_tel: '010-0000-0000',
+            };
+
+            IMP.request_pay(data, (rsp: any) => {
+                if (rsp.success) {
+                    setPaymentStep('processing');
+                    setTimeout(() => {
+                        handleCompleteBooking(content.price, rsp.imp_uid, rsp.merchant_uid);
+                    }, 1500);
+                } else {
+                    alert(`결제 실패: ${rsp.error_msg}`);
+                }
+            });
+            return;
+        }
+
         setPaymentStep('processing');
         setTimeout(() => {
             handleCompleteBooking(content.price);
@@ -249,45 +275,46 @@ export default function PersonalContentDetail() {
                 </div>
 
                 {/* Fixed Bottom Bar */}
-                <div className="fixed bottom-0 left-0 w-full bg-white border-t border-gray-200 p-4 shadow-lg z-50">
-                    <div className="max-w-7xl mx-auto flex items-center justify-between">
-                        <div className="hidden md:block">
-                            <div className="text-xs text-gray-500">Total Price</div>
-                            <div className="text-2xl font-bold text-gray-900">₩{content.price.toLocaleString()}</div>
-                        </div>
+                {!isOwner && (
+                    <div className="fixed bottom-0 left-0 w-full bg-white border-t border-gray-200 p-4 shadow-lg z-50">
+                        <div className="max-w-7xl mx-auto flex items-center justify-between">
+                            <div className="hidden md:block">
+                                <div className="text-xs text-gray-500">Total Price</div>
+                                <div className="text-2xl font-bold text-gray-900">₩{content.price.toLocaleString()}</div>
+                            </div>
 
-                        <div className="flex gap-3 ml-auto">
-                            <button
-                                onClick={() => setPreviewImage(content.thumbnailUrl)}
-                                className="flex items-center justify-center gap-2 px-6 py-4 rounded-xl font-bold text-lg bg-gray-100 text-gray-700 hover:bg-gray-200 transition-colors"
-                            >
-                                🔍 미리보기
-                            </button>
+                            <div className="flex gap-3 ml-auto">
+                                <button
+                                    onClick={() => setPreviewImage(content.thumbnailUrl)}
+                                    className="flex items-center justify-center gap-2 px-6 py-4 rounded-xl font-bold text-lg bg-gray-100 text-gray-700 hover:bg-gray-200 transition-colors"
+                                >
+                                    🔍 미리보기
+                                </button>
 
+                                <button
+                                    onClick={handleBottomButtonClick}
+                                    className={`flex items-center justify-center gap-2 px-8 py-4 rounded-xl font-bold text-lg min-w-[200px] transition-all transform hover:scale-105 shadow-lg ${hasPaid
+                                        ? 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-emerald-200'
+                                        : 'bg-blue-600 hover:bg-blue-700 text-white shadow-blue-200'
+                                        }`}
+                                >
+                                    {hasPaid ? (
+                                        <>
+                                            <Download size={20} />
+                                            다운로드 (Download)
+                                        </>
+                                    ) : (
+                                        <>
+                                            <CreditCard size={20} />
+                                            결제하기 (Purchase)
+                                        </>
+                                    )}
+                                </button>
 
-
-                            <button
-                                onClick={handleBottomButtonClick}
-                                className={`flex items-center justify-center gap-2 px-8 py-4 rounded-xl font-bold text-lg min-w-[200px] transition-all transform hover:scale-105 shadow-lg ${hasPaid
-                                    ? 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-emerald-200'
-                                    : 'bg-blue-600 hover:bg-blue-700 text-white shadow-blue-200'
-                                    }`}
-                            >
-                                {hasPaid ? (
-                                    <>
-                                        <Download size={20} />
-                                        다운로드 (Download)
-                                    </>
-                                ) : (
-                                    <>
-                                        <CreditCard size={20} />
-                                        결제하기 (Purchase)
-                                    </>
-                                )}
-                            </button>
+                            </div>
                         </div>
                     </div>
-                </div>
+                )}
             </div>
 
             {/* Image Preview Modal (Lightbox) */}
@@ -377,38 +404,15 @@ export default function PersonalContentDetail() {
                                 </div>
 
                                 {paymentMethod === 'card' && (
-                                    <div className="space-y-3 mb-6">
-                                        <div>
-                                            <input
-                                                type="text"
-                                                placeholder="카드 번호 (0000-0000-0000-0000)"
-                                                className="w-full border border-gray-300 rounded p-3 text-sm"
-                                                value={cardNumber}
-                                                onChange={handleCardNumberChange}
-                                                maxLength={19}
-                                                required
-                                            />
+                                    <div className="space-y-3 mb-6 bg-gray-50 p-4 rounded-lg border border-gray-100 animate-in fade-in slide-in-from-top-2 duration-300">
+                                        <div className="flex items-center gap-3 text-sm text-gray-600">
+                                            <CheckCircle size={16} className="text-blue-600" />
+                                            <span>PG사 보안 결제창이 호출됩니다.</span>
                                         </div>
-                                        <div className="flex gap-3">
-                                            <input
-                                                type="text"
-                                                placeholder="MM/YY"
-                                                className="w-full border border-gray-300 rounded p-3 text-sm"
-                                                value={cardExpiry}
-                                                onChange={handleExpiryChange}
-                                                maxLength={5}
-                                                required
-                                            />
-                                            <input
-                                                type="text"
-                                                placeholder="CVC"
-                                                className="w-full border border-gray-300 rounded p-3 text-sm"
-                                                value={cardCVC}
-                                                onChange={(e) => setCardCVC(e.target.value.replace(/\D/g, '').substr(0, 3))}
-                                                maxLength={3}
-                                                required
-                                            />
-                                        </div>
+                                        <p className="text-xs text-blue-500 pl-7">
+                                            * KG이니시스(또는 설정된 PG사)를 통해 안전하게 결제됩니다.<br />
+                                            * 팝업 차단을 해제해 주세요.
+                                        </p>
                                     </div>
                                 )}
 

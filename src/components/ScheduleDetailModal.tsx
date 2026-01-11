@@ -24,9 +24,9 @@ export default function ScheduleDetailModal({ partner, schedule, isOpen, onClose
     const isCompany = (user?.type === 'Company' || user?.type === 'company') || (!user && (viewMode === 'company' || queryType === 'company'));
 
     const [applicationStep, setApplicationStep] = useState<'idle' | 'checking' | 'confirm' | 'payment' | 'processing' | 'success'>('idle');
-    const [cardNumber, setCardNumber] = useState('');
-    const [cardExpiry, setCardExpiry] = useState('');
-    const [cardCVC, setCardCVC] = useState('');
+    // const [cardNumber, setCardNumber] = useState('');
+    // const [cardExpiry, setCardExpiry] = useState('');
+    // const [cardCVC, setCardCVC] = useState('');
     const [paymentMethod, setPaymentMethod] = useState<'card' | 'account' | 'cash'>('card');
 
     // Reset state when modal opens/closes
@@ -34,27 +34,11 @@ export default function ScheduleDetailModal({ partner, schedule, isOpen, onClose
         if (!isOpen) {
             setApplicationStep('idle');
             setPaymentMethod('card');
-            setCardNumber('');
-            setCardExpiry('');
-            setCardCVC('');
         }
     }, [isOpen]);
 
-    const handleCardNumberChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const value = e.target.value.replace(/\D/g, '');
-        const formatted = value.replace(/(\d{4})(?=\d)/g, '$1-').substr(0, 19);
-        setCardNumber(formatted);
-    };
-
-    const handleExpiryChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const value = e.target.value.replace(/\D/g, '');
-        if (value.length >= 2) {
-            const formatted = value.replace(/(\d{2})(?=\d)/g, '$1/').substr(0, 5);
-            setCardExpiry(formatted);
-        } else {
-            setCardExpiry(value);
-        }
-    };
+    // const handleCardNumberChange...
+    // const handleExpiryChange...
 
     const handleInitialApply = (e: React.MouseEvent) => {
         e.preventDefault();
@@ -90,6 +74,38 @@ export default function ScheduleDetailModal({ partner, schedule, isOpen, onClose
 
     const handlePaymentSubmit = (e: React.FormEvent) => {
         e.preventDefault();
+
+        if (paymentMethod === 'card') {
+            const { IMP } = window;
+            IMP.init('imp43046522');
+
+            const merchantUid = `SCH-M-${new Date().getFullYear()}-${Math.floor(Math.random() * 1000000).toString().padStart(6, '0')}`;
+            const amount = isCompany ? schedule.companyPrice : schedule.personalPrice;
+
+            const data = {
+                pg: 'html5_inicis',
+                pay_method: 'card',
+                merchant_uid: merchantUid,
+                name: schedule.title || 'Schedule Booking',
+                amount: amount || 0,
+                buyer_email: 'guest@example.com',
+                buyer_name: 'Guest',
+                buyer_tel: '010-0000-0000',
+            };
+
+            IMP.request_pay(data, (rsp: any) => {
+                if (rsp.success) {
+                    setApplicationStep('processing');
+                    setTimeout(() => {
+                        handleCompleteBooking(amount || 0, rsp.imp_uid, rsp.merchant_uid);
+                    }, 1500);
+                } else {
+                    alert(`결제 실패: ${rsp.error_msg}`);
+                }
+            });
+            return;
+        }
+
         setApplicationStep('processing');
         setTimeout(() => {
             const price = isCompany ? schedule.companyPrice : schedule.personalPrice;
@@ -97,14 +113,14 @@ export default function ScheduleDetailModal({ partner, schedule, isOpen, onClose
         }, 1500);
     };
 
-    const handleCompleteBooking = (amount: number) => {
+    const handleCompleteBooking = async (amount: number, _paymentId?: string, _merchantUid?: string) => {
         if (!user) {
-            setApplicationStep('idle');
+            alert("로그인이 필요합니다.");
             return;
         }
 
         try {
-            addRequest({
+            await addRequest({
                 partnerId: partner.id,
                 partnerName: partner.name,
                 userId: user.id,
@@ -117,11 +133,12 @@ export default function ScheduleDetailModal({ partner, schedule, isOpen, onClose
                 paymentDate: new Date().toISOString(),
                 paymentMethod: amount > 0 ? (paymentMethod === 'card' ? 'Credit Card' : paymentMethod === 'account' ? 'Bank Transfer' : 'On-site Payment') : 'Free',
                 userType: isCompany ? 'Company' : 'Personal'
+                // paymentId: paymentId // TODO: Add to interface if needed
             });
             setApplicationStep('success');
         } catch (error) {
             console.error("Booking Error:", error);
-            alert('신청 처리 중 오류가 발생했습니다.');
+            alert("예약 처리 중 오류가 발생했습니다.");
             setApplicationStep('idle');
         }
     };
@@ -297,36 +314,15 @@ export default function ScheduleDetailModal({ partner, schedule, isOpen, onClose
                                 </div>
 
                                 {paymentMethod === 'card' && (
-                                    <div className="space-y-4 mb-6">
-                                        <input
-                                            type="text"
-                                            placeholder="카드 번호 (0000-0000-0000-0000)"
-                                            className="w-full border border-gray-300 rounded p-3 text-sm"
-                                            value={cardNumber}
-                                            onChange={handleCardNumberChange}
-                                            maxLength={19}
-                                            required
-                                        />
-                                        <div className="flex gap-3">
-                                            <input
-                                                type="text"
-                                                placeholder="MM/YY"
-                                                className="w-full border border-gray-300 rounded p-3 text-sm"
-                                                value={cardExpiry}
-                                                onChange={handleExpiryChange}
-                                                maxLength={5}
-                                                required
-                                            />
-                                            <input
-                                                type="text"
-                                                placeholder="CVC"
-                                                className="w-full border border-gray-300 rounded p-3 text-sm"
-                                                value={cardCVC}
-                                                onChange={(e) => setCardCVC(e.target.value.replace(/\D/g, '').substr(0, 3))}
-                                                maxLength={3}
-                                                required
-                                            />
+                                    <div className="space-y-3 mb-6 bg-gray-50 p-4 rounded-lg border border-gray-100 animate-in fade-in slide-in-from-top-2 duration-300">
+                                        <div className="flex items-center gap-3 text-sm text-gray-600">
+                                            <CheckCircle size={16} className="text-blue-600" />
+                                            <span>PG사 보안 결제창이 호출됩니다.</span>
                                         </div>
+                                        <p className="text-xs text-blue-500 pl-7">
+                                            * KG이니시스(또는 설정된 PG사)를 통해 안전하게 결제됩니다.<br />
+                                            * 팝업 차단을 해제해 주세요.
+                                        </p>
                                     </div>
                                 )}
 

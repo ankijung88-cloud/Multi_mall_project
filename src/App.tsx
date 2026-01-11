@@ -164,6 +164,10 @@ export default function App() {
                       <Route path="/contents/register" element={<ProtectedRoute><RegisterContent /></ProtectedRoute>} />
                       <Route path="/contents/edit/:id" element={<ProtectedRoute><RegisterContent /></ProtectedRoute>} />
                       <Route path="/contents/history" element={<ProtectedRoute><ActivityHistory /></ProtectedRoute>} />
+
+                      {/* Special route for viewing my own content (forces owner view) */}
+                      <Route path="/contents/my/:id" element={<PersonalContentDetail />} />
+
                       <Route path="/contents/:id" element={<PersonalContentDetail />} />
 
                       <Route

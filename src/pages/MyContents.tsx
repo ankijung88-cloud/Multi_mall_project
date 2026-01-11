@@ -69,7 +69,7 @@ export default function MyContents() {
                                     animate={{ opacity: 1, y: 0 }}
                                     transition={{ delay: index * 0.1 }}
                                     className="group bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-lg transition-all duration-300 border border-gray-100 flex flex-col cursor-pointer"
-                                    onClick={() => navigate(`/contents/${content.id}`)}
+                                    onClick={() => navigate(`/contents/my/${content.id}`)}
                                 >
                                     <div className="h-48 overflow-hidden relative">
                                         <img

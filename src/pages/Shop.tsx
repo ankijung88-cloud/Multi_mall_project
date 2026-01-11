@@ -1,18 +1,18 @@
 import { useEffect, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { useProducts } from '../context/ProductContext';
-import { useCart } from '../context/CartContext';
+// import { useCart } from '../context/CartContext';
 import { useAuthStore } from '../store/useAuthStore';
 import { useNavigate, useLocation } from 'react-router-dom';
 import MainLayout from '../layouts/MainLayout';
 import { PriceDisplay } from '../components/PriceDisplay';
-import { ShoppingCart } from 'lucide-react';
+// Removed duplicate PriceDisplay import
 import clsx from 'clsx';
 
 export default function Shop() {
     const { products } = useProducts();
-    const { addToCart, openCheckout } = useCart();
-    const { isAuthenticated, userType: authUserType } = useAuthStore();
+    // const { addToCart, openCheckout } = useCart();
+    const { userType: authUserType } = useAuthStore();
     const navigate = useNavigate();
     const location = useLocation();
 
@@ -36,21 +36,6 @@ export default function Shop() {
     const getPrice = (product: any) => {
         // Show price based on viewType even if not authenticated
         return viewType === 'company' ? product.companyPrice : product.personalPrice;
-    };
-
-    const handleAddToCart = (e: React.MouseEvent, product: any) => {
-        e.stopPropagation();
-        if (!isAuthenticated) {
-            navigate(`/login?type=${viewType}`);
-            return;
-        }
-        const price = getPrice(product);
-        addToCart({
-            id: product.id,
-            name: product.name,
-            price: price,
-            image: product.image
-        });
     };
 
     // Filter Logic
@@ -111,37 +96,6 @@ export default function Shop() {
                                             {viewType === 'company' && (
                                                 <span className="text-xs text-blue-500 font-medium">기업 전용가</span>
                                             )}
-                                        </div>
-                                        <div className="flex space-x-2">
-                                            <button
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    handleAddToCart(e, product);
-                                                }}
-                                                className={clsx(
-                                                    "p-3 rounded-lg text-white transition-colors shadow-sm",
-                                                    viewType === 'company' ? "bg-blue-600 hover:bg-blue-700" : "bg-emerald-600 hover:bg-emerald-700"
-                                                )}
-                                            >
-                                                <ShoppingCart size={20} />
-                                            </button>
-                                            <button
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    if (!isAuthenticated) {
-                                                        navigate(`/login?type=${viewType}`);
-                                                        return;
-                                                    }
-                                                    handleAddToCart(e, product);
-                                                    openCheckout();
-                                                }}
-                                                className={clsx(
-                                                    "p-3 rounded-lg text-white transition-colors shadow-sm font-bold text-sm",
-                                                    viewType === 'company' ? "bg-gray-800 hover:bg-gray-900" : "bg-gray-800 hover:bg-gray-900"
-                                                )}
-                                            >
-                                                주문하기
-                                            </button>
                                         </div>
                                     </div>
                                 </div>

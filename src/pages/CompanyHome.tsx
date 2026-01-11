@@ -1,13 +1,16 @@
+
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useProducts } from '../context/ProductContext';
 import { useAgents } from '../context/AgentContext';
-import { useFreelancers } from '../context/FreelancerContext';
+// import { useFreelancers } from '../context/FreelancerContext';
+import { useContents } from '../context/ContentContext';
+
 import { PriceDisplay } from '../components/PriceDisplay';
 import MainLayout from '../layouts/MainLayout';
-import { ShoppingBag, TrendingDown, ShieldCheck } from 'lucide-react';
+import { TrendingDown, ShieldCheck } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { useCart } from '../context/CartContext';
+// import { useCart } from '../context/CartContext';
 import { useAuthStore } from '../store/useAuthStore';
 import KBeautySection from '../components/sections/KBeautySection';
 import KPerformanceSection from '../components/sections/KPerformanceSection';
@@ -17,7 +20,9 @@ import KCourseSection from '../components/sections/KCourseSection';
 
 export default function CompanyHome() {
     const { products } = useProducts();
-    const { addToCart } = useCart();
+    const { contents } = useContents();
+
+    // const { addToCart } = useCart();
     const navigate = useNavigate();
     const { isAuthenticated, setViewMode } = useAuthStore();
 
@@ -42,21 +47,6 @@ export default function CompanyHome() {
         setTimeout(() => {
             document.getElementById('corporate-catalog')?.scrollIntoView({ behavior: 'smooth' });
         }, 100);
-    };
-
-    const handleAddToCart = (e: React.MouseEvent, product: any) => {
-        e.stopPropagation();
-        if (!isAuthenticated) {
-            // Redirect to login with specific type query param
-            navigate('/login?type=company');
-            return;
-        }
-        addToCart({
-            id: product.id,
-            name: product.name,
-            price: product.companyPrice,
-            image: product.image
-        });
     };
 
     return (
@@ -162,9 +152,9 @@ export default function CompanyHome() {
                                     key={agent.id}
                                     onClick={() => {
                                         if (!isAuthenticated) {
-                                            navigate('/login?type=company', { state: { from: `/agents/${agent.id}` } });
+                                            navigate('/login?type=company', { state: { from: `/ agents / ${agent.id} ` } });
                                         } else {
-                                            navigate(`/agents/${agent.id}?type=company`);
+                                            navigate(`/ agents / ${agent.id}?type = company`);
                                         }
                                     }}
                                     className="block cursor-pointer group text-center"
@@ -189,6 +179,7 @@ export default function CompanyHome() {
                     </div>
                 </section>
 
+
                 {/* Personal Contents Section */}
                 <section id="personal-contents" className="bg-gray-50 py-20 border-b border-gray-200">
                     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -204,40 +195,44 @@ export default function CompanyHome() {
                             </button>
                         </div>
 
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                            {useFreelancers().freelancers.slice(0, 8).map((freelancer) => (
-                                <motion.div
-                                    key={freelancer.id}
-                                    whileHover={{ y: -5 }}
-                                    className="bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-all cursor-pointer group"
-                                    onClick={() => navigate(`/contents/${freelancer.id}`)}
+                        {/* Grid Container */}
+                        <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                            {contents.map((content) => (
+                                <div
+                                    key={content.id}
+                                    className="bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-all duration-300 hover:-translate-y-1 cursor-pointer group flex flex-col"
+                                    onClick={() => navigate(`/contents/${content.id}`)}
                                 >
                                     <div className="relative h-48 overflow-hidden">
                                         <img
-                                            src={freelancer.image}
-                                            alt={freelancer.name}
+                                            src={content.thumbnailUrl}
+                                            alt={content.title}
                                             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                                         />
-                                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
-                                        <div className="absolute bottom-4 left-4 text-white">
-                                            <p className="text-xs font-medium text-orange-200 mb-1">{freelancer.title}</p>
-                                            <h3 className="font-bold text-lg">{freelancer.name}</h3>
+                                        <div className="absolute top-3 right-3 bg-black/70 text-white px-2 py-1 rounded text-xs font-bold">
+                                            ₩{content.price.toLocaleString()}
                                         </div>
                                     </div>
-                                    <div className="p-4">
-                                        <p className="text-gray-600 text-sm line-clamp-2 mb-3">
-                                            {freelancer.description}
+                                    <div className="p-4 flex-grow flex flex-col">
+                                        <div className="text-xs text-orange-600 font-semibold mb-1">{content.userName}</div>
+                                        <h3 className="font-bold text-lg mb-2 line-clamp-1">{content.title}</h3>
+                                        <p className="text-gray-500 text-sm line-clamp-2 mb-4 flex-grow">
+                                            {content.description}
                                         </p>
-                                        <div className="flex items-center text-xs text-orange-500 font-medium">
-                                            <span>상세보기</span>
-                                            <svg className="w-4 h-4 ml-1 group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                                            </svg>
+                                        <div className="pt-3 border-t border-gray-100 flex justify-between items-center text-sm">
+                                            <span className="text-gray-400">{new Date(content.createdAt).toLocaleDateString()}</span>
+                                            <span className="text-orange-600 font-medium group-hover:underline">상세보기 &rarr;</span>
                                         </div>
                                     </div>
-                                </motion.div>
+                                </div>
                             ))}
                         </div>
+
+                        {contents.length === 0 && (
+                            <div className="w-full text-center py-20 bg-white rounded-xl shadow-sm">
+                                <p className="text-gray-500 text-lg">등록된 컨텐츠가 없습니다.</p>
+                            </div>
+                        )}
                     </div>
                 </section>
 
@@ -302,22 +297,6 @@ export default function CompanyHome() {
                                                 {Math.round(((product.personalPrice - product.companyPrice) / product.personalPrice) * 100)}%
                                             </div>
                                         </div>
-                                    </div>
-
-                                    <div className="flex gap-2">
-                                        <button
-                                            onClick={(e) => handleAddToCart(e, product)}
-                                            className="flex-1 bg-gray-900 hover:bg-gray-800 text-white text-sm font-medium py-2 rounded-lg transition-colors shadow-sm"
-                                        >
-                                            샘플 주문
-                                        </button>
-                                        <button
-                                            onClick={(e) => handleAddToCart(e, product)}
-                                            className="flex-1 border border-blue-600 text-blue-600 hover:bg-blue-50 text-sm font-medium py-2 rounded-lg transition-colors flex items-center justify-center"
-                                        >
-                                            <ShoppingBag size={16} className="mr-1" />
-                                            대량 추가
-                                        </button>
                                     </div>
                                 </div>
                             </motion.div>
