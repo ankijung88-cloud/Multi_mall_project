@@ -53,7 +53,7 @@ export default function MainLayout({ children, hideFooter = false }: MainLayoutP
                 { name: '뷰티 & 병원', path: isCompany ? '/partners/beauty?type=company' : '/partners/beauty' },
                 { name: '공연 & 전시', path: isCompany ? '/partners/performance?type=company' : '/partners/performance' },
                 { name: '오디션', path: isCompany ? '/partners/audition?type=company' : '/partners/audition' },
-                { name: '패션', path: isCompany ? '/partners/fashion?type=company' : '/partners/fashion' },
+                { name: '패션 & Photo', path: isCompany ? '/partners/fashion?type=company' : '/partners/fashion' },
                 { name: '맛집', path: isCompany ? '/partners/travel?type=company' : '/partners/travel' },
                 { name: '가이드', path: isCompany ? '/partners/guide?type=company' : '/partners/guide' },
                 // Specific Items for Company Only

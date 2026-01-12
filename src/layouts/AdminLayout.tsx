@@ -39,9 +39,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
         { path: '/admin/partners/beauty', label: 'Beauty (뷰티/성형)' },
         { path: '/admin/partners/performance', label: 'Performance (공연/전시)' },
         { path: '/admin/partners/audition', label: 'Audition (오디션)' },
-        { path: '/admin/partners/fashion', label: 'Fashion (패션)' },
-        // { path: '/admin/partners/travel-company', label: 'Travel Corp (여행-기업)' },
-        // { path: '/admin/partners/food-company', label: 'Food Corp (음식-기업)' },
+        { path: '/admin/partners/fashion', label: 'Fashion (패션 & 사진)' },
     ];
 
     const requestSubItems = [
@@ -50,8 +48,6 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
         { path: '/admin/partner-requests/performance', label: 'Performance Requests' },
         { path: '/admin/partner-requests/audition', label: 'Audition Requests' },
         { path: '/admin/partner-requests/fashion', label: 'Fashion Requests' },
-        // { path: '/admin/partner-requests/travel-company', label: 'Travel Corp Requests' },
-        // { path: '/admin/partner-requests/food-company', label: 'Food Corp Requests' },
         { path: '/admin/partner-requests/inquiry', label: 'Inquiry (문의/제휴)' },
     ];
 

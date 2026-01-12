@@ -261,4 +261,18 @@ router.post('/:id/like', async (req, res) => {
     }
 });
 
+// Delete Purchase
+router.delete('/purchases/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+        await prisma.contentPurchase.delete({
+            where: { id }
+        });
+        res.json({ success: true });
+    } catch (error) {
+        console.error("Delete purchase failed:", error);
+        res.status(500).json({ error: "Failed to delete purchase" });
+    }
+});
+
 export default router;

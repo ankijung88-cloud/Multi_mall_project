@@ -209,7 +209,8 @@ export default function AdminDashboard() {
             .filter(req => req.scheduleTitle !== 'Partnership Inquiry')
             .forEach(req => {
                 const partner = partners.find(p => p.id === req.partnerId);
-                const category = partner?.category || 'Uncategorized';
+                const rawCategory = partner?.category || 'Uncategorized';
+                const category = (rawCategory === 'Fashion' || rawCategory === '패션') ? '패션 & 사진' : rawCategory;
                 partnerBreakdown[category] = (partnerBreakdown[category] || 0) + 1;
             });
 
@@ -299,7 +300,6 @@ export default function AdminDashboard() {
                 <div className="flex items-center gap-2">
                     <button
                         onClick={() => {
-                            console.log("Manual Refresh Clicked");
                             loadData();
                             if (refreshRequests) refreshRequests();
                         }}

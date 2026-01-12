@@ -1,9 +1,11 @@
 import { useState, useEffect } from 'react';
-import { Package, Truck, CheckCircle, Clock, Calendar, Users } from 'lucide-react';
+import { Package, Truck, CheckCircle, Clock, Calendar, Users, Trash2 } from 'lucide-react';
+import axios from 'axios';
 import { useAuthStore } from '../store/useAuthStore';
 import { usePartners } from '../context/PartnerContext';
 import { useAgents } from '../context/AgentContext';
 import MainLayout from '../layouts/MainLayout';
+import { useContents } from '../context/ContentContext';
 import clsx from 'clsx';
 
 interface Order {
@@ -20,30 +22,30 @@ interface Order {
 
 export default function OrderHistory() {
     const { user } = useAuthStore();
-    const { requests: partnerRequests } = usePartners();
-    const { requests: agentRequests } = useAgents();
+    const { requests: partnerRequests, deleteRequest: deletePartnerRequest } = usePartners();
+    const { requests: agentRequests, deleteRequest: deleteAgentRequest } = useAgents();
+    const { contents, refreshContents } = useContents(); // Get contents from context
     const [activeOrders, setActiveOrders] = useState<Order[]>([]);
     const [pastOrders, setPastOrders] = useState<Order[]>([]);
 
     useEffect(() => {
         if (!user) return;
 
-        const stored = localStorage.getItem('mall_orders');
-        if (stored) {
+        const fetchOrders = async () => {
             try {
-                const allOrders: Order[] = JSON.parse(stored);
+                // Fetch from server instead of localStorage
+                const { data } = await axios.get('/api/orders');
+                const allOrders: Order[] = Array.isArray(data) ? data : [];
+
                 // Filter by logged-in user
-                // Assuming user.email matches customerEmail in orders for now, or user.id
-                // In a real app we'd match ID. Here we'll try to match email if available, or just show all for demo if needed.
-                // The current order creation logic stores 'customerEmail'.
                 const userOrders = allOrders.filter(o => o.customerEmail === user.email);
 
                 // Sort by date desc
                 userOrders.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
                 // Split orders
-                // Active: Pending, Shipped, Receiving (Return in progress)
-                // Past: Delivered, Cancelled, Completed (Return completed)
+                // Active: Pending, Processing, Paid, Shipped, Receiving (Return in progress)
+                // Past: Delivered, Cancelled, Completed, Returned (Return completed)
 
                 const active = userOrders.filter(o =>
                     ['Pending', 'Processing', 'Paid', 'Shipped'].includes(o.status) ||
@@ -60,11 +62,59 @@ export default function OrderHistory() {
             } catch (error) {
                 console.error("Failed to load orders", error);
             }
-        }
+        };
+
+        fetchOrders();
     }, [user]);
 
+    // Filter purchased contents
+    const purchasedContents = contents.filter(content =>
+        content.purchases?.some(p => String(p.userId) === String(user?.id))
+    );
+
+    // Handlers
+    const handleDeleteOrder = async (orderId: string) => {
+        if (!window.confirm("Are you sure you want to delete this order history?")) return;
+        try {
+            await axios.delete(`/api/orders/${orderId}`);
+            setActiveOrders(prev => prev.filter(o => o.id !== orderId));
+            setPastOrders(prev => prev.filter(o => o.id !== orderId));
+        } catch (error) {
+            console.error("Failed to delete order", error);
+            alert("Failed to delete order");
+        }
+    };
+
+    const handleDeletePartner = async (requestId: string) => {
+        if (!window.confirm("Delete this application?")) return;
+        deletePartnerRequest(requestId);
+    };
+
+    const handleDeleteAgent = async (requestId: string) => {
+        if (!window.confirm("Delete this application?")) return;
+        deleteAgentRequest(requestId);
+    };
+
+    const handleDeletePurchase = async (purchaseId: string) => {
+        if (!window.confirm("Remove this purchase record?")) return;
+        try {
+            await axios.delete(`/api/contents/purchases/${purchaseId}`);
+            refreshContents();
+        } catch (error) {
+            console.error("Failed to delete purchase", error);
+        }
+    };
+
     const OrderCard = ({ order, isPast }: { order: Order, isPast: boolean }) => (
-        <div className={`bg-white rounded-xl shadow-sm border border-gray-200 p-6 flex flex-col md:flex-row gap-6 mb-4 ${isPast ? 'opacity-75 hover:opacity-100 transition-opacity' : ''}`}>
+        <div className={`bg-white rounded-xl shadow-sm border border-gray-200 p-6 flex flex-col md:flex-row gap-6 mb-4 relative ${isPast ? 'opacity-75 hover:opacity-100 transition-opacity' : ''}`}>
+            <button
+                onClick={(e) => { e.stopPropagation(); handleDeleteOrder(order.id); }}
+                className="absolute top-4 right-4 text-gray-400 hover:text-red-500 transition-colors p-1"
+                title="Delete Order History"
+            >
+                <Trash2 size={18} />
+            </button>
+
             <div className="flex-1">
                 <div className="flex items-center gap-2 mb-2">
                     <span className="text-sm font-bold text-gray-900">Order #{order.id}</span>
@@ -121,7 +171,7 @@ export default function OrderHistory() {
                 <section className="mb-12">
                     <h2 className="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2">
                         <Truck className="text-blue-600" />
-                        In Progress (진행중인 주문)
+                        In Progress (진행중인 주문) <span className="text-sm bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full ml-2">{activeOrders.length}</span>
                     </h2>
                     {activeOrders.length > 0 ? (
                         activeOrders.map(order => <OrderCard key={order.id} order={order} isPast={false} />)
@@ -135,7 +185,7 @@ export default function OrderHistory() {
                 <section>
                     <h2 className="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2">
                         <CheckCircle className="text-green-600" />
-                        Past Orders (지난 주문 내역)
+                        Past Orders (지난 주문 내역) <span className="text-sm bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full ml-2">{pastOrders.length}</span>
                     </h2>
                     {pastOrders.length > 0 ? (
                         pastOrders.map(order => <OrderCard key={order.id} order={order} isPast={true} />)
@@ -150,12 +200,19 @@ export default function OrderHistory() {
                 <section className="mt-12 border-t pt-8">
                     <h2 className="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2">
                         <Calendar className="text-purple-600" />
-                        K-Culture Course Applications (참여 신청 내역)
+                        K-Culture Course Applications (참여 신청 내역) <span className="text-sm bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full ml-2">{partnerRequests.filter(r => String(r.userId) === String(user?.id)).length}</span>
                     </h2>
-                    {partnerRequests.filter(r => r.userId === user?.id).length > 0 ? (
+                    {partnerRequests.filter(r => String(r.userId) === String(user?.id)).length > 0 ? (
                         <div className="space-y-4">
-                            {partnerRequests.filter(r => r.userId === user?.id).reverse().map(req => (
-                                <div key={req.id} className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 flex items-center justify-between">
+                            {partnerRequests.filter(r => String(r.userId) === String(user?.id)).reverse().map(req => (
+                                <div key={req.id} className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 flex items-center justify-between relative">
+                                    <button
+                                        onClick={() => handleDeletePartner(req.id)}
+                                        className="absolute top-4 right-4 text-gray-400 hover:text-red-500 transition-colors p-1"
+                                        title="Delete Application"
+                                    >
+                                        <Trash2 size={18} />
+                                    </button>
                                     <div>
                                         <div className="flex items-center gap-2 mb-1">
                                             <span className="font-bold text-gray-900">{req.partnerName}</span>
@@ -164,7 +221,7 @@ export default function OrderHistory() {
                                         <div className="text-gray-700 font-medium">{req.scheduleTitle}</div>
                                         <div className="text-sm text-gray-500">Scheduled: {req.scheduleDate}</div>
                                     </div>
-                                    <div>
+                                    <div className="mr-8">
                                         <span className={clsx(
                                             "px-3 py-1 rounded-full text-xs font-semibold",
                                             req.status === 'approved' ? "bg-green-100 text-green-800" :
@@ -189,12 +246,19 @@ export default function OrderHistory() {
                 <section className="mt-12 border-t pt-8">
                     <h2 className="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2">
                         <Users className="text-indigo-600" />
-                        Agent Schedule Applications (에이전트 상담 신청 내역)
+                        Agent Schedule Applications (에이전트 상담 신청 내역) <span className="text-sm bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full ml-2">{agentRequests.filter(r => String(r.userId) === String(user?.id)).length}</span>
                     </h2>
-                    {agentRequests.filter(r => r.userId === user?.id).length > 0 ? (
+                    {agentRequests.filter(r => String(r.userId) === String(user?.id)).length > 0 ? (
                         <div className="space-y-4">
-                            {agentRequests.filter(r => r.userId === user?.id).reverse().map(req => (
-                                <div key={req.id} className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 flex items-center justify-between">
+                            {agentRequests.filter(r => String(r.userId) === String(user?.id)).reverse().map(req => (
+                                <div key={req.id} className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 flex items-center justify-between relative">
+                                    <button
+                                        onClick={() => handleDeleteAgent(req.id)}
+                                        className="absolute top-4 right-4 text-gray-400 hover:text-red-500 transition-colors p-1"
+                                        title="Delete Application"
+                                    >
+                                        <Trash2 size={18} />
+                                    </button>
                                     <div>
                                         <div className="flex items-center gap-2 mb-1">
                                             <span className="font-bold text-gray-900">{req.agentName}</span>
@@ -205,7 +269,7 @@ export default function OrderHistory() {
                                             {req.flightInfo ? `Flight: ${req.flightInfo}` : req.content || 'No content'}
                                         </div>
                                     </div>
-                                    <div>
+                                    <div className="mr-8">
                                         <span className={clsx(
                                             "px-3 py-1 rounded-full text-xs font-semibold",
                                             req.status === 'approved' ? "bg-green-100 text-green-800" :
@@ -222,6 +286,67 @@ export default function OrderHistory() {
                     ) : (
                         <div className="text-center py-8 bg-gray-50 rounded-xl text-gray-500">
                             신청 내역이 없습니다.
+                        </div>
+                    )}
+                </section>
+
+                {/* Content Purchase History */}
+                <section className="mt-12 border-t pt-8">
+                    <h2 className="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2">
+                        <Package className="text-pink-600" />
+                        Content Purchase History (컨텐츠 구매 내역) <span className="text-sm bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full ml-2">{purchasedContents.length}</span>
+                    </h2>
+                    {purchasedContents.length > 0 ? (
+                        <div className="space-y-4">
+                            {purchasedContents.map(content => {
+                                const purchase = content.purchases?.find(p => String(p.userId) === String(user?.id));
+                                return (
+                                    <div key={content.id} className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 flex items-center justify-between relative">
+                                        <button
+                                            onClick={() => purchase && handleDeletePurchase(purchase.id)}
+                                            className="absolute top-4 right-4 text-gray-400 hover:text-red-500 transition-colors p-1"
+                                            title="Remove Purchase Record"
+                                        >
+                                            <Trash2 size={18} />
+                                        </button>
+                                        <div className="flex items-center gap-4">
+                                            <div className="w-16 h-16 bg-gray-100 rounded-lg overflow-hidden flex-shrink-0">
+                                                {content.thumbnailUrl ? (
+                                                    <img src={content.thumbnailUrl} alt={content.title} className="w-full h-full object-cover" />
+                                                ) : (
+                                                    <div className="w-full h-full flex items-center justify-center text-gray-400">
+                                                        <Package size={24} />
+                                                    </div>
+                                                )}
+                                            </div>
+                                            <div>
+                                                <h3 className="font-bold text-gray-900">{content.title}</h3>
+                                                <p className="text-sm text-gray-500 line-clamp-1">{content.description}</p>
+                                                <div className="text-xs text-gray-400 mt-1">
+                                                    Purchased: {new Date(purchase?.purchaseDate || '').toLocaleDateString()}
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div className="text-right mr-8">
+                                            <div className="font-bold text-gray-900">
+                                                ${content.price.toLocaleString()}
+                                            </div>
+                                            <a
+                                                href={content.contentUrl}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="text-xs text-blue-600 hover:underline mt-1 block"
+                                            >
+                                                View Content
+                                            </a>
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    ) : (
+                        <div className="text-center py-8 bg-gray-50 rounded-xl text-gray-500">
+                            구매 내역이 없습니다.
                         </div>
                     )}
                 </section>
