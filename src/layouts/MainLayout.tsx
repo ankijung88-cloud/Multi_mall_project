@@ -1,6 +1,6 @@
 import { useState, useEffect, type ReactNode } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { ShoppingBag, LogOut, ShoppingCart, LogIn, ClipboardList, LayoutDashboard, Menu, X, ChevronDown, ChevronUp, Search } from 'lucide-react';
+import { ShoppingBag, ShoppingCart, ClipboardList, LayoutDashboard, Menu, X, ChevronDown, ChevronUp, Search } from 'lucide-react';
 import clsx from 'clsx';
 import { useAuthStore } from '../store/useAuthStore';
 import { useCart } from '../context/CartContext';
@@ -28,89 +28,105 @@ export default function MainLayout({ children, hideFooter = false }: MainLayoutP
     const isCompany = activeType === 'company';
 
 
+    // Helper to generate dummy sub-sub items
+    const generateSubSub = (baseName: string, count: number) => {
+        return Array.from({ length: count }, (_, i) => ({
+            name: `${baseName} 상세 ${i + 1}`,
+            path: '#'
+        }));
+    };
+
     const navItems = [
         {
-            name: 'HOME',
+            name: '홈',
             path: isCompany ? '/company' : '/personal',
             subMenus: isCompany
                 ? [
-                    { name: '소개', path: '/intro?type=company' },
-                    { name: '공지사항', path: '/notice?type=company' },
-                    { name: '이벤트', path: '/event?type=company' }
+                    { name: '소개', path: '/intro?type=company', subMenus: generateSubSub('소개', 5) },
+                    { name: '공지사항', path: '/notice?type=company', subMenus: generateSubSub('공지사항', 5) },
+                    { name: '이벤트', path: '/event?type=company', subMenus: generateSubSub('이벤트', 5) },
+                    { name: '오시는 길', path: '/location?type=company', subMenus: generateSubSub('오시는 길', 5) },
+                    { name: '사이트맵', path: '/sitemap?type=company', subMenus: generateSubSub('사이트맵', 5) }
                 ]
                 : [
-                    { name: '소개', path: '/intro' },
-                    { name: '공지사항', path: '/notice' },
-                    { name: '이벤트', path: '/event' },
-                    { name: '채용', path: '/recruit' }
+                    { name: '소개', path: '/intro', subMenus: generateSubSub('소개', 5) },
+                    { name: '공지사항', path: '/notice', subMenus: generateSubSub('공지사항', 5) },
+                    { name: '이벤트', path: '/event', subMenus: generateSubSub('이벤트', 5) },
+                    { name: '채용', path: '/recruit', subMenus: generateSubSub('채용', 5) },
+                    { name: '오시는 길', path: '/location', subMenus: generateSubSub('오시는 길', 5) }
                 ]
         },
         {
-            name: 'K-CULTURE',
+            name: 'K-컬처',
             path: isCompany ? '/partners?type=company' : '/partners',
             subMenus: [
-                { name: 'K-COURSE', path: isCompany ? '/partners/course?type=company' : '/partners/course' },
-                { name: 'K-BEAUTY', path: isCompany ? '/partners/beauty?type=company' : '/partners/beauty' },
-                { name: 'K-PERFORMANCE', path: isCompany ? '/partners/performance?type=company' : '/partners/performance' },
-                { name: 'K-AUDITION', path: isCompany ? '/partners/audition?type=company' : '/partners/audition' },
-                { name: 'K-FASHION', path: isCompany ? '/partners/fashion?type=company' : '/partners/fashion' },
-                { name: 'K-FOOD', path: isCompany ? '/partners/travel?type=company' : '/partners/travel' },
-                { name: 'K-GUIDE', path: isCompany ? '/partners/guide?type=company' : '/partners/guide' },
-                // Specific Items for Company Only
-                ...(isCompany ? [
-                    { name: '제휴 문의', path: '/partners/inquiry?type=company' },
-                    { name: '파트너 뉴스', path: '/partners/news?type=company' },
-                    { name: '성공 사례', path: '/partners/success?type=company' }
-                ] : [])
+                { name: 'K-COURSE', path: isCompany ? '/partners/course?type=company' : '/partners/course', subMenus: generateSubSub('K-COURSE', 5) },
+                { name: 'K-BEAUTY', path: isCompany ? '/partners/beauty?type=company' : '/partners/beauty', subMenus: generateSubSub('K-BEAUTY', 5) },
+                { name: 'K-PERFORMANCE', path: isCompany ? '/partners/performance?type=company' : '/partners/performance', subMenus: generateSubSub('K-PERFORMANCE', 5) },
+                { name: 'K-AUDITION', path: isCompany ? '/partners/audition?type=company' : '/partners/audition', subMenus: generateSubSub('K-AUDITION', 5) },
+                { name: 'K-FASHION', path: isCompany ? '/partners/fashion?type=company' : '/partners/fashion', subMenus: generateSubSub('K-FASHION', 5) },
+                { name: 'K-FOOD', path: isCompany ? '/partners/travel?type=company' : '/partners/travel', subMenus: generateSubSub('K-FOOD', 5) },
+                { name: 'K-GUIDE', path: isCompany ? '/partners/guide?type=company' : '/partners/guide', subMenus: generateSubSub('K-GUIDE', 5) }
             ]
         },
         {
-            name: 'AGENT',
+            name: '에이전트',
             path: isCompany ? '/agents?type=company' : '/agents',
             subMenus: [
-                { name: '이용 가이드', path: isCompany ? '/agents/guide?type=company' : '/agents/guide' },
-                { name: '수수료 안내', path: isCompany ? '/agents/fee?type=company' : '/agents/fee' },
-                { name: '후기', path: isCompany ? '/agents/reviews?type=company' : '/agents/reviews' }
+                { name: '이용 가이드', path: isCompany ? '/agents/guide?type=company' : '/agents/guide', subMenus: generateSubSub('이용 가이드', 5) },
+                { name: '수수료 안내', path: isCompany ? '/agents/fee?type=company' : '/agents/fee', subMenus: generateSubSub('수수료 안내', 5) },
+                { name: '후기', path: isCompany ? '/agents/reviews?type=company' : '/agents/reviews', subMenus: generateSubSub('후기', 5) },
+                { name: '혜택 안내', path: isCompany ? '/agents/benefits?type=company' : '/agents/benefits', subMenus: generateSubSub('혜택 안내', 5) },
+                { name: '자주 묻는 질문', path: isCompany ? '/agents/faq?type=company' : '/agents/faq', subMenus: generateSubSub('FAQ', 5) }
             ]
         },
         {
-            name: 'PERSONAL',
+            name: '퍼스널',
             path: isCompany ? '/contents?type=company' : '/contents',
             subMenus: isCompany
                 ? [
-                    { name: '등록컨텐츠', path: '/contents?type=company' }
+                    { name: '등록컨텐츠', path: '/contents?type=company', subMenus: generateSubSub('등록컨텐츠', 5) },
+                    { name: '통계', path: '/contents/stats?type=company', subMenus: generateSubSub('통계', 5) },
+                    { name: '설정', path: '/contents/settings?type=company', subMenus: generateSubSub('설정', 5) },
+                    { name: '알림', path: '/contents/notifications?type=company', subMenus: generateSubSub('알림', 5) },
+                    { name: '고객지원', path: '/contents/support?type=company', subMenus: generateSubSub('고객지원', 5) }
                 ]
                 : [
-                    { name: '등록컨텐츠', path: '/contents' },
-                    { name: '나의 컨텐츠', path: '/contents/my' }
+                    { name: '등록컨텐츠', path: '/contents', subMenus: generateSubSub('등록컨텐츠', 5) },
+                    { name: '나의 컨텐츠', path: '/contents/my', subMenus: generateSubSub('나의 컨텐츠', 5) },
+                    { name: '관심 목록', path: '/contents/wishlist', subMenus: generateSubSub('관심 목록', 5) },
+                    { name: '활동 내역', path: '/contents/history', subMenus: generateSubSub('활동 내역', 5) },
+                    { name: '설정', path: '/contents/settings', subMenus: generateSubSub('설정', 5) }
                 ]
         },
         {
-            name: 'COMMUNITY',
+            name: '커뮤니티',
             path: '#',
             subMenus: [
-                { name: '정보공유', path: isCompany ? '/community/info?type=company' : '/community/info' },
-                { name: '항공사링크', path: isCompany ? '/community/airline?type=company' : '/community/airline' },
-                { name: '호텔링크', path: isCompany ? '/community/hotel?type=company' : '/community/hotel' },
-                { name: '교통링크', path: isCompany ? '/community/transport?type=company' : '/community/transport' },
-                { name: '고객센터', path: isCompany ? '/community/center?type=company' : '/community/center' }
+                { name: '정보공유', path: isCompany ? '/community/info?type=company' : '/community/info', subMenus: generateSubSub('정보공유', 5) },
+                { name: '항공사링크', path: isCompany ? '/community/airline?type=company' : '/community/airline', subMenus: generateSubSub('항공사링크', 5) },
+                { name: '호텔링크', path: isCompany ? '/community/hotel?type=company' : '/community/hotel', subMenus: generateSubSub('호텔링크', 5) },
+                { name: '교통링크', path: isCompany ? '/community/transport?type=company' : '/community/transport', subMenus: generateSubSub('교통링크', 5) },
+                { name: '고객센터', path: isCompany ? '/community/center?type=company' : '/community/center', subMenus: generateSubSub('고객센터', 5) }
             ]
         },
         {
-            name: 'SHOP',
+            name: '쇼핑',
             path: isCompany ? '/shop?type=company' : '/shop',
             subMenus: isCompany
                 ? [
-                    { name: '추천', path: '/shop?type=company#recommended' },
-                    { name: '신상품', path: '/shop?type=company#new' },
-                    { name: '브랜드', path: '/shop?type=company#brand' },
-                    { name: '세일', path: '/shop?type=company#sale' }
+                    { name: '추천', path: '/shop?type=company#recommended', subMenus: generateSubSub('추천', 5) },
+                    { name: '신상품', path: '/shop?type=company#new', subMenus: generateSubSub('신상품', 5) },
+                    { name: '브랜드', path: '/shop?type=company#brand', subMenus: generateSubSub('브랜드', 5) },
+                    { name: '세일', path: '/shop?type=company#sale', subMenus: generateSubSub('세일', 5) },
+                    { name: '베스트', path: '/shop?type=company#best', subMenus: generateSubSub('베스트', 5) }
                 ]
                 : [
-                    { name: '추천', path: '/shop#recommended' },
-                    { name: '신상품', path: '/shop#new' },
-                    { name: '브랜드', path: '/shop#brand' },
-                    { name: '세일', path: '/shop#sale' }
+                    { name: '추천', path: '/shop#recommended', subMenus: generateSubSub('추천', 5) },
+                    { name: '신상품', path: '/shop#new', subMenus: generateSubSub('신상품', 5) },
+                    { name: '브랜드', path: '/shop#brand', subMenus: generateSubSub('브랜드', 5) },
+                    { name: '세일', path: '/shop#sale', subMenus: generateSubSub('세일', 5) },
+                    { name: '베스트', path: '/shop#best', subMenus: generateSubSub('베스트', 5) }
                 ]
         },
     ];
@@ -131,9 +147,18 @@ export default function MainLayout({ children, hideFooter = false }: MainLayoutP
     // Set default active category when all menu opens
     useEffect(() => {
         if (isAllMenuOpen && navItems.length > 0 && !activeAllMenuCategory) {
-            setActiveAllMenuCategory(navItems[0].name);
+            const firstCat = navItems[0];
+            setActiveAllMenuCategory(firstCat.name);
         }
-    }, [isAllMenuOpen, navItems, activeAllMenuCategory]);
+    }, [isAllMenuOpen, activeAllMenuCategory]);
+
+    const handleAuthAction = (action: () => void) => {
+        if (!isAuthenticated) {
+            navigate(`/login?type=${isCompany ? 'company' : 'personal'}`);
+        } else {
+            action();
+        }
+    };
 
     const handleLogout = () => {
         logout();
@@ -141,27 +166,17 @@ export default function MainLayout({ children, hideFooter = false }: MainLayoutP
     };
 
     const [searchQuery, setSearchQuery] = useState('');
-
     const handleSearch = (e: React.KeyboardEvent<HTMLInputElement>) => {
         if (e.key === 'Enter') {
             navigate(`/search?q=${encodeURIComponent(searchQuery)}&type=${isCompany ? 'company' : 'personal'}`);
         }
     };
 
-
-    const handleAuthAction = (action: () => void) => {
-        if (!isAuthenticated) {
-            navigate(`/login?type=${isCompany ? 'company' : 'personal'}`);
-            return;
-        }
-        action();
-    };
-
-
     return (
-        <div className="min-h-screen flex flex-col font-sans" style={{
+        <div className="flex flex-col min-h-screen font-sans" style={{
             background: 'linear-gradient(180deg, rgba(255, 248, 240, 1) 0%, rgba(255, 255, 255, 1) 100%)'
         }}>
+            {/* Navigation Header */}
             <nav className={clsx(
                 "sticky top-0 z-50 transition-colors duration-300",
                 isCompany ? "" : ""
@@ -169,12 +184,13 @@ export default function MainLayout({ children, hideFooter = false }: MainLayoutP
                 background: 'linear-gradient(135deg, #FFF8F0 0%, #FFFFFF 100%)',
                 borderBottom: isCompany ? '2px solid #FFB6B9' : '2px solid #A8D8EA'
             }}>
+                {/* Merged Header (Logo + Search + Utilities) */}
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                    {/* Top Bar: Logo and Auth/Cart (Desktop: Split, Mobile: Combined) */}
-                    <div className="flex justify-between h-16 items-center relative">
-                        <div className="flex items-center space-x-2 md:space-x-8">
-
-                            <Link to={isCompany ? '/company' : '/personal'} className="flex items-center space-x-2">
+                    <div className="flex justify-between items-center h-20">
+                        {/* Left: Logo & Search */}
+                        <div className="flex items-center gap-8">
+                            {/* Logo */}
+                            <Link to={isCompany ? '/company' : '/personal'} className="flex items-center space-x-2 group flex-shrink-0">
                                 <div className="p-2 rounded-lg" style={{
                                     background: isCompany
                                         ? 'linear-gradient(135deg, #FFB6B9 0%, #FF9AA2 100%)'
@@ -182,29 +198,32 @@ export default function MainLayout({ children, hideFooter = false }: MainLayoutP
                                 }}>
                                     <ShoppingBag size={24} className="text-white" />
                                 </div>
-                                <span className="text-sm font-bold text-hanbok-charcoal hidden sm:block px-3 py-1.5 rounded-full bg-hanbok-cloud">                                 {isCompany ? 'BizMall' : 'LifeStyle'}
-                                </span>
-                                <span className="text-xl font-bold text-gray-800 sm:hidden">
-                                    {isCompany ? 'Biz' : 'LS'}
+                                <span className={clsx(
+                                    "text-2xl md:text-3xl font-bold font-korean tracking-tight transition-colors duration-300",
+                                    isCompany ? "text-hanbok-royal" : "text-hanbok-jade group-hover:text-hanbok-sea"
+                                )}>
+                                    {isCompany ? 'BizMall' : 'K-Mall'}
                                 </span>
                             </Link>
 
-                            {/* Search Bar - Added next to Logo */}
-                            <div className="relative hidden sm:block ml-4" style={{ width: '450px' }}>
+                            {/* Desktop Search Bar (Hidden on Mobile/Tablet) */}
+                            <div className="hidden xl:block relative" style={{ width: '400px' }}>
                                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                                     <Search size={18} style={{ color: '#8E9AAF' }} />
                                 </div>
                                 <input
                                     type="text"
-                                    placeholder="상품 검색"
+                                    placeholder="검색어를 입력하세요..."
+                                    className="block w-full pl-10 pr-4 py-2 rounded-xl leading-5 placeholder-gray-400 focus:outline-none sm:text-sm transition-all duration-200 font-korean"
                                     value={searchQuery}
                                     onChange={(e) => setSearchQuery(e.target.value)}
                                     onKeyDown={handleSearch}
-                                    className="block w-full pl-11 pr-4 py-2.5 rounded-xl leading-5 placeholder-gray-400 focus:outline-none sm:text-sm transition-all duration-200 font-korean"
                                     style={{
                                         background: 'rgba(255, 248, 240, 0.5)',
                                         border: '2px solid rgba(203, 213, 224, 0.6)',
-                                        color: '#4A5568'
+                                        color: '#4A5568',
+                                        borderRadius: '0.75rem',
+                                        paddingLeft: '2.5rem' // matched with icon padding
                                     }}
                                     onFocus={(e) => {
                                         e.currentTarget.style.background = '#FFFFFF';
@@ -218,116 +237,106 @@ export default function MainLayout({ children, hideFooter = false }: MainLayoutP
                             </div>
                         </div>
 
-                        {/* Right Side: Auth & Cart */}
-                        <div className="flex items-center space-x-3">
-                            <span className="text-sm font-medium text-gray-500 hidden sm:block">
-                                {userType === 'admin' ? '슈퍼 관리자' : (isCompany ? '기업 회원' : '개인 회원')}
-                            </span>
-                            {isAuthenticated ? (
+                        {/* Right: Utilities & Mobile Toggle */}
+                        <div className="flex items-center space-x-4 md:space-x-6">
+                            {/* Utility Links (Desktop Only) */}
+                            <div className="hidden lg:flex items-center space-x-4 text-xs font-medium text-gray-500 font-korean">
+                                {isAuthenticated ? (
+                                    <>
+                                        <span className="text-gray-700">
+                                            {userType === 'admin' ? '관리자' : (isCompany ? '기업회원' : '개인회원')}님
+                                        </span>
+                                        <button onClick={handleLogout} className="hover:text-hanbok-red transition-colors">로그아웃</button>
+                                    </>
+                                ) : (
+                                    <>
+                                        <Link to={`/login?type=${isCompany ? 'company' : 'personal'}`} className="hover:text-hanbok-jade transition-colors">로그인</Link>
+                                        <span className="text-gray-300">|</span>
+                                        <Link to={`/register?type=${isCompany ? 'company' : 'personal'}`} className="hover:text-hanbok-jade transition-colors">회원가입</Link>
+                                    </>
+                                )}
+                                <span className="text-gray-300">|</span>
+                                <button className="hover:text-hanbok-jade transition-colors">고객센터</button>
+                                {(userType === 'admin' || userType === 'company') && (
+                                    <>
+                                        <span className="text-gray-300">|</span>
+                                        <Link to="/partners/inquiry" className="hover:text-hanbok-jade transition-colors">제휴문의</Link>
+                                    </>
+                                )}
+                            </div>
+
+                            {/* Admin Dashboard Button (Desktop) */}
+                            {userType === 'admin' && (
                                 <button
-                                    onClick={handleLogout}
-                                    className="flex items-center space-x-1.5 text-hanbok-charcoal hover:text-hanbok-jade transition-colors hidden sm:flex font-medium"
+                                    onClick={() => navigate('/admin')}
+                                    className="hidden md:flex px-3 py-1.5 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors font-medium text-xs items-center gap-1"
                                 >
-                                    <LogOut size={18} />
-                                    <span>LOGOUT</span>
+                                    <LayoutDashboard size={14} /> 관리자
                                 </button>
-                            ) : (
-                                <Link
-                                    to={`/login?type=${isCompany ? 'company' : 'personal'}`}
-                                    className="flex items-center space-x-1 text-gray-600 hover:text-emerald-500 transition-colors hidden sm:flex"
-                                >
-                                    <LogIn size={18} />
-                                    <span>LOGIN</span>
-                                </Link>
                             )}
 
-                            {/* Mobile Menu Button - Right on mobile */}
-                            <button
-                                onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-                                className="md:hidden p-2 text-hanbok-charcoal hover:text-hanbok-jade transition-colors ml-2 rounded-lg hover:bg-hanbok-cloud"
-                            >
-                                {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+                            {/* Mobile Search Icon (When search bar is hidden) */}
+                            <button className="xl:hidden text-gray-500 hover:text-hanbok-jade">
+                                <Search size={24} />
                             </button>
+
+                            {/* Mobile Menu Button */}
+                            <div className="flex items-center md:hidden">
+                                <button
+                                    onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                                    className="inline-flex items-center justify-center p-2 rounded-md text-gray-700 hover:text-hanbok-jade focus:outline-none transition-colors"
+                                >
+                                    {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
 
-                {/* Second Bar: Navigation Links (Desktop Only) */}
+                {/* Desktop Secondary Navigation Bar (The "Bottom Navigation") */}
                 <div className="hidden md:block border-t relative" style={{
                     background: 'linear-gradient(135deg, rgba(255, 248, 240, 0.8) 0%, rgba(255, 255, 255, 0.8) 100%)',
                     borderColor: 'rgba(203, 213, 224, 0.5)'
                 }}>
                     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                        <div className="flex items-center h-16">
-                            {/* View All Menu Button - Leftmost */}
-                            <div className="h-full flex items-center mr-8">
+                        <div className="flex items-center h-14">
+                            {/* All Menu Button */}
+                            <div className="relative group mr-8">
                                 <button
                                     onClick={() => setIsAllMenuOpen(!isAllMenuOpen)}
-                                    className="flex items-center space-x-2 font-bold px-3 py-2 transition-all font-korean text-base hover:scale-105"
-                                    style={{
-                                        background: 'transparent',
-                                        color: isAllMenuOpen ? '#7AC5DC' : '#8E9AAF',
-                                        border: 'none'
-                                    }}
+                                    className={clsx(
+                                        "flex items-center space-x-2 font-bold text-base transition-colors py-4",
+                                        isAllMenuOpen ? "text-hanbok-jade" : "text-gray-800 hover:text-hanbok-jade"
+                                    )}
                                 >
                                     <Menu size={20} />
                                     <span>전체보기</span>
                                 </button>
                             </div>
 
-                            {/* Separator */}
-                            <div className="h-6 w-px bg-gradient-to-b from-hanbok-jade to-hanbok-sunset mr-8"></div>
-
-                            <div className="flex space-x-8 whitespace-nowrap items-center h-full">
+                            {/* Main Categories (Horizontal) */}
+                            <div className="flex h-full items-stretch space-x-1 flex-1">
                                 {navItems.map((item) => (
-                                    <div key={item.name} className="relative group flex items-center h-full">
-                                        <Link
-                                            to={item.path}
-                                            onClick={(e) => item.path === '#' && e.preventDefault()}
-                                            className={clsx(
-                                                "text-base font-medium transition-colors border-b-2 border-transparent pb-1 block",
-                                                "text-gray-600 hover:text-gray-900",
-                                                isCompany
-                                                    ? "group-hover:text-hanbok-royal group-hover:border-hanbok-royal"
-                                                    : "group-hover:text-hanbok-jade group-hover:border-hanbok-jade",
-                                                item.name === 'Personal' && (isCompany ? "text-hanbok-royal font-bold" : "text-hanbok-jade font-bold")
-                                            )}
-                                        >
-                                            {item.name}
-                                        </Link>
+                                    <div key={item.name} className="relative group px-1 h-full flex items-center">
+                                        <div className="group flex flex-col items-center h-full justify-center">
+                                            <Link
+                                                to={item.path}
+                                                className={clsx(
+                                                    "px-4 flex items-center h-full text-base font-bold transition-colors relative z-10",
+                                                    location.pathname === item.path
+                                                        ? (isCompany ? "text-hanbok-royal" : "text-hanbok-jade")
+                                                        : "text-gray-700 group-hover:text-hanbok-jade"
+                                                )}
+                                            >
+                                                {item.name}
+                                            </Link>
 
-                                        {/* Traditional Dropdown Menu (optional, keeping for consistent UX if "All Menu" is not used) */}
-                                        <div className="absolute left-1/2 transform -translate-x-1/2 mt-0 w-52 bg-white border-2 border-hanbok-jade/20 shadow-hanbok rounded-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50 top-full overflow-hidden">
-                                            <div className={clsx("h-1 w-full bg-gradient-hanbok", isCompany ? "" : "")}></div>
-                                            <div className="py-2">
-                                                {item.subMenus.map((subItem, idx) => {
-                                                    const subName = typeof subItem === 'string' ? subItem : subItem.name;
-                                                    const subPath = typeof subItem === 'string' ? '#' : subItem.path;
-                                                    return (
-                                                        <Link
-                                                            key={idx}
-                                                            to={subPath}
-                                                            className="block px-5 py-3 text-sm font-korean text-hanbok-charcoal hover:bg-hanbok-cloud hover:text-hanbok-jade whitespace-pre-line text-left leading-normal transition-colors font-medium"
-                                                        >
-                                                            {subName}
-                                                        </Link>
-                                                    );
-                                                })}
-                                            </div>
                                         </div>
-
                                     </div>
                                 ))}
                             </div>
 
-                            {/* Order History & Cart Buttons - Far right of the nav bar (optional, or kept here as per previous request? Previous request said 'next to Home', but user said 'Left Align Bottom Nav'. Flex row with nav items usually takes space.
-                            Left align implies Nav items start from left.
-                            Let's keep the Order/Cart icons inside the right side of this bar as per previous instruction to move them to bottom bar?
-                            Wait, previous instruction was to move them to bottom bar.
-                            Let's add them via `ml-auto` to push them to the right, or keep them close if that's preferred.
-                            "Left Align" usually means the menu items are on the left.
-                            Let's put the cart/order on the right side of this bottom bar to balance it out.
-                            */}
+                            {/* Order History & Cart Buttons */}
                             <div className="flex items-center space-x-4 pl-4 border-l border-gray-200 ml-auto">
                                 <button
                                     onClick={() => handleAuthAction(() => navigate('/order-history'))}
@@ -335,9 +344,7 @@ export default function MainLayout({ children, hideFooter = false }: MainLayoutP
                                     title="Order History"
                                 >
                                     <ClipboardList size={20} />
-                                    <span className="text-sm font-medium">MYPAGE
-
-                                    </span>
+                                    <span className="text-sm font-medium">MYPAGE</span>
                                 </button>
 
                                 <button
@@ -367,72 +374,7 @@ export default function MainLayout({ children, hideFooter = false }: MainLayoutP
                         isMobileMenuOpen ? "max-h-screen opacity-100" : "max-h-0 opacity-0"
                     )}
                 >
-
                     <div className="h-[calc(100vh-64px)] overflow-y-auto">
-                        {/* Mobile User Section */}
-                        <div className="bg-gray-50 px-4 py-6 border-b border-gray-200">
-                            {isAuthenticated ? (
-                                <div className="space-y-4">
-                                    <div className="flex items-center justify-between">
-                                        <span className="font-bold text-gray-900 text-lg">
-                                            {userType === 'admin' ? '슈퍼 관리자' : (isCompany ? '기업 회원' : '개인 회원')}님
-                                        </span>
-                                        <button
-                                            onClick={handleLogout}
-                                            className="text-sm text-gray-500 hover:text-red-500 underline"
-                                        >
-                                            LOGOUT
-                                        </button>
-                                    </div>
-                                    <div className="grid grid-cols-2 gap-3">
-                                        <button
-                                            onClick={() => {
-                                                navigate('/order-history');
-                                                setIsMobileMenuOpen(false);
-                                            }}
-                                            className="flex items-center justify-center space-x-2 py-3 bg-white border border-gray-200 rounded-xl shadow-sm hover:bg-gray-50 transition-colors"
-                                        >
-                                            <ClipboardList size={20} className="text-gray-600" />
-                                            <span className="text-sm font-medium text-gray-700">주문내역</span>
-                                        </button>
-                                        <button
-                                            onClick={() => {
-                                                toggleCart();
-                                                setIsMobileMenuOpen(false);
-                                            }}
-                                            className="flex items-center justify-center space-x-2 py-3 bg-white border border-gray-200 rounded-xl shadow-sm hover:bg-gray-50 transition-colors relative"
-                                        >
-                                            <ShoppingCart size={20} className="text-gray-600" />
-                                            <span className="text-sm font-medium text-gray-700">CART</span>
-                                            {totalItems > 0 && (
-                                                <span className={clsx(
-                                                    "absolute -top-2 -right-2 w-5 h-5 flex items-center justify-center text-xs font-bold text-white rounded-full",
-                                                    isCompany ? "bg-blue-600" : "bg-emerald-500"
-                                                )}>
-                                                    {totalItems}
-                                                </span>
-                                            )}
-                                        </button>
-                                    </div>
-                                </div>
-                            ) : (
-                                <div>
-                                    <p className="text-gray-500 mb-4 text-sm">로그인이 필요합니다.</p>
-                                    <Link
-                                        to={`/login?type=${isCompany ? 'company' : 'personal'}`}
-                                        onClick={() => setIsMobileMenuOpen(false)}
-                                        className={clsx(
-                                            "w-full flex items-center justify-center space-x-2 py-3 rounded-xl text-white font-bold shadow-md transition-transform active:scale-95",
-                                            isCompany ? "bg-blue-600" : "bg-emerald-500"
-                                        )}
-                                    >
-                                        <LogIn size={20} />
-                                        <span>로그인 / 회원가입</span>
-                                    </Link>
-                                </div>
-                            )}
-                        </div>
-
                         <div className="px-4 py-2 space-y-1">
                             {navItems.map((item) => (
                                 <div key={item.name} className="border-b border-gray-100 last:border-0">
@@ -456,33 +398,27 @@ export default function MainLayout({ children, hideFooter = false }: MainLayoutP
                                     <div
                                         className={clsx(
                                             "bg-gray-50 space-y-1 overflow-hidden transition-all duration-300",
-                                            expandedMobileMenu === item.name ? "max-h-[500px] py-2" : "max-h-0"
+                                            expandedMobileMenu === item.name ? "max-h-[800px] py-2" : "max-h-0"
                                         )}
                                     >
+                                        {/* Mobile Submenu render */}
                                         {item.subMenus.map((sub, idx) => {
-                                            // Reuse logic from Custom Link handling if needed, but simplified here
-                                            // As per desktop code, subItems can be string or objects
-                                            // Let's assume standard object structure or fix previous inconsistent typing if present.
-                                            // Checking previous code, it handled string | object.
-                                            let subName = '';
-                                            let subPath = '#';
-
-                                            if (typeof sub === 'string') {
-                                                subName = sub;
-                                            } else {
-                                                subName = sub.name;
-                                                subPath = sub.path;
-                                            }
-
+                                            const subName = typeof sub === 'string' ? sub : sub.name;
                                             return (
-                                                <Link
-                                                    key={idx}
-                                                    to={subPath}
-                                                    onClick={() => setIsMobileMenuOpen(false)}
-                                                    className="block px-6 py-2 text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-md"
-                                                >
-                                                    {subName}
-                                                </Link>
+                                                <div key={idx}>
+                                                    <div className="px-6 py-2 text-sm text-gray-600 font-bold">{subName}</div>
+                                                    {/* Render Sub-Sub items for mobile */}
+                                                    {typeof sub !== 'string' && sub.subMenus && sub.subMenus.map((subSub: any, sIdx: number) => (
+                                                        <Link
+                                                            key={sIdx}
+                                                            to={subSub.path}
+                                                            onClick={() => setIsMobileMenuOpen(false)}
+                                                            className="block px-8 py-2 text-xs text-gray-500 hover:text-gray-900"
+                                                        >
+                                                            - {subSub.name}
+                                                        </Link>
+                                                    ))}
+                                                </div>
                                             );
                                         })}
                                     </div>
@@ -491,130 +427,212 @@ export default function MainLayout({ children, hideFooter = false }: MainLayoutP
                         </div>
                     </div>
                 </div>
-                {/* Desktop All Menu Overlay - Re-designed */}
-                {isAllMenuOpen && (
-                    <div
-                        className="hidden md:block absolute top-[132px] left-0 w-full bg-white z-50 shadow-xl border-t border-gray-100 border-b-4 border-gray-100 animate-in fade-in slide-in-from-top-1"
-                        style={{ minHeight: '400px' }}
-                    >
-                        <div className="max-w-7xl mx-auto flex h-full min-h-[400px]">
-                            {/* Overlay Sidebar */}
-                            <div className="w-1/4 bg-gray-50 border-r border-gray-100 py-8">
-                                <ul className="space-y-1 px-4">
-                                    {navItems.map((item) => (
-                                        <li key={item.name}>
-                                            <button
-                                                onMouseEnter={() => setActiveAllMenuCategory(item.name)}
-                                                onClick={() => navigate(item.path)}
-                                                className={clsx(
-                                                    "w-full text-left px-6 py-4 rounded-lg font-bold text-lg transition-all flex items-center justify-between",
-                                                    activeAllMenuCategory === item.name
-                                                        ? (isCompany ? "bg-white text-blue-600 shadow-sm" : "bg-white text-emerald-600 shadow-sm")
-                                                        : "text-gray-500 hover:text-gray-900 hover:bg-gray-100"
-                                                )}
-                                            >
-                                                <span>{item.name}</span>
-                                                {activeAllMenuCategory === item.name && (
-                                                    <ChevronDown size={20} className="-rotate-90 transform" />
-                                                )}
-                                            </button>
-                                        </li>
-                                    ))}
-                                </ul>
-                            </div>
 
-                            {/* Overlay Content Area */}
-                            <div className="w-3/4 p-12 bg-white flex flex-col">
-                                {activeAllMenuCategory && (
-                                    <div className="animate-in fade-in duration-300">
-                                        <h3 className="text-2xl font-bold mb-8 text-gray-800 pb-4 border-b border-gray-100">
-                                            {activeAllMenuCategory}
-                                        </h3>
-                                        <div className="grid grid-cols-3 gap-8">
-                                            {navItems.find(i => i.name === activeAllMenuCategory)?.subMenus.map((sub, idx) => {
-                                                const subName = typeof sub === 'string' ? sub : sub.name;
-                                                const subPath = typeof sub === 'string' ? '#' : sub.path;
 
-                                                return (
-                                                    <Link
-                                                        key={idx}
-                                                        to={subPath}
-                                                        onClick={() => setIsAllMenuOpen(false)}
-                                                        className="group flex flex-col space-y-1 hover:bg-gray-50 p-4 rounded-lg transition-colors border border-transparent hover:border-gray-100"
-                                                    >
-                                                        <span className="font-medium text-gray-700 group-hover:text-black">
-                                                            {subName.split('\n')[0]}
-                                                        </span>
-                                                        {subName.includes('\n') && (
-                                                            <span className="text-xs text-gray-400">
-                                                                {subName.split('\n')[1]}
-                                                            </span>
-                                                        )}
-                                                    </Link>
-                                                )
-                                            })}
-                                        </div>
-                                    </div>
-                                )}
-                            </div>
-                        </div>
-                    </div>
-                )}
-                {/* Backdrop */}
-                {isAllMenuOpen && (
-                    <div
-                        className="fixed inset-0 top-[132px] -z-10 bg-black/30 backdrop-blur-sm transition-opacity"
-                        onClick={() => setIsAllMenuOpen(false)}
-                    ></div>
-                )}
-            </nav>
-
-            {userType === 'admin' && (
-                <button
-                    onClick={() => navigate('/admin')}
-                    className="fixed top-4 right-4 z-[100] px-4 py-2 bg-red-600 text-white rounded-full shadow-xl flex items-center space-x-2 hover:bg-red-700 transition-all hover:scale-105 border-2 border-white ring-2 ring-red-200"
-                    title="Return to Admin Dashboard"
+                {/* Desktop All Menu Overlay (Side Drawer) */}
+                <div
+                    className={clsx(
+                        "hidden md:block fixed inset-0 z-50 transform transition-transform duration-300 ease-in-out",
+                        isAllMenuOpen ? "translate-x-0" : "translate-x-full"
+                    )}
                 >
-                    <LayoutDashboard size={20} />
-                    <span className="font-bold">관리자 페이지</span>
-                </button>
-            )}
+                    <div className="absolute inset-0 bg-black/20 backdrop-blur-sm" onClick={() => setIsAllMenuOpen(false)}></div>
+                    <div className="absolute top-0 right-0 w-[600px] h-full bg-white shadow-2xl flex flex-col">
 
-            <CartModal />
-
-            <main className="flex-grow">
-                {children}
-            </main>
-
-            {
-                !hideFooter && (
-                    <footer className="bg-hanbok-charcoal text-white py-16 mt-auto relative overflow-hidden">
-                        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 md:grid-cols-3 gap-8">
+                        {/* Drawer Header */}
+                        <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-gray-50">
                             <div>
-                                <h3 className="text-lg font-bold mb-4 font-korean">회사 소개</h3>
-                                <p className="text-gray-400 font-korean">{isCompany ? '기업' : '모두'}를 위한 맞춤형 프리미엄 쇼핑 경험을 제공합니다.</p>
+                                <h2 className="text-2xl font-bold font-korean text-gray-800">
+                                    {isCompany ? 'BizMall' : 'K-Mall'}
+                                    <span className="text-hanbok-jade ml-2">전체메뉴</span>
+                                </h2>
+                                <p className="text-sm text-gray-500 mt-1">원하시는 서비스를 쉽고 빠르게 찾아보세요.</p>
                             </div>
-                            <div>
-                                <h3 className="text-lg font-korean mb-6 text-hanbok-gold">고객 센터</h3>
-                                <ul className="space-y-2 text-gray-400 font-korean">
-                                    <li className="hover:text-hanbok-jade transition-colors cursor-pointer">문의하기</li>
-                                    <li className="hover:text-hanbok-jade transition-colors cursor-pointer">배송 정책</li>
-                                    <li className="hover:text-hanbok-jade transition-colors cursor-pointer">반품 및 환불</li>
-                                </ul>
+                            <button
+                                onClick={() => setIsAllMenuOpen(false)}
+                                className="p-2 hover:bg-white rounded-full transition-colors text-gray-500 hover:text-red-500"
+                            >
+                                <X size={28} />
+                            </button>
+                        </div>
+
+                        {/* Drawer Content - Split Pane */}
+                        <div className="flex-1 overflow-hidden flex">
+                            {/* Left Pane: Main Categories (30%) */}
+                            <div className="w-[35%] bg-gray-50 h-full overflow-y-auto border-r border-gray-100 py-4">
+                                {navItems.map((item) => {
+                                    const isActive = activeAllMenuCategory === item.name;
+                                    return (
+                                        <button
+                                            key={item.name}
+                                            onMouseEnter={() => setActiveAllMenuCategory(item.name)}
+                                            className={clsx(
+                                                "w-full text-left px-6 py-4 font-bold text-lg transition-all flex items-center justify-between group relative",
+                                                isActive
+                                                    ? "bg-white text-hanbok-jade shadow-sm"
+                                                    : "text-gray-500 hover:text-gray-900 hover:bg-gray-100"
+                                            )}
+                                        >
+                                            {isActive && (
+                                                <div className="absolute left-0 top-0 bottom-0 w-1 bg-hanbok-jade"></div>
+                                            )}
+                                            <span>{item.name}</span>
+                                            {item.subMenus && item.subMenus.length > 0 && (
+                                                <ChevronDown size={16} className={clsx("transform transition-transform -rotate-90", isActive ? "opacity-100 text-hanbok-jade" : "opacity-30")} />
+                                            )}
+                                        </button>
+                                    );
+                                })}
                             </div>
-                            <div>
-                                <h3 className="text-lg font-korean mb-6 text-hanbok-sky">소셜 미디어</h3>
-                                <div className="flex space-x-4">
-                                    {/* Social icons would go here */}
+
+                            {/* Right Pane: 2nd & 3rd Level (70%) */}
+                            <div className="w-[65%] bg-white h-full overflow-y-auto">
+                                <div className="p-8">
+                                    {activeAllMenuCategory && (
+                                        <div className="animate-in fade-in slide-in-from-right-4 duration-300">
+                                            <h3 className="text-xl font-bold mb-6 pb-2 border-b border-gray-100 text-gray-800 flex items-center">
+                                                {activeAllMenuCategory}
+                                                <span className="ml-auto text-xs font-normal text-gray-400">Total {navItems.find(i => i.name === activeAllMenuCategory)?.subMenus.length} items</span>
+                                            </h3>
+
+                                            <div className="space-y-8">
+                                                {navItems.find(i => i.name === activeAllMenuCategory)?.subMenus.map((sub, idx) => {
+                                                    const subName = typeof sub === 'string' ? sub : sub.name;
+                                                    const hasSubSub = typeof sub !== 'string' && sub.subMenus && sub.subMenus.length > 0;
+
+                                                    return (
+                                                        <div key={idx} className="group">
+                                                            {/* 2nd Level Title */}
+                                                            <div className="flex items-center mb-3">
+                                                                <Link
+                                                                    to={typeof sub === 'string' ? '#' : sub.path}
+                                                                    onClick={() => setIsAllMenuOpen(false)}
+                                                                    className="text-lg font-bold text-gray-700 group-hover:text-hanbok-jade transition-colors flex items-center gap-2"
+                                                                >
+                                                                    <div className="w-1.5 h-1.5 rounded-full bg-gray-300 group-hover:bg-hanbok-jade transition-colors"></div>
+                                                                    {subName}
+                                                                </Link>
+                                                            </div>
+
+                                                            {/* 3rd Level List */}
+                                                            {hasSubSub && (
+                                                                <div className="ml-4 pl-4 border-l border-gray-100 grid grid-cols-2 gap-y-2 gap-x-4">
+                                                                    {(sub as any).subMenus.map((subSub: any, sIdx: number) => (
+                                                                        <Link
+                                                                            key={sIdx}
+                                                                            to={subSub.path}
+                                                                            onClick={() => setIsAllMenuOpen(false)}
+                                                                            className="text-sm text-gray-500 hover:text-hanbok-jade hover:underline transition-all block py-1"
+                                                                        >
+                                                                            {subSub.name}
+                                                                        </Link>
+                                                                    ))}
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                    );
+                                                })}
+                                            </div>
+
+                                            {/* Promo Card inside Drawer */}
+                                            <div className="mt-12 bg-gray-50 rounded-xl p-5 border border-gray-100">
+                                                <h4 className="font-bold text-gray-800 mb-2">Notice</h4>
+                                                <p className="text-sm text-gray-600 leading-relaxed">
+                                                    새로워진 {isCompany ? 'BizMall' : 'K-Mall'}의 전체 메뉴를 통해<br />
+                                                    원하시는 서비스를 더 빠르게 찾아보세요.
+                                                </p>
+                                            </div>
+                                        </div>
+                                    )}
                                 </div>
                             </div>
                         </div>
-                        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-12 pt-8 border-t border-hanbok-charcoal/40 text-center relative z-10 text-sm font-korean">
-                            © 2024 {isCompany ? 'BizMall Inc.' : 'LifeStyle Shop'}. All rights reserved.
+                    </div>
+                </div>
+
+                {/* Backdrop Layer (Removed, integrated into drawer structure above) */}
+                {/* Decorative Bar (50% height of bottom nav = h-7 -> reduced by 50% again = h-3.5) */}
+                <div className="w-full h-3.5" style={{
+                    backgroundImage: 'url(/images/header_bg.jpg)',
+                    backgroundSize: 'cover',
+                    backgroundPosition: 'center',
+                    backgroundRepeat: 'no-repeat'
+                }}></div>
+            </nav>
+
+            {/* Main Content */}
+            <main className="flex-grow bg-gray-50">
+                {children}
+            </main>
+
+            {/* Footer */}
+            {!hideFooter && (
+                <footer className="bg-white border-t border-gray-200 mt-auto">
+                    <div className="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
+                        <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+                            <div className="col-span-1 md:col-span-2">
+                                <span className={clsx(
+                                    "text-2xl font-bold font-korean tracking-tight",
+                                    isCompany ? "text-hanbok-royal" : "text-hanbok-jade"
+                                )}>
+                                    {isCompany ? 'BizMall' : 'K-Mall'}
+                                </span>
+                                <p className="mt-4 text-gray-500 text-sm">
+                                    대한민국의 문화를 세계로 알리는<br />
+                                    프리미엄 K-Culture 플랫폼입니다.
+                                </p>
+                            </div>
+                            <div>
+                                <h3 className="text-sm font-semibold text-gray-400 tracking-wider uppercase">고객센터</h3>
+                                <ul className="mt-4 space-y-4">
+                                    <li>
+                                        <a href="#" className="text-base text-gray-500 hover:text-gray-900">
+                                            1:1 문의
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a href="#" className="text-base text-gray-500 hover:text-gray-900">
+                                            자주 묻는 질문
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a href="#" className="text-base text-gray-500 hover:text-gray-900">
+                                            공지사항
+                                        </a>
+                                    </li>
+                                </ul>
+                            </div>
+                            <div>
+                                <h3 className="text-sm font-semibold text-gray-400 tracking-wider uppercase">회사소개</h3>
+                                <ul className="mt-4 space-y-4">
+                                    <li>
+                                        <a href="#" className="text-base text-gray-500 hover:text-gray-900">
+                                            회사소개
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a href="#" className="text-base text-gray-500 hover:text-gray-900">
+                                            이용약관
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a href="#" className="text-base text-gray-500 hover:text-gray-900">
+                                            개인정보처리방침
+                                        </a>
+                                    </li>
+                                </ul>
+                            </div>
                         </div>
-                    </footer>
-                )
-            }
-        </div >
+                        <div className="mt-8 border-t border-gray-200 pt-8">
+                            <p className="text-base text-gray-400 text-center">
+                                &copy; 2024 {isCompany ? 'BizMall' : 'K-Mall'}. All rights reserved.
+                            </p>
+                        </div>
+                    </div>
+                </footer>
+            )}
+
+            <CartModal />
+        </div>
     );
 }

@@ -104,8 +104,11 @@ export default function PersonalHome() {
                             }}
                         >
                             시작하기
+
                         </motion.button>
                     </div>
+
+
                 </section>
 
                 {/* K-Culture Course Partners Section */}
@@ -131,7 +134,7 @@ export default function PersonalHome() {
                                 color: '#4A5568',
                                 borderLeft: '4px solid #8B5CF6'
                             }}>
-                                CHOOSE AGENT
+                                에이전트 찾기
                             </h2>
                             <button
                                 onClick={() => navigate('/agents')}
@@ -331,6 +334,6 @@ export default function PersonalHome() {
                     </div>
                 </section>
             </MainLayout>
-        </div>
+        </div >
     );
 }

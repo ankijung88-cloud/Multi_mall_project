@@ -131,6 +131,8 @@ export default function CompanyHome() {
                             </motion.div>
                         </div>
                     </div>
+
+
                 </section>
 
                 {/* K-Culture Course Partners Section */}
