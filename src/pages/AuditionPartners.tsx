@@ -26,7 +26,7 @@ export default function AuditionPartners() {
                 )}>
                     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
                         <h1 className="text-4xl md:text-5xl font-bold mb-4">
-                            K-Audition
+                            K-AUDITION
                         </h1>
                         <p className={clsx("text-xl max-w-2xl mx-auto", userType === 'company' ? "text-blue-200" : "text-gray-300")}>
                             글로벌 스타를 꿈꾸는 인재를 위한 전문 오디션 프로그램을 소개합니다.

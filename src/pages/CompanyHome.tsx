@@ -53,39 +53,48 @@ export default function CompanyHome() {
         <div>
             <MainLayout>
                 {/* B2B Hero Section */}
-                <section className="relative h-[500px] flex items-center bg-blue-900 overflow-hidden">
-                    <div className="absolute inset-0 z-0">
-                        <div className="absolute inset-0 bg-gradient-to-r from-blue-900 via-blue-900/90 to-blue-800/50 z-10" />
-                        <img
-                            src="https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&q=80&w=2000"
-                            alt="Office"
-                            className="w-full h-full object-cover"
-                        />
-                    </div>
+                <section className="relative h-[600px] flex items-center justify-center overflow-hidden" style={{
+                    background: '#FFFFFF'
+                }}>
+                    <div className="absolute inset-0 z-0" style={{
+                        backgroundImage: 'url(https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&q=80&w=2000)',
+                        backgroundSize: 'cover',
+                        backgroundPosition: 'center',
+                    }} />
 
                     <div className="relative z-10 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row items-center justify-between">
-                        <div className="md:w-1/2 text-white">
+                        <div className="md:w-1/2">
                             <motion.div
                                 initial={{ opacity: 0, x: -20 }}
                                 animate={{ opacity: 1, x: 0 }}
-                                className="inline-flex items-center space-x-2 bg-blue-800/50 rounded-full px-4 py-1 mb-6 border border-blue-700"
+                                className="inline-flex items-center space-x-2 rounded-full px-4 py-1 mb-6 font-korean"
+                                style={{
+                                    background: 'rgba(255, 182, 185, 0.2)',
+                                    border: '2px solid rgba(255, 182, 185, 0.4)'
+                                }}
                             >
-                                <ShieldCheck size={16} className="text-blue-300" />
-                                <span className="text-sm font-medium text-blue-100">인증된 기업 파트너</span>
+                                <ShieldCheck size={16} style={{ color: '#FF9AA2' }} />
+                                <span className="text-sm font-medium" style={{ color: '#4A5568' }}>인증된 기업 파트너</span>
                             </motion.div>
                             <motion.h1
                                 initial={{ opacity: 0, y: 20 }}
                                 animate={{ opacity: 1, y: 0 }}
-                                className="text-4xl md:text-6xl font-bold mb-6 leading-tight"
+                                className="text-4xl md:text-6xl font-bold mb-6 leading-tight font-hanbok"
+                                style={{ color: '#FFFFFF' }}
                             >
-                                구매를 <br />더 <span className="text-blue-400">간편하게</span>
+                                기업을 위한 <br /><span style={{ color: '#FFB6B9' }}>특별한 혜택</span>
                             </motion.h1>
-                            <p className="text-xl text-blue-200 mb-8 max-w-lg">
+                            <p className="text-xl mb-8 max-w-lg font-korean" style={{ color: '#FFFFFF' }}>
                                 기업 전용 할인가, 자동 인보이스 발행, 그리고 전담 지원 서비스를 경험하세요.
                             </p>
                             <button
                                 onClick={handleViewCatalog}
-                                className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-8 rounded-lg shadow-lg shadow-blue-500/30 transition-all">
+                                className="font-bold py-3 px-8 rounded-lg transition-all font-korean text-white"
+                                style={{
+                                    background: 'linear-gradient(135deg, #FFB6B9 0%, #FF9AA2 100%)',
+                                    border: '3px solid #FFFFFF'
+                                }}
+                            >
                                 기업 전용 카탈로그 보기
                             </button>
                         </div>
@@ -96,21 +105,29 @@ export default function CompanyHome() {
                                 initial={{ opacity: 0, scale: 0.9 }}
                                 animate={{ opacity: 1, scale: 1 }}
                                 transition={{ delay: 0.2 }}
-                                className="bg-white/10 backdrop-blur-md border border-white/20 p-6 rounded-xl min-w-[200px]"
+                                className="p-6 rounded-xl min-w-[200px]"
+                                style={{
+                                    background: 'rgba(255, 255, 255, 0.9)',
+                                    border: '2px solid rgba(255, 182, 185, 0.3)'
+                                }}
                             >
-                                <div className="text-blue-300 mb-2">파트너 할인</div>
-                                <div className="text-4xl font-bold text-white">20%</div>
-                                <div className="text-sm text-blue-200 mt-1">평균 할인율</div>
+                                <div className="mb-2 font-korean" style={{ color: '#FF9AA2' }}>파트너 할인</div>
+                                <div className="text-4xl font-bold" style={{ color: '#4A5568' }}>20%</div>
+                                <div className="text-sm mt-1 font-korean" style={{ color: '#8E9AAF' }}>평균 할인율</div>
                             </motion.div>
                             <motion.div
                                 initial={{ opacity: 0, scale: 0.9 }}
                                 animate={{ opacity: 1, scale: 1 }}
                                 transition={{ delay: 0.3 }}
-                                className="bg-white/10 backdrop-blur-md border border-white/20 p-6 rounded-xl min-w-[200px]"
+                                className="p-6 rounded-xl min-w-[200px]"
+                                style={{
+                                    background: 'rgba(255, 255, 255, 0.9)',
+                                    border: '2px solid rgba(255, 229, 180, 0.3)'
+                                }}
                             >
-                                <div className="text-blue-300 mb-2">배송 시간</div>
-                                <div className="text-4xl font-bold text-white">24h</div>
-                                <div className="text-sm text-blue-200 mt-1">익일 배송</div>
+                                <div className="mb-2 font-korean" style={{ color: '#FFD89B' }}>배송 시간</div>
+                                <div className="text-4xl font-bold" style={{ color: '#4A5568' }}>24h</div>
+                                <div className="text-sm mt-1 font-korean" style={{ color: '#8E9AAF' }}>익일 배송</div>
                             </motion.div>
                         </div>
                     </div>
@@ -135,14 +152,22 @@ export default function CompanyHome() {
                 <section className="bg-white py-20 border-b border-gray-200">
                     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                         <div className="flex items-center justify-between mb-12">
-                            <h2 className="text-3xl font-bold text-gray-900 border-l-4 border-purple-600 pl-4">
-                                Choose Agent
+                            <h2 className="text-3xl font-bold font-hanbok pl-4" style={{
+                                color: '#4A5568',
+                                borderLeft: '4px solid #8B5CF6'
+                            }}>
+                                CHOOSE AGENT
                             </h2>
                             <button
                                 onClick={() => navigate('/agents?type=company')}
-                                className="text-gray-500 hover:text-purple-600 text-sm font-medium transition-colors"
+                                className="font-bold font-korean px-6 py-3 transition-all duration-300 rounded-full hover:scale-105"
+                                style={{
+                                    color: '#8B5CF6',
+                                    background: 'rgba(139, 92, 246, 0.15)',
+                                    border: '2px solid rgba(139, 92, 246, 0.3)'
+                                }}
                             >
-                                전체 에이전트 보기
+                                전체보기
                             </button>
                         </div>
 
@@ -184,14 +209,22 @@ export default function CompanyHome() {
                 <section id="personal-contents" className="bg-gray-50 py-20 border-b border-gray-200">
                     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                         <div className="flex items-center justify-between mb-12">
-                            <h2 className="text-3xl font-bold text-gray-900 border-l-4 border-orange-500 pl-4">
-                                Personal Contents
+                            <h2 className="text-3xl font-bold font-hanbok pl-4" style={{
+                                color: '#4A5568',
+                                borderLeft: '4px solid #F97316'
+                            }}>
+                                PERSONAL CONTENTS
                             </h2>
                             <button
                                 onClick={() => navigate('/contents?type=company')}
-                                className="text-gray-500 hover:text-orange-600 text-sm font-medium transition-colors"
+                                className="font-bold font-korean px-6 py-3 transition-all duration-300 rounded-full hover:scale-105"
+                                style={{
+                                    color: '#F97316',
+                                    background: 'rgba(249, 115, 22, 0.15)',
+                                    border: '2px solid rgba(249, 115, 22, 0.3)'
+                                }}
                             >
-                                전체 컨텐츠 보기 (View All)
+                                전체보기
                             </button>
                         </div>
 
@@ -239,8 +272,8 @@ export default function CompanyHome() {
                 {/* Main Content */}
                 <section id="corporate-catalog" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 bg-gray-50">
                     <div className="flex items-center justify-between mb-8 border-b border-gray-200 pb-4">
-                        <h2 className="text-2xl font-extrabold text-gray-900">
-                            {isFiltered ? '귀사를 위한 추천 상품' : '전체 기업 카탈로그'}
+                        <h2 className="text-2xl font-extrabold font-hanbok" style={{ color: '#4A5568' }}>
+                            {isFiltered ? '귀사를 위한 추천 상품' : 'SHOP'}
                         </h2>
                         <div className="flex gap-4">
                             {isFiltered && (
@@ -253,7 +286,12 @@ export default function CompanyHome() {
                             )}
                             <button
                                 onClick={() => navigate('/shop?type=company')}
-                                className="text-blue-600 font-semibold hover:text-blue-800 transition-colors"
+                                className="font-bold font-korean px-6 py-3 transition-all duration-300 rounded-full hover:scale-105"
+                                style={{
+                                    color: '#10B981',
+                                    background: 'rgba(16, 185, 129, 0.15)',
+                                    border: '2px solid rgba(16, 185, 129, 0.3)'
+                                }}
                             >
                                 상품보기
                             </button>

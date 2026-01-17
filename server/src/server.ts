@@ -39,6 +39,7 @@ import path from 'path';
 
 // Serve static files from the React frontend app
 const clientBuildPath = path.join(__dirname, '../../dist');
+console.log('Serving static files from:', clientBuildPath);
 app.use(express.static(clientBuildPath));
 
 // Serve uploaded files

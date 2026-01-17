@@ -14,15 +14,26 @@ export default function KBeautySection() {
     const sectionPartners = partners.filter(p => p.category === '뷰티 & 성형').slice(0, 3);
 
     return (
-        <section className="bg-white py-20 border-b border-gray-100">
+        <section className="py-20 border-b" style={{
+            background: 'linear-gradient(135deg, rgba(255, 201, 204, 0.3) 0%, rgba(255, 244, 224, 0.3) 100%)',
+            borderColor: '#CBD5E0'
+        }}>
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div className="flex items-center justify-between mb-12">
-                    <h2 className="text-3xl font-bold text-gray-900 border-l-4 border-pink-500 pl-4">
-                        K-Beauty & Plastic Surgery
+                    <h2 className="text-3xl font-hanbok pl-4" style={{
+                        color: '#4A5568',
+                        borderLeft: '4px solid #FFB6B9'
+                    }}>
+                        K-BEAUTY
                     </h2>
                     <button
                         onClick={() => navigate('/partners/beauty' + linkParams)}
-                        className="text-gray-500 hover:text-pink-600 text-sm font-medium transition-colors"
+                        className="font-bold font-korean px-6 py-3 transition-all duration-300 rounded-full hover:scale-105"
+                        style={{
+                            color: '#FF9AA2',
+                            background: 'rgba(255, 182, 185, 0.15)',
+                            border: '2px solid rgba(255, 182, 185, 0.3)'
+                        }}
                     >
                         전체 보기
                     </button>

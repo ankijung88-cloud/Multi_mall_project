@@ -77,14 +77,18 @@ export default function Signup() {
     };
 
     const isCompany = type === 'company';
-    const bgColor = isCompany ? 'bg-blue-600' : 'bg-emerald-600';
-    const hoverColor = isCompany ? 'hover:bg-blue-700' : 'hover:bg-emerald-700';
-    const ringColor = isCompany ? 'focus:ring-blue-500' : 'focus:ring-emerald-500';
-    const textColor = isCompany ? 'text-blue-600' : 'text-emerald-600';
+    const bgGradient = isCompany
+        ? 'linear-gradient(135deg, #FFB6B9 0%, #FF9AA2 100%)'
+        : 'linear-gradient(135deg, #A8D8EA 0%, #7AC5DC 100%)';
+    const ringColor = isCompany ? 'focus:ring-blue-300' : 'focus:ring-blue-300';
+    const textColor = isCompany ? '#FFB6B9' : '#A8D8EA';
 
     return (
         <AuthLayout>
-            <div className="bg-white py-8 px-4 shadow-2xl shadow-gray-200/50 sm:rounded-2xl sm:px-10 border border-gray-100">
+            <div className="py-8 px-4 sm:rounded-2xl sm:px-10" style={{
+                background: '#FFFFFF',
+                border: '2px solid rgba(203, 213, 224, 0.6)'
+            }}>
                 {/* Type Switcher */}
                 <div className="flex justify-center mb-8">
                     <div className="bg-gray-100 p-1 rounded-lg flex space-x-1">
@@ -114,7 +118,7 @@ export default function Signup() {
                 </div>
 
                 <div className="sm:mx-auto sm:w-full sm:max-w-md mb-6">
-                    <h2 className={clsx("mt-2 text-center text-3xl font-extrabold tracking-tight", isCompany ? "text-blue-900" : "text-emerald-900")}>
+                    <h2 className="mt-2 text-center text-3xl font-extrabold tracking-tight font-hanbok" style={{ color: '#4A5568' }}>
                         {isCompany ? '파트너 회원가입' : '회원가입'}
                     </h2>
                     <p className="mt-2 text-center text-sm text-gray-600">
@@ -256,7 +260,13 @@ export default function Signup() {
                             whileTap={{ scale: 0.99 }}
                             type="submit"
                             disabled={isLoading}
-                            className={`w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white focus:outline-none focus:ring-2 focus:ring-offset-2 transition-all ${bgColor} ${hoverColor} ${isLoading ? "opacity-75 cursor-not-allowed" : ""}`}
+                            className="w-full flex justify-center py-3 px-4 rounded-lg text-sm font-medium text-white focus:outline-none transition-all font-korean"
+                            style={{
+                                background: bgGradient,
+                                border: 'none',
+                                opacity: isLoading ? 0.75 : 1,
+                                cursor: isLoading ? 'not-allowed' : 'pointer'
+                            }}
                         >
                             {isLoading ? (
                                 <Loader2 className="animate-spin -ml-1 mr-2 h-5 w-5" />

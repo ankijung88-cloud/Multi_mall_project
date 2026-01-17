@@ -14,15 +14,26 @@ export default function KPerformanceSection() {
     const sectionPartners = partners.filter(p => p.category === '공연 & 전시').slice(0, 3);
 
     return (
-        <section className="bg-white py-20 border-b border-gray-100">
+        <section className="py-20 border-b" style={{
+            background: 'linear-gradient(135deg, rgba(255, 244, 224, 0.3) 0%, rgba(255, 229, 180, 0.3) 100%)',
+            borderColor: '#CBD5E0'
+        }}>
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div className="flex items-center justify-between mb-12">
-                    <h2 className="text-3xl font-bold text-gray-900 border-l-4 border-indigo-600 pl-4">
-                        K-Performance & Exhibition
+                    <h2 className="text-3xl font-hanbok pl-4" style={{
+                        color: '#4A5568',
+                        borderLeft: '4px solid #FFE5B4'
+                    }}>
+                        K-PERFORMANCE
                     </h2>
                     <button
                         onClick={() => navigate('/partners/performance' + linkParams)}
-                        className="text-gray-500 hover:text-indigo-600 text-sm font-medium transition-colors"
+                        className="font-bold font-korean px-6 py-3 transition-all duration-300 rounded-full hover:scale-105"
+                        style={{
+                            color: '#FFD89B',
+                            background: 'rgba(255, 229, 180, 0.15)',
+                            border: '2px solid rgba(255, 229, 180, 0.3)'
+                        }}
                     >
                         전체 보기
                     </button>

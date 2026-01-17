@@ -65,34 +65,45 @@ export default function PersonalHome() {
         <div>
             <MainLayout>
                 {/* Hero Section */}
-                <section className="relative h-[600px] flex items-center justify-center overflow-hidden bg-gray-900">
-                    <div className="absolute inset-0 z-0">
-                        <img
-                            src="https://images.unsplash.com/photo-1441986300917-64674bd600d8?auto=format&fit=crop&q=80&w=2000"
-                            alt="Hero"
-                            className="w-full h-full object-cover opacity-60"
-                        />
-                        <div className="absolute inset-0 bg-gradient-to-t from-gray-900 via-transparent to-transparent" />
-                    </div>
+                <section className="relative h-[600px] flex items-center justify-center overflow-hidden" style={{
+                    background: '#FFFFFF'
+                }}>
+                    <div className="absolute inset-0 z-0" style={{
+                        backgroundImage: 'url(https://images.unsplash.com/photo-1540039155733-5bb30b53aa14?auto=format&fit=crop&q=80&w=2000)',
+                        backgroundSize: 'cover',
+                        backgroundPosition: 'center',
+                    }} />
 
-                    <div className="relative z-10 text-center text-white px-4 max-w-7xl mx-auto">
+                    <div className="relative z-10 text-center px-4 max-w-7xl mx-auto">
                         <motion.h1
-                            className="text-5xl md:text-7xl font-bold mb-6 tracking-tight"
+                            className="text-5xl md:text-7xl font-extrabold mb-6 tracking-tight font-hanbok"
+                            style={{
+                                color: '#FFFFFF',
+                                textShadow: '0 2px 4px rgba(255, 255, 255, 0.4)'
+                            }}
                         >
-                            당신의 <span className="text-emerald-400">라이프스타일</span>을 높이세요
+                            한국 문화의 <span style={{ color: '#A8D8EA', textShadow: '0 2px 4px rgba(255, 255, 255, 0.4)' }}>특별한 경험</span>
                         </motion.h1>
                         <motion.p
-                            className="text-xl md:text-2xl text-gray-200 mb-10"
+                            className="text-xl md:text-2xl mb-10 font-korean"
+                            style={{
+                                color: '#FFFFFF',
+                                textShadow: '0 1px 3px rgba(0, 0, 0, 0.4)'
+                            }}
                         >
-                            현대인을 위한 엄선된 프리미엄 상품을 만나보세요.
+                            K-Culture의 모든 것, 당신만을 위한 프리미엄 여정
                         </motion.p>
                         <motion.button
                             whileHover={{ scale: 1.05 }}
                             whileTap={{ scale: 0.95 }}
                             onClick={handleShopCollection}
-                            className="bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-4 px-10 rounded-full text-lg shadow-lg shadow-emerald-500/30 transition-all"
+                            className="font-bold py-4 px-10 rounded-full text-lg font-korean transition-all text-white"
+                            style={{
+                                background: 'linear-gradient(135deg, #A8D8EA 0%, #7AC5DC 100%)',
+                                border: '3px solid #FFFFFF'
+                            }}
                         >
-                            컬렉션 입기
+                            시작하기
                         </motion.button>
                     </div>
                 </section>
@@ -116,14 +127,22 @@ export default function PersonalHome() {
                 <section className="bg-white py-20 border-b border-gray-100">
                     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                         <div className="flex items-center justify-between mb-12">
-                            <h2 className="text-3xl font-bold text-gray-900 border-l-4 border-purple-600 pl-4">
-                                Choose Agent
+                            <h2 className="text-3xl font-bold font-hanbok pl-4" style={{
+                                color: '#4A5568',
+                                borderLeft: '4px solid #8B5CF6'
+                            }}>
+                                CHOOSE AGENT
                             </h2>
                             <button
                                 onClick={() => navigate('/agents')}
-                                className="text-gray-500 hover:text-purple-600 text-sm font-medium transition-colors"
+                                className="font-bold font-korean px-6 py-3 transition-all duration-300 rounded-full hover:scale-105"
+                                style={{
+                                    color: '#8B5CF6',
+                                    background: 'rgba(139, 92, 246, 0.15)',
+                                    border: '2px solid rgba(139, 92, 246, 0.3)'
+                                }}
                             >
-                                전체 에이전트 보기
+                                전체보기
                             </button>
                         </div>
 
@@ -164,16 +183,24 @@ export default function PersonalHome() {
                 <section id="personal-contents" className="bg-gray-50 py-20 border-b border-gray-100">
                     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                         <div className="flex items-center justify-between mb-12">
-                            <h2 className="text-3xl font-bold text-gray-900 border-l-4 border-orange-500 pl-4">
-                                Personal Contents
+                            <h2 className="text-3xl font-bold font-hanbok pl-4" style={{
+                                color: '#4A5568',
+                                borderLeft: '4px solid #F97316'
+                            }}>
+                                PERSONAL CONTENTS
                             </h2>
                             <div className="flex gap-4">
 
                                 <button
                                     onClick={() => navigate('/contents')}
-                                    className="text-gray-500 hover:text-orange-600 text-sm font-medium transition-colors"
+                                    className="font-bold font-korean px-6 py-3 transition-all duration-300 rounded-full hover:scale-105"
+                                    style={{
+                                        color: '#F97316',
+                                        background: 'rgba(249, 115, 22, 0.15)',
+                                        border: '2px solid rgba(249, 115, 22, 0.3)'
+                                    }}
                                 >
-                                    전체 컨텐츠 보기 (View All)
+                                    전체보기
                                 </button>
                             </div>
                         </div>
@@ -232,8 +259,11 @@ export default function PersonalHome() {
                 {/* Product Grid */}
                 <section id="recommended-section" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
                     <div className="flex items-center justify-between mb-12 border-b border-gray-100 pb-4">
-                        <h2 className="text-3xl font-bold text-gray-900 border-l-4 border-emerald-500 pl-4">
-                            {isFiltered ? '고객님을 위한 추천 상품' : '전체 상품'}
+                        <h2 className="text-3xl font-bold font-hanbok pl-4" style={{
+                            color: '#4A5568',
+                            borderLeft: '4px solid #10B981'
+                        }}>
+                            {isFiltered ? '고객님을 위한 추천 상품' : 'SHOP'}
                         </h2>
                         <div className="flex gap-4">
                             {isFiltered && (
@@ -246,7 +276,12 @@ export default function PersonalHome() {
                             )}
                             <button
                                 onClick={() => navigate('/shop')}
-                                className="text-gray-500 hover:text-emerald-600 text-sm font-medium transition-colors"
+                                className="font-bold font-korean px-6 py-3 transition-all duration-300 rounded-full hover:scale-105"
+                                style={{
+                                    color: '#10B981',
+                                    background: 'rgba(16, 185, 129, 0.15)',
+                                    border: '2px solid rgba(16, 185, 129, 0.3)'
+                                }}
                             >
                                 상품보기
                             </button>

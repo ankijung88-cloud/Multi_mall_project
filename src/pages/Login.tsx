@@ -61,9 +61,12 @@ export default function Login() {
 
     return (
         <AuthLayout>
-            <div className="bg-white py-8 px-4 shadow-2xl shadow-gray-200/50 sm:rounded-2xl sm:px-10 border border-gray-100">
+            <div className="py-8 px-4 sm:rounded-2xl sm:px-10" style={{
+                background: '#FFFFFF',
+                border: '2px solid rgba(203, 213, 224, 0.6)'
+            }}>
                 <div className="sm:mx-auto sm:w-full sm:max-w-md mb-6">
-                    <h2 className={clsx("mt-2 text-center text-3xl font-extrabold tracking-tight", isCompany ? "text-blue-900" : "text-emerald-900")}>
+                    <h2 className="mt-2 text-center text-3xl font-extrabold tracking-tight font-hanbok" style={{ color: '#4A5568' }}>
                         {isCompany ? '비즈니스 포털' : '회원 로그인'}
                     </h2>
                     <p className="mt-2 text-center text-sm text-gray-600">
@@ -143,13 +146,15 @@ export default function Login() {
                             whileTap={{ scale: 0.99 }}
                             type="submit"
                             disabled={isLoading}
-                            className={clsx(
-                                "w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white focus:outline-none focus:ring-2 focus:ring-offset-2 transition-all",
-                                isCompany
-                                    ? "bg-blue-600 hover:bg-blue-700 focus:ring-blue-500"
-                                    : "bg-emerald-600 hover:bg-emerald-700 focus:ring-emerald-500",
-                                isLoading && "opacity-75 cursor-not-allowed"
-                            )}
+                            className="w-full flex justify-center py-3 px-4 rounded-lg text-sm font-medium text-white focus:outline-none transition-all font-korean"
+                            style={{
+                                background: isCompany
+                                    ? 'linear-gradient(135deg, #FFB6B9 0%, #FF9AA2 100%)'
+                                    : 'linear-gradient(135deg, #A8D8EA 0%, #7AC5DC 100%)',
+                                border: 'none',
+                                opacity: isLoading ? 0.75 : 1,
+                                cursor: isLoading ? 'not-allowed' : 'pointer'
+                            }}
                         >
                             {isLoading ? (
                                 <Loader2 className="animate-spin -ml-1 mr-2 h-5 w-5" />
@@ -164,7 +169,7 @@ export default function Login() {
                         <div className="grid grid-cols-3 gap-3">
                             <Link
                                 to={`/find-account?type=${type || 'personal'}&mode=id`}
-                                className="flex items-center justify-center px-4 py-2 border border-gray-300 shadow-sm text-xs font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500"
+                                className="flex items-center justify-center px-4 py-2 border border-gray-300 text-xs font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500"
                             >
                                 아이디 찾기
                             </Link>
@@ -177,7 +182,7 @@ export default function Login() {
                             <Link
                                 to={`/signup?type=${type || 'personal'}`}
                                 className={clsx(
-                                    "flex items-center justify-center px-4 py-2 border border-transparent shadow-sm text-xs font-bold rounded-md text-white focus:outline-none focus:ring-2 focus:ring-offset-2",
+                                    "flex items-center justify-center px-4 py-2 border border-transparent text-xs font-bold rounded-md text-white focus:outline-none focus:ring-2 focus:ring-offset-2",
                                     isCompany ? "bg-blue-600 hover:bg-blue-700" : "bg-emerald-600 hover:bg-emerald-700"
                                 )}
                             >

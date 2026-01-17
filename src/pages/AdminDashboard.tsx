@@ -165,6 +165,33 @@ export default function AdminDashboard() {
         const todaysOrdersSorted = dailyFiltered.sort((a: any, b: any) => new Date(b.date).getTime() - new Date(a.date).getTime());
         setDailyOrders(todaysOrdersSorted);
 
+        // 3. Calculate Growth (Month-over-Month Revenue)
+        const lastMonthDate = new Date(now);
+        lastMonthDate.setMonth(now.getMonth() - 1);
+        const lastMonth = lastMonthDate.getMonth();
+        const lastMonthYear = lastMonthDate.getFullYear();
+
+        const currentMonthRevenue = monthlyCount > 0
+            ? orders.filter((o: any) => {
+                const d = new Date(o.date);
+                return d.getMonth() === currentMonth && d.getFullYear() === currentYear;
+            }).reduce((sum: number, o: any) => sum + (Number(o.totalAmount) || 0), 0)
+            : 0;
+
+        const lastMonthRevenue = orders.filter((o: any) => {
+            const d = new Date(o.date);
+            return d.getMonth() === lastMonth && d.getFullYear() === lastMonthYear;
+        }).reduce((sum: number, o: any) => sum + (Number(o.totalAmount) || 0), 0);
+
+        let growthRate = '0%';
+        if (lastMonthRevenue === 0) {
+            growthRate = currentMonthRevenue > 0 ? '+100%' : '0%';
+        } else {
+            const growth = ((currentMonthRevenue - lastMonthRevenue) / lastMonthRevenue) * 100;
+            const sign = growth >= 0 ? '+' : '';
+            growthRate = `${sign}${growth.toFixed(1)}%`;
+        }
+
         const cycleLabel = `Today's Orders (${cycleStart.toLocaleDateString()})`;
 
         setStats({
@@ -172,7 +199,7 @@ export default function AdminDashboard() {
             ordersMonthly: monthlyCount,
             ordersDaily: dailyCount,
             users: members.length,
-            growth: '+12%',
+            growth: growthRate, // Dynamic Growth
             orderCycleLabel: cycleLabel
         });
 

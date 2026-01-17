@@ -30,7 +30,7 @@ export default function MainLayout({ children, hideFooter = false }: MainLayoutP
 
     const navItems = [
         {
-            name: '홈',
+            name: 'HOME',
             path: isCompany ? '/company' : '/personal',
             subMenus: isCompany
                 ? [
@@ -46,16 +46,16 @@ export default function MainLayout({ children, hideFooter = false }: MainLayoutP
                 ]
         },
         {
-            name: 'K-Culture',
+            name: 'K-CULTURE',
             path: isCompany ? '/partners?type=company' : '/partners',
             subMenus: [
-                { name: 'K-코스', path: isCompany ? '/partners/course?type=company' : '/partners/course' },
-                { name: '뷰티 & 병원', path: isCompany ? '/partners/beauty?type=company' : '/partners/beauty' },
-                { name: '공연 & 전시', path: isCompany ? '/partners/performance?type=company' : '/partners/performance' },
-                { name: '오디션', path: isCompany ? '/partners/audition?type=company' : '/partners/audition' },
-                { name: '패션 & Photo', path: isCompany ? '/partners/fashion?type=company' : '/partners/fashion' },
-                { name: '맛집', path: isCompany ? '/partners/travel?type=company' : '/partners/travel' },
-                { name: '가이드', path: isCompany ? '/partners/guide?type=company' : '/partners/guide' },
+                { name: 'K-COURSE', path: isCompany ? '/partners/course?type=company' : '/partners/course' },
+                { name: 'K-BEAUTY', path: isCompany ? '/partners/beauty?type=company' : '/partners/beauty' },
+                { name: 'K-PERFORMANCE', path: isCompany ? '/partners/performance?type=company' : '/partners/performance' },
+                { name: 'K-AUDITION', path: isCompany ? '/partners/audition?type=company' : '/partners/audition' },
+                { name: 'K-FASHION', path: isCompany ? '/partners/fashion?type=company' : '/partners/fashion' },
+                { name: 'K-FOOD', path: isCompany ? '/partners/travel?type=company' : '/partners/travel' },
+                { name: 'K-GUIDE', path: isCompany ? '/partners/guide?type=company' : '/partners/guide' },
                 // Specific Items for Company Only
                 ...(isCompany ? [
                     { name: '제휴 문의', path: '/partners/inquiry?type=company' },
@@ -65,7 +65,7 @@ export default function MainLayout({ children, hideFooter = false }: MainLayoutP
             ]
         },
         {
-            name: '에이전트',
+            name: 'AGENT',
             path: isCompany ? '/agents?type=company' : '/agents',
             subMenus: [
                 { name: '이용 가이드', path: isCompany ? '/agents/guide?type=company' : '/agents/guide' },
@@ -74,7 +74,7 @@ export default function MainLayout({ children, hideFooter = false }: MainLayoutP
             ]
         },
         {
-            name: 'Personal',
+            name: 'PERSONAL',
             path: isCompany ? '/contents?type=company' : '/contents',
             subMenus: isCompany
                 ? [
@@ -86,7 +86,7 @@ export default function MainLayout({ children, hideFooter = false }: MainLayoutP
                 ]
         },
         {
-            name: '커뮤니티',
+            name: 'COMMUNITY',
             path: '#',
             subMenus: [
                 { name: '정보공유', path: isCompany ? '/community/info?type=company' : '/community/info' },
@@ -97,7 +97,7 @@ export default function MainLayout({ children, hideFooter = false }: MainLayoutP
             ]
         },
         {
-            name: '쇼핑',
+            name: 'SHOP',
             path: isCompany ? '/shop?type=company' : '/shop',
             subMenus: isCompany
                 ? [
@@ -159,25 +159,30 @@ export default function MainLayout({ children, hideFooter = false }: MainLayoutP
 
 
     return (
-        <div className="min-h-screen bg-gray-50 flex flex-col font-sans">
+        <div className="min-h-screen flex flex-col font-sans" style={{
+            background: 'linear-gradient(180deg, rgba(255, 248, 240, 1) 0%, rgba(255, 255, 255, 1) 100%)'
+        }}>
             <nav className={clsx(
-                "bg-white shadow-sm sticky top-0 z-50 transition-colors duration-300",
-                isCompany ? "border-b-4 border-blue-600" : "border-b-4 border-emerald-500"
-            )}>
+                "sticky top-0 z-50 transition-colors duration-300",
+                isCompany ? "" : ""
+            )} style={{
+                background: 'linear-gradient(135deg, #FFF8F0 0%, #FFFFFF 100%)',
+                borderBottom: isCompany ? '2px solid #FFB6B9' : '2px solid #A8D8EA'
+            }}>
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     {/* Top Bar: Logo and Auth/Cart (Desktop: Split, Mobile: Combined) */}
-                    <div className="flex justify-between h-16 items-center border-b border-gray-100 relative">
+                    <div className="flex justify-between h-16 items-center relative">
                         <div className="flex items-center space-x-2 md:space-x-8">
 
                             <Link to={isCompany ? '/company' : '/personal'} className="flex items-center space-x-2">
-                                <div className={clsx(
-                                    "p-2 rounded-lg text-white",
-                                    isCompany ? "bg-blue-600" : "bg-emerald-500"
-                                )}>
-                                    <ShoppingBag size={24} />
+                                <div className="p-2 rounded-lg" style={{
+                                    background: isCompany
+                                        ? 'linear-gradient(135deg, #FFB6B9 0%, #FF9AA2 100%)'
+                                        : 'linear-gradient(135deg, #A8D8EA 0%, #7AC5DC 100%)'
+                                }}>
+                                    <ShoppingBag size={24} className="text-white" />
                                 </div>
-                                <span className="text-xl font-bold text-gray-800 hidden sm:block">
-                                    {isCompany ? 'BizMall' : 'LifeStyle'}
+                                <span className="text-sm font-bold text-hanbok-charcoal hidden sm:block px-3 py-1.5 rounded-full bg-hanbok-cloud">                                 {isCompany ? 'BizMall' : 'LifeStyle'}
                                 </span>
                                 <span className="text-xl font-bold text-gray-800 sm:hidden">
                                     {isCompany ? 'Biz' : 'LS'}
@@ -185,9 +190,9 @@ export default function MainLayout({ children, hideFooter = false }: MainLayoutP
                             </Link>
 
                             {/* Search Bar - Added next to Logo */}
-                            <div className="relative hidden sm:block ml-4 flex-grow max-w-md">
+                            <div className="relative hidden sm:block ml-4" style={{ width: '450px' }}>
                                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                    <Search size={18} className="text-gray-400" />
+                                    <Search size={18} style={{ color: '#8E9AAF' }} />
                                 </div>
                                 <input
                                     type="text"
@@ -195,7 +200,20 @@ export default function MainLayout({ children, hideFooter = false }: MainLayoutP
                                     value={searchQuery}
                                     onChange={(e) => setSearchQuery(e.target.value)}
                                     onKeyDown={handleSearch}
-                                    className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg leading-5 bg-gray-50 placeholder-gray-500 focus:outline-none focus:bg-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500 sm:text-sm transition-colors duration-200"
+                                    className="block w-full pl-11 pr-4 py-2.5 rounded-xl leading-5 placeholder-gray-400 focus:outline-none sm:text-sm transition-all duration-200 font-korean"
+                                    style={{
+                                        background: 'rgba(255, 248, 240, 0.5)',
+                                        border: '2px solid rgba(203, 213, 224, 0.6)',
+                                        color: '#4A5568'
+                                    }}
+                                    onFocus={(e) => {
+                                        e.currentTarget.style.background = '#FFFFFF';
+                                        e.currentTarget.style.borderColor = '#A8D8EA';
+                                    }}
+                                    onBlur={(e) => {
+                                        e.currentTarget.style.background = 'rgba(255, 248, 240, 0.5)';
+                                        e.currentTarget.style.borderColor = 'rgba(203, 213, 224, 0.6)';
+                                    }}
                                 />
                             </div>
                         </div>
@@ -208,10 +226,10 @@ export default function MainLayout({ children, hideFooter = false }: MainLayoutP
                             {isAuthenticated ? (
                                 <button
                                     onClick={handleLogout}
-                                    className="flex items-center space-x-1 text-gray-600 hover:text-red-500 transition-colors hidden sm:flex"
+                                    className="flex items-center space-x-1.5 text-hanbok-charcoal hover:text-hanbok-jade transition-colors hidden sm:flex font-medium"
                                 >
                                     <LogOut size={18} />
-                                    <span>로그아웃</span>
+                                    <span>LOGOUT</span>
                                 </button>
                             ) : (
                                 <Link
@@ -219,14 +237,14 @@ export default function MainLayout({ children, hideFooter = false }: MainLayoutP
                                     className="flex items-center space-x-1 text-gray-600 hover:text-emerald-500 transition-colors hidden sm:flex"
                                 >
                                     <LogIn size={18} />
-                                    <span>로그인</span>
+                                    <span>LOGIN</span>
                                 </Link>
                             )}
 
                             {/* Mobile Menu Button - Right on mobile */}
                             <button
                                 onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-                                className="md:hidden p-2 text-gray-600 hover:text-gray-900 transition-colors ml-2"
+                                className="md:hidden p-2 text-hanbok-charcoal hover:text-hanbok-jade transition-colors ml-2 rounded-lg hover:bg-hanbok-cloud"
                             >
                                 {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
                             </button>
@@ -235,17 +253,22 @@ export default function MainLayout({ children, hideFooter = false }: MainLayoutP
                 </div>
 
                 {/* Second Bar: Navigation Links (Desktop Only) */}
-                <div className="hidden md:block border-t border-gray-100 bg-white relative">
+                <div className="hidden md:block border-t relative" style={{
+                    background: 'linear-gradient(135deg, rgba(255, 248, 240, 0.8) 0%, rgba(255, 255, 255, 0.8) 100%)',
+                    borderColor: 'rgba(203, 213, 224, 0.5)'
+                }}>
                     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                         <div className="flex items-center h-16">
                             {/* View All Menu Button - Leftmost */}
                             <div className="h-full flex items-center mr-8">
                                 <button
                                     onClick={() => setIsAllMenuOpen(!isAllMenuOpen)}
-                                    className={clsx(
-                                        "flex items-center space-x-2 font-bold px-4 h-full border-b-2 transition-all",
-                                        isAllMenuOpen ? "border-gray-900 text-gray-900" : "border-transparent text-gray-700 hover:text-gray-900 hover:border-gray-900"
-                                    )}
+                                    className="flex items-center space-x-2 font-bold px-3 py-2 transition-all font-korean text-base hover:scale-105"
+                                    style={{
+                                        background: 'transparent',
+                                        color: isAllMenuOpen ? '#7AC5DC' : '#8E9AAF',
+                                        border: 'none'
+                                    }}
                                 >
                                     <Menu size={20} />
                                     <span>전체보기</span>
@@ -253,7 +276,7 @@ export default function MainLayout({ children, hideFooter = false }: MainLayoutP
                             </div>
 
                             {/* Separator */}
-                            <div className="h-6 w-px bg-gray-300 mr-8"></div>
+                            <div className="h-6 w-px bg-gradient-to-b from-hanbok-jade to-hanbok-sunset mr-8"></div>
 
                             <div className="flex space-x-8 whitespace-nowrap items-center h-full">
                                 {navItems.map((item) => (
@@ -265,17 +288,17 @@ export default function MainLayout({ children, hideFooter = false }: MainLayoutP
                                                 "text-base font-medium transition-colors border-b-2 border-transparent pb-1 block",
                                                 "text-gray-600 hover:text-gray-900",
                                                 isCompany
-                                                    ? "group-hover:text-blue-600 group-hover:border-blue-600"
-                                                    : "group-hover:text-emerald-500 group-hover:border-emerald-500",
-                                                item.name === 'Personal' && (isCompany ? "text-blue-600" : "text-emerald-500")
+                                                    ? "group-hover:text-hanbok-royal group-hover:border-hanbok-royal"
+                                                    : "group-hover:text-hanbok-jade group-hover:border-hanbok-jade",
+                                                item.name === 'Personal' && (isCompany ? "text-hanbok-royal font-bold" : "text-hanbok-jade font-bold")
                                             )}
                                         >
                                             {item.name}
                                         </Link>
 
                                         {/* Traditional Dropdown Menu (optional, keeping for consistent UX if "All Menu" is not used) */}
-                                        <div className="absolute left-1/2 transform -translate-x-1/2 mt-0 w-48 bg-white border border-gray-100 shadow-xl rounded-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50 top-full">
-                                            <div className={clsx("h-1 w-full rounded-t-lg", isCompany ? "bg-blue-600" : "bg-emerald-500")}></div>
+                                        <div className="absolute left-1/2 transform -translate-x-1/2 mt-0 w-52 bg-white border-2 border-hanbok-jade/20 shadow-hanbok rounded-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50 top-full overflow-hidden">
+                                            <div className={clsx("h-1 w-full bg-gradient-hanbok", isCompany ? "" : "")}></div>
                                             <div className="py-2">
                                                 {item.subMenus.map((subItem, idx) => {
                                                     const subName = typeof subItem === 'string' ? subItem : subItem.name;
@@ -284,7 +307,7 @@ export default function MainLayout({ children, hideFooter = false }: MainLayoutP
                                                         <Link
                                                             key={idx}
                                                             to={subPath}
-                                                            className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-gray-900 whitespace-pre-line text-left leading-normal"
+                                                            className="block px-5 py-3 text-sm font-korean text-hanbok-charcoal hover:bg-hanbok-cloud hover:text-hanbok-jade whitespace-pre-line text-left leading-normal transition-colors font-medium"
                                                         >
                                                             {subName}
                                                         </Link>
@@ -298,7 +321,7 @@ export default function MainLayout({ children, hideFooter = false }: MainLayoutP
                             </div>
 
                             {/* Order History & Cart Buttons - Far right of the nav bar (optional, or kept here as per previous request? Previous request said 'next to Home', but user said 'Left Align Bottom Nav'. Flex row with nav items usually takes space.
-                            Left align implies Nav items start from left. 
+                            Left align implies Nav items start from left.
                             Let's keep the Order/Cart icons inside the right side of this bar as per previous instruction to move them to bottom bar?
                             Wait, previous instruction was to move them to bottom bar.
                             Let's add them via `ml-auto` to push them to the right, or keep them close if that's preferred.
@@ -308,19 +331,21 @@ export default function MainLayout({ children, hideFooter = false }: MainLayoutP
                             <div className="flex items-center space-x-4 pl-4 border-l border-gray-200 ml-auto">
                                 <button
                                     onClick={() => handleAuthAction(() => navigate('/order-history'))}
-                                    className="text-gray-600 hover:text-gray-900 transition-colors flex items-center space-x-1"
+                                    className="text-hanbok-charcoal hover:text-hanbok-jade transition-colors flex items-center space-x-2 px-4 py-2"
                                     title="Order History"
                                 >
                                     <ClipboardList size={20} />
-                                    <span className="text-sm font-medium">주문내역</span>
+                                    <span className="text-sm font-medium">MYPAGE
+
+                                    </span>
                                 </button>
 
                                 <button
                                     onClick={() => handleAuthAction(toggleCart)}
-                                    className="relative text-gray-600 hover:text-gray-900 transition-colors flex items-center space-x-1"
+                                    className="relative text-hanbok-charcoal hover:text-hanbok-jade transition-colors flex items-center space-x-2 px-4 py-2"
                                 >
                                     <ShoppingCart size={20} />
-                                    <span className="text-sm font-medium">장바구니</span>
+                                    <span className="text-sm font-medium">CART</span>
                                     {totalItems > 0 && (
                                         <span className={clsx(
                                             "ml-1 text-xs font-bold text-white px-1.5 py-0.5 rounded-full",
@@ -356,7 +381,7 @@ export default function MainLayout({ children, hideFooter = false }: MainLayoutP
                                             onClick={handleLogout}
                                             className="text-sm text-gray-500 hover:text-red-500 underline"
                                         >
-                                            로그아웃
+                                            LOGOUT
                                         </button>
                                     </div>
                                     <div className="grid grid-cols-2 gap-3">
@@ -378,7 +403,7 @@ export default function MainLayout({ children, hideFooter = false }: MainLayoutP
                                             className="flex items-center justify-center space-x-2 py-3 bg-white border border-gray-200 rounded-xl shadow-sm hover:bg-gray-50 transition-colors relative"
                                         >
                                             <ShoppingCart size={20} className="text-gray-600" />
-                                            <span className="text-sm font-medium text-gray-700">장바구니</span>
+                                            <span className="text-sm font-medium text-gray-700">CART</span>
                                             {totalItems > 0 && (
                                                 <span className={clsx(
                                                     "absolute -top-2 -right-2 w-5 h-5 flex items-center justify-center text-xs font-bold text-white rounded-full",
@@ -563,28 +588,28 @@ export default function MainLayout({ children, hideFooter = false }: MainLayoutP
 
             {
                 !hideFooter && (
-                    <footer className="bg-gray-900 text-white py-12">
+                    <footer className="bg-hanbok-charcoal text-white py-16 mt-auto relative overflow-hidden">
                         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 md:grid-cols-3 gap-8">
                             <div>
-                                <h3 className="text-lg font-bold mb-4">회사 소개</h3>
-                                <p className="text-gray-400">{isCompany ? '기업' : '모두'}를 위한 맞춤형 프리미엄 쇼핑 경험을 제공합니다.</p>
+                                <h3 className="text-lg font-bold mb-4 font-korean">회사 소개</h3>
+                                <p className="text-gray-400 font-korean">{isCompany ? '기업' : '모두'}를 위한 맞춤형 프리미엄 쇼핑 경험을 제공합니다.</p>
                             </div>
                             <div>
-                                <h3 className="text-lg font-bold mb-4">고객 센터</h3>
-                                <ul className="space-y-2 text-gray-400">
-                                    <li>문의하기</li>
-                                    <li>배송 정책</li>
-                                    <li>반품 및 환불</li>
+                                <h3 className="text-lg font-korean mb-6 text-hanbok-gold">고객 센터</h3>
+                                <ul className="space-y-2 text-gray-400 font-korean">
+                                    <li className="hover:text-hanbok-jade transition-colors cursor-pointer">문의하기</li>
+                                    <li className="hover:text-hanbok-jade transition-colors cursor-pointer">배송 정책</li>
+                                    <li className="hover:text-hanbok-jade transition-colors cursor-pointer">반품 및 환불</li>
                                 </ul>
                             </div>
                             <div>
-                                <h3 className="text-lg font-bold mb-4">소셜 미디어</h3>
+                                <h3 className="text-lg font-korean mb-6 text-hanbok-sky">소셜 미디어</h3>
                                 <div className="flex space-x-4">
                                     {/* Social icons would go here */}
                                 </div>
                             </div>
                         </div>
-                        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-8 pt-8 border-t border-gray-800 text-center text-gray-500 text-sm">
+                        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-12 pt-8 border-t border-hanbok-charcoal/40 text-center relative z-10 text-sm font-korean">
                             © 2024 {isCompany ? 'BizMall Inc.' : 'LifeStyle Shop'}. All rights reserved.
                         </div>
                     </footer>

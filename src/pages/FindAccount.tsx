@@ -17,14 +17,15 @@ export default function FindAccount() {
     };
 
     const isCompany = type === 'company';
-    const activeColor = isCompany ? 'text-blue-600 border-blue-600' : 'text-emerald-600 border-emerald-600';
-    const buttonColor = isCompany ? 'bg-blue-600 hover:bg-blue-700' : 'bg-emerald-600 hover:bg-emerald-700';
 
     return (
         <AuthLayout>
-            <div className="bg-white py-8 px-4 shadow-2xl shadow-gray-200/50 sm:rounded-2xl sm:px-10 border border-gray-100">
+            <div className="py-8 px-4 sm:rounded-2xl sm:px-10" style={{
+                background: '#FFFFFF',
+                border: '2px solid rgba(203, 213, 224, 0.6)'
+            }}>
                 <div className="sm:mx-auto sm:w-full sm:max-w-md mb-6">
-                    <h2 className="mt-2 text-center text-3xl font-extrabold tracking-tight text-gray-900">
+                    <h2 className="mt-2 text-center text-3xl font-extrabold tracking-tight font-hanbok" style={{ color: '#4A5568' }}>
                         계정 찾기
                     </h2>
                     <p className="mt-2 text-center text-sm text-gray-600">
@@ -35,13 +36,29 @@ export default function FindAccount() {
                 {/* Tabs */}
                 <div className="flex border-b border-gray-200 mb-6">
                     <button
-                        className={`flex-1 py-4 px-1 text-center border-b-2 font-medium text-sm transition-colors ${activeTab === 'id' ? activeColor : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'}`}
+                        className="flex-1 py-4 px-1 text-center border-b-2 font-medium text-sm transition-colors font-korean"
+                        style={{
+                            borderColor: activeTab === 'id'
+                                ? (isCompany ? '#FFB6B9' : '#A8D8EA')
+                                : 'transparent',
+                            color: activeTab === 'id'
+                                ? (isCompany ? '#FFB6B9' : '#A8D8EA')
+                                : '#9CA3AF'
+                        }}
                         onClick={() => { setActiveTab('id'); setIsSubmitted(false); }}
                     >
                         아이디 찾기
                     </button>
                     <button
-                        className={`flex-1 py-4 px-1 text-center border-b-2 font-medium text-sm transition-colors ${activeTab === 'password' ? activeColor : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'}`}
+                        className="flex-1 py-4 px-1 text-center border-b-2 font-medium text-sm transition-colors font-korean"
+                        style={{
+                            borderColor: activeTab === 'password'
+                                ? (isCompany ? '#FFB6B9' : '#A8D8EA')
+                                : 'transparent',
+                            color: activeTab === 'password'
+                                ? (isCompany ? '#FFB6B9' : '#A8D8EA')
+                                : '#9CA3AF'
+                        }}
                         onClick={() => { setActiveTab('password'); setIsSubmitted(false); }}
                     >
                         비밀번호 재설정
@@ -92,7 +109,13 @@ export default function FindAccount() {
                             whileHover={{ scale: 1.01 }}
                             whileTap={{ scale: 0.99 }}
                             type="submit"
-                            className={`w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white focus:outline-none focus:ring-2 focus:ring-offset-2 transition-all ${buttonColor}`}
+                            className="w-full flex justify-center py-3 px-4 rounded-lg text-sm font-medium text-white focus:outline-none transition-all font-korean"
+                            style={{
+                                background: isCompany
+                                    ? 'linear-gradient(135deg, #FFB6B9 0%, #FF9AA2 100%)'
+                                    : 'linear-gradient(135deg, #A8D8EA 0%, #7AC5DC 100%)',
+                                border: 'none'
+                            }}
                         >
                             {activeTab === 'id' ? '아이디 찾기' : '재설정 링크 발송'}
                         </motion.button>

@@ -1,31 +1,229 @@
+/* ============================================
+   MODERN KOREAN CULTURE DESIGN SYSTEM
+   한복 색상 + 조선시대 미학 현대 해석
+   Hanbok Colors + Joseon Dynasty Aesthetics
+   ============================================ */
+
+/* Pretendard: Modern Korean Sans-serif (본문용) */
+@import url("https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css");
+
+/* Nanum Myeongjo: Traditional Korean Serif (제목용) */
+@import url('https://fonts.googleapis.com/css2?family=Nanum+Myeongjo:wght@400;700;800&display=swap');
+
 :root {
-  font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
-  line-height: 1.5;
-  font-weight: 400;
+  /* 한복 색상 팔레트 - Hanbok Color Palette */
+  --hanbok-jade: #00B894;
+  /* 비취색 - Primary brand */
+  --hanbok-sunset: #FF6B9D;
+  /* 분홍빛 석양 - Accent */
+  --hanbok-royal: #6C5CE7;
+  /* 왕실 보라 - Premium */
+  --hanbok-sky: #74B9FF;
+  /* 하늘색 - Secondary */
+  --hanbok-cloud: #F8F9FA;
+  /* 구름 흰색 - Background */
+  --hanbok-charcoal: #2D3436;
+  /* 먹색 - Text */
+  --hanbok-gold: #FDCB6E;
+  /* 금색 - Highlights */
+  --hanbok-light-jade: #55EFC4;
+  /* 연한 비취 */
+  --hanbok-light-pink: #FD79A8;
+  /* 연한 분홍 */
 
-  color-scheme: light dark;
-  color: rgba(255, 255, 255, 0.87);
-  background-color: #242424;
+  /* 그라데이션 - Gradients */
+  --gradient-jade-sky: linear-gradient(135deg, var(--hanbok-jade) 0%, var(--hanbok-sky) 100%);
+  --gradient-sunset-royal: linear-gradient(135deg, var(--hanbok-sunset) 0%, var(--hanbok-royal) 100%);
+  --gradient-royal-gold: linear-gradient(135deg, var(--hanbok-royal) 0%, var(--hanbok-gold) 100%);
+  --gradient-hanbok: linear-gradient(135deg, #00B894 0%, #FF6B9D 50%, #6C5CE7 100%);
 
+  /* 전통 패턴 - Traditional Patterns */
+  --pattern-lotus: url('data:image/svg+xml,<svg width="40" height="40" xmlns="http://www.w3.org/2000/svg"><circle cx="20" cy="20" r="3" fill="%2300B894" opacity="0.1"/></svg>');
+  --pattern-cloud: repeating-radial-gradient(circle at 20% 80%, transparent 0, transparent 10px, rgba(0, 184, 148, 0.03) 10px, rgba(0, 184, 148, 0.03) 20px);
+
+  /* ============================================
+     PREMIUM MINIMAL DESIGN SYSTEM
+     ============================================ */
+
+  /* Typography Scale */
+  --text-display-lg: 4.5rem;
+  /* 72px - Hero Extra Large */
+  --text-display: 3.5rem;
+  /* 56px - Hero Display */
+  --text-h1: 3rem;
+  /* 48px - Page Title */
+  --text-h2: 2.25rem;
+  /* 36px - Section Title */
+  --text-h3: 1.875rem;
+  /* 30px - Sub Section */
+  --text-h4: 1.5rem;
+  /* 24px - Card Title */
+  --text-lg: 1.125rem;
+  /* 18px - Lead Text */
+  --text-base: 1rem;
+  /* 16px - Normal */
+  --text-sm: 0.875rem;
+  /* 14px - Small */
+
+  /* Spacing System (8px Grid) */
+  --space-1: 0.5rem;
+  /* 8px */
+  --space-2: 1rem;
+  /* 16px */
+  --space-3: 1.5rem;
+  /* 24px */
+  --space-4: 2rem;
+  /* 32px */
+  --space-5: 2.5rem;
+  /* 40px */
+  --space-6: 3rem;
+  /* 48px */
+  --space-8: 4rem;
+  /* 64px */
+  --space-10: 5rem;
+  /* 80px */
+  --space-12: 6rem;
+  /* 96px */
+  --space-16: 8rem;
+  /* 128px */
+  --space-20: 10rem;
+  /* 160px */
+
+  /* Shadow System (Elevation Levels) */
+  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.04);
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.08);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.08);
+  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.12);
+  --shadow-xl: 0 12px 40px rgba(0, 0, 0, 0.16);
+  --shadow-2xl: 0 20px 60px rgba(0, 0, 0, 0.20);
+
+  /* Hanbok Color Shadows */
+  --shadow-jade: 0 8px 32px rgba(0, 184, 148, 0.12);
+  --shadow-sunset: 0 8px 32px rgba(255, 107, 157, 0.12);
+  --shadow-royal: 0 8px 32px rgba(108, 92, 231, 0.12);
+  --shadow-sky: 0 8px 32px rgba(116, 185, 255, 0.12);
+  --shadow-gold: 0 8px 32px rgba(253, 203, 110, 0.12);
+
+  /* Transition System */
+  --duration-fast: 150ms;
+  --duration-base: 300ms;
+  --duration-slow: 500ms;
+  --duration-slower: 700ms;
+
+  --ease-smooth: cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-spring: cubic-bezier(0.68, -0.55, 0.265, 1.55);
+  --ease-in: cubic-bezier(0.4, 0, 1, 1);
+  --ease-out: cubic-bezier(0, 0, 0.2, 1);
+
+  /* ============================================
+     KOREAN OBANGSAEK (五色) PASTEL SYSTEM
+     전통 오색 파스텔 디자인
+     ============================================ */
+
+  /* 청(靑) - Pastel Blue (동쪽, 봄, 생명) */
+  --obangsaek-blue: #A8D8EA;
+  --obangsaek-blue-light: #D4EBF7;
+  --obangsaek-blue-dark: #7AC5DC;
+
+  /* 백(白) - Cream White (서쪽, 가을, 순수) */
+  --obangsaek-white: #FFF8F0;
+  --obangsaek-ivory: #FFFEF9;
+  --obangsaek-cream: #FAF3E0;
+
+  /* 적(赤) - Coral Pink (남쪽, 여름, 정열) */
+  --obangsaek-red: #FFB6B9;
+  --obangsaek-red-light: #FFC9CC;
+  --obangsaek-red-dark: #FF9AA2;
+
+  /* 흑(黑) - Warm Charcoal (북쪽, 겨울, 지혜) */
+  --obangsaek-black: #4A5568;
+  --obangsaek-gray: #8E9AAF;
+  --obangsaek-gray-light: #CBD5E0;
+
+  /* 황(黃) - Pastel Peach (중앙, 균형) */
+  --obangsaek-yellow: #FFE5B4;
+  --obangsaek-yellow-light: #FFF4E0;
+  --obangsaek-yellow-dark: #FFD89B;
+
+  /* Soft Gradients */
+  --gradient-blue-white: linear-gradient(135deg, #D4EBF7 0%, #FFF8F0 100%);
+  --gradient-pink-peach: linear-gradient(135deg, #FFC9CC 0%, #FFE5B4 100%);
+  --gradient-blue-pink: linear-gradient(135deg, #A8D8EA 0%, #FFB6B9 100%);
+  --gradient-obangsaek: linear-gradient(135deg, #A8D8EA 0%, #FFB6B9 50%, #FFE5B4 100%);
+
+  /* Soft Shadows */
+  --shadow-blue: 0 4px 20px rgba(168, 216, 234, 0.2);
+  --shadow-pink: 0 4px 20px rgba(255, 182, 185, 0.2);
+  --shadow-peach: 0 4px 20px rgba(255, 229, 180, 0.2);
+  --shadow-soft: 0 2px 12px rgba(74, 85, 104, 0.08);
+
+  /* 타이포그래피 */
+  line-height: 1.6;
+  font-weight: 500;
+
+  /* 최적화 */
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
-a {
-  font-weight: 500;
-  color: #646cff;
-  text-decoration: inherit;
-}
-a:hover {
-  color: #535bf2;
-}
-
 body {
   margin: 0;
+  padding: 0;
   min-width: 320px;
   min-height: 100vh;
+  background: var(--hanbok-cloud);
+  color: var(--hanbok-charcoal);
+  position: relative;
+  overflow-x: hidden;
+  letter-spacing: -0.01em;
+  font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, Roboto, 'Helvetica Neue', 'Segoe UI', 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', sans-serif;
+}
+
+/* 연꽃 패턴 배경 */
+body::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-image: var(--pattern-lotus);
+  background-size: 80px 80px;
+  opacity: 0.4;
+  z-index: -1;
+  pointer-events: none;
+}
+
+/* 기본 폰트 설정 */
+.font-korean {
+  font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, Roboto, 'Helvetica Neue', 'Segoe UI', 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', sans-serif;
+}
+
+.font-hanbok {
+  font-family: 'Nanum Myeongjo', 'Pretendard', serif;
+  font-weight: 700;
+}
+
+/* 스크롤바 스타일 */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--hanbok-cloud);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--gradient-jade-sky);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--gradient-sunset-royal);
 }
 
 #root {
@@ -35,49 +233,351 @@ body {
   flex-direction: column;
 }
 
-h1 {
-  font-size: 3.2em;
-  line-height: 1.1;
+/* ============================================
+   TYPOGRAPHY - 볼드하고 에너제틱한 타이포
+   ============================================ */
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: 'Black Han Sans', 'Noto Sans KR', sans-serif;
+  font-weight: 900;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
 }
+
+h1 {
+  font-size: clamp(2rem, 5vw, 3.5rem);
+  background: var(--gradient-street);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  text-transform: uppercase;
+}
+
+h2 {
+  font-size: clamp(1.5rem, 4vw, 2.5rem);
+  color: var(--street-pink);
+}
+
+h3 {
+  font-size: clamp(1.25rem, 3vw, 2rem);
+  color: var(--street-purple);
+}
+
+/* ============================================
+   LINKS - 강렬한 호버 효과
+   ============================================ */
+
+a {
+  color: var(--street-purple);
+  text-decoration: none;
+  font-weight: 600;
+  position: relative;
+  transition: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+
+a:hover {
+  color: var(--street-pink);
+  transform: translateY(-2px);
+}
+
+a::after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  width: 0;
+  height: 3px;
+  background: var(--gradient-pink-yellow);
+  transition: width 0.3s ease;
+}
+
+a:hover::after {
+  width: 100%;
+}
+
+/* ============================================
+   BUTTONS - 스트릿 스타일 버튼
+   ============================================ */
 
 button {
-  border-radius: 8px;
-  border: 1px solid transparent;
-  padding: 0.6em 1.2em;
-  font-size: 1em;
-  font-weight: 500;
-  font-family: inherit;
-  background-color: #1a1a1a;
+  border-radius: 16px;
+  border: none;
+  padding: 1.5em 3em;
+  font-size: 1.1em;
+  font-weight: 700;
+  font-family: 'Noto Sans KR', sans-serif;
+  background: var(--street-pink);
+  color: white;
   cursor: pointer;
-  transition: border-color 0.25s;
-}
-button:hover {
-  border-color: #646cff;
-}
-button:focus,
-button:focus-visible {
-  outline: 4px auto -webkit-focus-ring-color;
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s ease;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
 }
 
-@media (prefers-color-scheme: light) {
-  :root {
-    color: #213547;
-    background-color: #ffffff;
+button::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: var(--gradient-street);
+  transition: left 0.3s ease;
+  z-index: -1;
+}
+
+button:hover::before {
+  left: 0;
+}
+
+button:hover {
+  transform: translateY(-2px) scale(1.03);
+}
+
+button:active {
+  transform: translateY(0) scale(1.01);
+}
+
+button:focus,
+button:focus-visible {
+  outline: 3px solid var(--street-yellow);
+  outline-offset: 3px;
+}
+
+/* ============================================
+   INPUTS - 스트릿 스타일 인풋
+   ============================================ */
+
+input,
+textarea,
+select {
+  border: 2px solid var(--street-gray);
+  border-radius: 8px;
+  padding: 0.75em 1em;
+  font-size: 1em;
+  font-family: 'Noto Sans KR', sans-serif;
+  background: white;
+  color: var(--street-black);
+  transition: all 0.3s ease;
+  letter-spacing: normal !important;
+}
+
+input:focus,
+textarea:focus,
+select:focus {
+  outline: none;
+  border-color: var(--street-pink);
+}
+
+/* ============================================
+   CARDS - 스트릿 카드 스타일
+   ============================================ */
+
+.street-card {
+  background: white;
+  border-radius: 16px;
+  padding: 1.5rem;
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+  border: 3px solid transparent;
+}
+
+.street-card::before {
+  content: '';
+  position: absolute;
+  top: -2px;
+  left: -2px;
+  right: -2px;
+  bottom: -2px;
+  background: var(--gradient-street);
+  border-radius: 16px;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  z-index: -1;
+}
+
+.street-card:hover {
+  transform: translateY(-8px) rotate(-1deg);
+}
+
+.street-card:hover::before {
+  opacity: 1;
+}
+
+/* ============================================
+   ANIMATIONS - 에너제틱한 애니메이션
+   ============================================ */
+
+@keyframes pulse-street {
+
+  0%,
+  100% {
+    transform: scale(1);
   }
-  a:hover {
-    color: #747bff;
-  }
-  button {
-    background-color: #f9f9f9;
+
+  50% {
+    transform: scale(1.05);
   }
 }
+
+@keyframes slide-in-left {
+  from {
+    opacity: 0;
+    transform: translateX(-50px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes slide-in-right {
+  from {
+    opacity: 0;
+    transform: translateX(50px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes bounce-in {
+  0% {
+    opacity: 0;
+    transform: scale(0.3);
+  }
+
+  50% {
+    opacity: 1;
+    transform: scale(1.05);
+  }
+
+  70% {
+    transform: scale(0.95);
+  }
+
+  100% {
+    transform: scale(1);
+  }
+}
+
+.animate-pulse-street {
+  animation: pulse-street 2s ease-in-out infinite;
+}
+
+.animate-slide-left {
+  animation: slide-in-left 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+
+.animate-slide-right {
+  animation: slide-in-right 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+
+.animate-bounce-in {
+  animation: bounce-in 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+
+/* ============================================
+   UTILITY CLASSES - 스트릿 유틸리티
+   ============================================ */
+
+.street-gradient-text {
+  background: var(--gradient-street);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  font-weight: 900;
+}
+
+.street-badge {
+  display: inline-block;
+  padding: 0.25em 0.75em;
+  border-radius: 20px;
+  background: var(--gradient-pink-yellow);
+  color: white;
+  font-size: 0.875rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.street-divider {
+  height: 4px;
+  background: var(--gradient-street);
+  border-radius: 2px;
+  margin: 2rem 0;
+  position: relative;
+}
+
+.street-divider::after {
+  content: '★';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: white;
+  padding: 0 1rem;
+  color: var(--street-pink);
+  font-size: 1.5rem;
+}
+
+/* ============================================
+   SCROLLBAR - 커스텀 스크롤바
+   ============================================ */
+
+::-webkit-scrollbar {
+  width: 12px;
+  height: 12px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--street-light);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--gradient-street);
+  border-radius: 6px;
+  border: 2px solid var(--street-light);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--street-pink);
+}
+
+/* ============================================
+   RESPONSIVE
+   ============================================ */
+
+@media (max-width: 768px) {
+  h1 {
+    font-size: 2rem;
+  }
+
+  .street-card {
+    padding: 1rem;
+  }
+
+  button {
+    padding: 0.6em 1.2em;
+    font-size: 0.9em;
+  }
+}
+
+/* ============================================
+   TAILWIND INTEGRATION
+   ============================================ */
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-
-@layer base {
-  input, textarea, select {
-    letter-spacing: normal !important;
-  }
-}
