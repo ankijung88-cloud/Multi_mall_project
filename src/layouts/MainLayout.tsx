@@ -69,20 +69,20 @@ export default function MainLayout({ children, hideFooter = false }: MainLayoutP
                     name: 'K-BEAUTY',
                     path: isCompany ? '/partners/beauty?type=company' : '/partners/beauty',
                     subMenus: [
-                        { name: 'COLOR', path: '#' },
-                        { name: 'PLASTIC SURGERY', path: '#' },
-                        { name: 'SKIN', path: '#' },
-                        { name: 'HAIR', path: '#' }
+                        { name: 'COLOR', path: isCompany ? '/partners/beauty?type=company&category=COLOR' : '/partners/beauty?category=COLOR' },
+                        { name: 'PLASTIC SURGERY', path: isCompany ? '/partners/beauty?type=company&category=PLASTIC SURGERY' : '/partners/beauty?category=PLASTIC SURGERY' },
+                        { name: 'SKIN', path: isCompany ? '/partners/beauty?type=company&category=SKIN' : '/partners/beauty?category=SKIN' },
+                        { name: 'HAIR', path: isCompany ? '/partners/beauty?type=company&category=HAIR' : '/partners/beauty?category=HAIR' }
                     ]
                 },
                 {
                     name: 'K-PERFORMANCE',
                     path: isCompany ? '/partners/performance?type=company' : '/partners/performance',
                     subMenus: [
-                        { name: '댄스', path: '#' },
-                        { name: '사진', path: '#' },
-                        { name: '공연', path: '#' },
-                        { name: '전시', path: '#' }
+                        { name: '댄스', path: isCompany ? '/partners/performance?type=company&category=DANCE' : '/partners/performance?category=DANCE' },
+                        { name: '사진', path: isCompany ? '/partners/performance?type=company&category=PHOTO' : '/partners/performance?category=PHOTO' },
+                        { name: '공연', path: isCompany ? '/partners/performance?type=company&category=CONCERT' : '/partners/performance?category=CONCERT' },
+                        { name: '전시', path: isCompany ? '/partners/performance?type=company&category=EXHIBITION' : '/partners/performance?category=EXHIBITION' }
                     ]
                 },
                 { name: 'K-AUDITION', path: isCompany ? '/partners/audition?type=company' : '/partners/audition' },
@@ -155,24 +155,16 @@ export default function MainLayout({ children, hideFooter = false }: MainLayoutP
 
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const [expandedMobileMenu, setExpandedMobileMenu] = useState<string | null>(null);
-    const [isAllMenuOpen, setIsAllMenuOpen] = useState(false);
-    const [activeAllMenuCategory, setActiveAllMenuCategory] = useState<string | null>(null);
+
 
     // Close menus when route changes
     useEffect(() => {
         setIsMobileMenuOpen(false);
         setExpandedMobileMenu(null);
-        setIsAllMenuOpen(false);
-        setActiveAllMenuCategory(null);
+
     }, [location.pathname]);
 
-    // Set default active category when all menu opens
-    useEffect(() => {
-        if (isAllMenuOpen && navItems.length > 0 && !activeAllMenuCategory) {
-            const firstCat = navItems[0];
-            setActiveAllMenuCategory(firstCat.name);
-        }
-    }, [isAllMenuOpen, activeAllMenuCategory]);
+
 
     const handleAuthAction = (action: () => void) => {
         if (!isAuthenticated) {
@@ -194,10 +186,15 @@ export default function MainLayout({ children, hideFooter = false }: MainLayoutP
         }
     };
 
+    // DEBUG SYSTEM START
+
+
     return (
         <div className="flex flex-col min-h-screen font-sans" style={{
             background: 'linear-gradient(180deg, rgba(255, 248, 240, 1) 0%, rgba(255, 255, 255, 1) 100%)'
         }}>
+
+
             {/* Navigation Header */}
             <nav className={clsx(
                 "sticky top-0 z-50 transition-colors duration-300",
@@ -259,10 +256,10 @@ export default function MainLayout({ children, hideFooter = false }: MainLayoutP
                             </div>
                         </div>
 
-                        {/* Right: Utilities & Mobile Toggle */}
+                        {/* Utilities & Mobile Toggle */}
                         <div className="flex items-center space-x-4 md:space-x-6">
                             {/* Utility Links (Desktop Only) */}
-                            <div className="hidden lg:flex items-center space-x-4 text-xs font-medium text-gray-500 font-korean">
+                            <div className="hidden xl:flex items-center space-x-4 text-xs font-medium text-gray-500 font-korean">
                                 {isAuthenticated ? (
                                     <>
                                         <span className="text-gray-700">
@@ -291,7 +288,7 @@ export default function MainLayout({ children, hideFooter = false }: MainLayoutP
                             {userType === 'admin' && (
                                 <button
                                     onClick={() => navigate('/admin')}
-                                    className="hidden md:flex px-3 py-1.5 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors font-medium text-xs items-center gap-1"
+                                    className="hidden xl:flex px-3 py-1.5 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors font-medium text-xs items-center gap-1"
                                 >
                                     <LayoutDashboard size={14} /> 관리자
                                 </button>
@@ -303,7 +300,7 @@ export default function MainLayout({ children, hideFooter = false }: MainLayoutP
                             </button>
 
                             {/* Mobile Menu Button */}
-                            <div className="flex items-center md:hidden">
+                            <div className="flex items-center xl:hidden">
                                 <button
                                     onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
                                     className="inline-flex items-center justify-center p-2 rounded-md text-gray-700 hover:text-hanbok-jade focus:outline-none transition-colors"
@@ -316,25 +313,14 @@ export default function MainLayout({ children, hideFooter = false }: MainLayoutP
                 </div>
 
                 {/* Desktop Secondary Navigation Bar (The "Bottom Navigation") */}
-                <div className="hidden md:block border-t relative" style={{
+                <div className="hidden xl:block border-t relative" style={{
                     background: 'linear-gradient(135deg, rgba(255, 248, 240, 0.8) 0%, rgba(255, 255, 255, 0.8) 100%)',
                     borderColor: 'rgba(203, 213, 224, 0.5)'
                 }}>
                     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                         <div className="flex items-center h-14">
                             {/* All Menu Button */}
-                            <div className="relative group mr-8">
-                                <button
-                                    onClick={() => setIsAllMenuOpen(!isAllMenuOpen)}
-                                    className={clsx(
-                                        "flex items-center space-x-2 font-bold text-base transition-colors py-4",
-                                        isAllMenuOpen ? "text-hanbok-jade" : "text-gray-800 hover:text-hanbok-jade"
-                                    )}
-                                >
-                                    <Menu size={20} />
-                                    <span>전체보기</span>
-                                </button>
-                            </div>
+
 
                             {/* Main Categories (Horizontal) */}
                             <div className="flex h-full items-stretch space-x-1 flex-1">
@@ -406,192 +392,122 @@ export default function MainLayout({ children, hideFooter = false }: MainLayoutP
                     </div>
                 </div>
 
-                {/* Mobile Menu */}
-                <div
-                    className={clsx(
-                        "md:hidden bg-white border-t overflow-hidden transition-all duration-300 ease-in-out",
-                        isMobileMenuOpen ? "max-h-screen opacity-100" : "max-h-0 opacity-0"
-                    )}
-                >
-                    <div className="h-[calc(100vh-64px)] overflow-y-auto">
-                        <div className="px-4 py-2 space-y-1">
-                            {navItems.map((item) => (
-                                <div key={item.name} className="border-b border-gray-100 last:border-0">
-                                    <button
-                                        onClick={() => {
-                                            if (item.subMenus && item.subMenus.length > 0) {
-                                                setExpandedMobileMenu(expandedMobileMenu === item.name ? null : item.name);
-                                            } else {
-                                                navigate(item.path);
-                                                setIsMobileMenuOpen(false);
-                                            }
-                                        }}
-                                        className="w-full flex justify-between items-center py-4 text-left text-base font-medium text-gray-700 hover:text-gray-900"
-                                    >
-                                        <span>{item.name}</span>
-                                        {item.subMenus && item.subMenus.length > 0 && (
-                                            expandedMobileMenu === item.name ? <ChevronUp size={20} /> : <ChevronDown size={20} />
-                                        )}
-                                    </button>
-
-                                    <div
-                                        className={clsx(
-                                            "bg-gray-50 space-y-1 overflow-hidden transition-all duration-300",
-                                            expandedMobileMenu === item.name ? "max-h-[800px] py-2" : "max-h-0"
-                                        )}
-                                    >
-                                        {/* Mobile Submenu render */}
-                                        {item.subMenus.map((sub, idx) => {
-                                            const subName = typeof sub === 'string' ? sub : sub.name;
-                                            return (
-                                                <div key={idx}>
-                                                    <div className="px-6 py-2 text-sm text-gray-600 font-bold">{subName}</div>
-                                                    {/* Render Sub-Sub items for mobile */}
-                                                    {typeof sub !== 'string' && 'subMenus' in sub && (sub as any).subMenus.map((subSub: any, sIdx: number) => (
-                                                        <Link
-                                                            key={sIdx}
-                                                            to={subSub.path}
-                                                            onClick={() => setIsMobileMenuOpen(false)}
-                                                            className="block px-8 py-2 text-xs text-gray-500 hover:text-gray-900"
-                                                        >
-                                                            - {subSub.name}
-                                                        </Link>
-                                                    ))}
-                                                </div>
-                                            );
-                                        })}
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-                </div>
+                {/* Mobile Menu Removed (Moved outside) */}
 
 
-                {/* Desktop All Menu Overlay (Side Drawer) */}
-                <div
-                    className={clsx(
-                        "hidden md:block fixed inset-0 z-50 transform transition-transform duration-300 ease-in-out",
-                        isAllMenuOpen ? "translate-x-0" : "translate-x-full"
-                    )}
-                >
-                    <div className="absolute inset-0 bg-black/20 backdrop-blur-sm" onClick={() => setIsAllMenuOpen(false)}></div>
-                    <div className="absolute top-0 right-0 w-[600px] h-full bg-white shadow-2xl flex flex-col">
 
-                        {/* Drawer Header */}
-                        <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-gray-50">
-                            <div>
-                                <h2 className="text-2xl font-bold font-korean text-gray-800">
-                                    {isCompany ? 'BizMall' : 'K-Mall'}
-                                    <span className="text-hanbok-jade ml-2">전체메뉴</span>
-                                </h2>
-                                <p className="text-sm text-gray-500 mt-1">원하시는 서비스를 쉽고 빠르게 찾아보세요.</p>
-                            </div>
-                            <button
-                                onClick={() => setIsAllMenuOpen(false)}
-                                className="p-2 hover:bg-white rounded-full transition-colors text-gray-500 hover:text-red-500"
-                            >
-                                <X size={28} />
-                            </button>
-                        </div>
-
-                        {/* Drawer Content - Split Pane */}
-                        <div className="flex-1 overflow-hidden flex">
-                            {/* Left Pane: Main Categories (30%) */}
-                            <div className="w-[35%] bg-gray-50 h-full overflow-y-auto border-r border-gray-100 py-4">
-                                {navItems.map((item) => {
-                                    const isActive = activeAllMenuCategory === item.name;
-                                    return (
-                                        <button
-                                            key={item.name}
-                                            onMouseEnter={() => setActiveAllMenuCategory(item.name)}
-                                            className={clsx(
-                                                "w-full text-left px-6 py-4 font-bold text-lg transition-all flex items-center justify-between group relative",
-                                                isActive
-                                                    ? "bg-white text-hanbok-jade shadow-sm"
-                                                    : "text-gray-500 hover:text-gray-900 hover:bg-gray-100"
-                                            )}
-                                        >
-                                            {isActive && (
-                                                <div className="absolute left-0 top-0 bottom-0 w-1 bg-hanbok-jade"></div>
-                                            )}
-                                            <span>{item.name}</span>
-                                            {item.subMenus && item.subMenus.length > 0 && (
-                                                <ChevronDown size={16} className={clsx("transform transition-transform -rotate-90", isActive ? "opacity-100 text-hanbok-jade" : "opacity-30")} />
-                                            )}
-                                        </button>
-                                    );
-                                })}
-                            </div>
-
-                            {/* Right Pane: 2nd & 3rd Level (70%) */}
-                            <div className="w-[65%] bg-white h-full overflow-y-auto">
-                                <div className="p-8">
-                                    {activeAllMenuCategory && (
-                                        <div className="animate-in fade-in slide-in-from-right-4 duration-300">
-                                            <h3 className="text-xl font-bold mb-6 pb-2 border-b border-gray-100 text-gray-800 flex items-center">
-                                                {activeAllMenuCategory}
-                                                <span className="ml-auto text-xs font-normal text-gray-400">Total {navItems.find(i => i.name === activeAllMenuCategory)?.subMenus.length} items</span>
-                                            </h3>
-
-                                            <div className="space-y-8">
-                                                {navItems.find(i => i.name === activeAllMenuCategory)?.subMenus.map((sub, idx) => {
-                                                    const subName = typeof sub === 'string' ? sub : sub.name;
-                                                    const hasSubSub = typeof sub !== 'string' && 'subMenus' in sub && (sub as any).subMenus && (sub as any).subMenus.length > 0;
-
-                                                    return (
-                                                        <div key={idx} className="group">
-                                                            {/* 2nd Level Title */}
-                                                            <div className="flex items-center mb-3">
-                                                                <Link
-                                                                    to={typeof sub === 'string' ? '#' : sub.path}
-                                                                    onClick={() => setIsAllMenuOpen(false)}
-                                                                    className="text-lg font-bold text-gray-700 group-hover:text-hanbok-jade transition-colors flex items-center gap-2"
-                                                                >
-                                                                    <div className="w-1.5 h-1.5 rounded-full bg-gray-300 group-hover:bg-hanbok-jade transition-colors"></div>
-                                                                    {subName}
-                                                                </Link>
-                                                            </div>
-
-                                                            {/* 3rd Level List */}
-                                                            {hasSubSub && (
-                                                                <div className="ml-4 pl-4 border-l border-gray-100 grid grid-cols-2 gap-y-2 gap-x-4">
-                                                                    {(sub as any).subMenus.map((subSub: any, sIdx: number) => (
-                                                                        <Link
-                                                                            key={sIdx}
-                                                                            to={subSub.path}
-                                                                            onClick={() => setIsAllMenuOpen(false)}
-                                                                            className="text-sm text-gray-500 hover:text-hanbok-jade hover:underline transition-all block py-1"
-                                                                        >
-                                                                            {subSub.name}
-                                                                        </Link>
-                                                                    ))}
-                                                                </div>
-                                                            )}
-                                                        </div>
-                                                    );
-                                                })}
-                                            </div>
-
-                                            {/* Promo Card inside Drawer */}
-                                            <div className="mt-12 bg-gray-50 rounded-xl p-5 border border-gray-100">
-                                                <h4 className="font-bold text-gray-800 mb-2">Notice</h4>
-                                                <p className="text-sm text-gray-600 leading-relaxed">
-                                                    새로워진 {isCompany ? 'BizMall' : 'K-Mall'}의 전체 메뉴를 통해<br />
-                                                    원하시는 서비스를 더 빠르게 찾아보세요.
-                                                </p>
-                                            </div>
-                                        </div>
-                                    )}
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                {/* Backdrop Layer (Removed, integrated into drawer structure above) */}
 
             </nav>
+
+            {/* Mobile Menu (Moved Outside Nav) */}
+            <div
+                className={clsx(
+                    "xl:hidden bg-white border-t overflow-hidden transition-all duration-300 ease-in-out fixed inset-0 top-14 !z-[9999]",
+                    isMobileMenuOpen ? "opacity-100 visible !pointer-events-auto" : "opacity-0 invisible pointer-events-none"
+                )}
+            >
+                <div className="h-[calc(100vh-64px)] overflow-y-auto">
+                    <div className="px-4 py-2 space-y-1">
+                        {navItems.map((item) => (
+                            <div key={item.name} className="border-b border-gray-100 last:border-0">
+                                <div className="w-full flex justify-between items-center py-4 text-base font-medium text-gray-700 hover:text-gray-900">
+                                    {item.path === '#' ? (
+                                        <button
+                                            onClick={() => setExpandedMobileMenu(expandedMobileMenu === item.name ? null : item.name)}
+                                            className="flex-1 text-left !cursor-pointer !transform-none !transition-none"
+                                            style={{ background: 'transparent', cursor: 'pointer' }}
+                                        >
+                                            {item.name}
+                                        </button>
+                                    ) : (
+                                        <button
+                                            onClick={() => {
+                                                navigate(item.path);
+                                                setIsMobileMenuOpen(false);
+                                            }}
+                                            className="flex-1 text-left !cursor-pointer !transform-none !transition-none"
+                                            style={{ background: 'transparent', cursor: 'pointer' }}
+                                        >
+                                            {item.name}
+                                        </button>
+                                    )}
+
+                                    {item.subMenus && item.subMenus.length > 0 && (
+                                        <button
+                                            onClick={(e) => {
+                                                e.preventDefault();
+                                                setExpandedMobileMenu(expandedMobileMenu === item.name ? null : item.name);
+                                            }}
+                                            className="ml-4 p-1 !cursor-pointer !transform-none !transition-none"
+                                            style={{ background: 'transparent', cursor: 'pointer' }}
+                                        >
+                                            {expandedMobileMenu === item.name ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
+                                        </button>
+                                    )}
+                                </div>
+
+                                <div
+                                    className={clsx(
+                                        "bg-gray-50 space-y-1 overflow-hidden transition-all duration-300",
+                                        expandedMobileMenu === item.name ? "max-h-[800px] py-2" : "max-h-0"
+                                    )}
+                                >
+                                    {/* Mobile Submenu render */}
+                                    {item.subMenus.map((sub, idx) => {
+                                        const subName = typeof sub === 'string' ? sub : sub.name;
+                                        const targetPath = typeof sub === 'string' ? '#' : sub.path;
+                                        return (
+                                            <div key={idx}>
+                                                {targetPath && targetPath !== '#' ? (
+                                                    <button
+                                                        onClick={(e) => {
+                                                            e.preventDefault();
+                                                            e.stopPropagation();
+                                                            navigate(targetPath);
+                                                            setIsMobileMenuOpen(false);
+                                                        }}
+                                                        className="w-full text-left block px-6 py-2 text-sm text-gray-600 font-bold hover:text-hanbok-jade transition-colors relative z-10 !pointer-events-auto !cursor-pointer !transform-none !transition-none"
+                                                        style={{ background: 'transparent', cursor: 'pointer' }}
+                                                    >
+                                                        {subName}
+                                                    </button>
+                                                ) : (
+                                                    <button
+                                                        type="button"
+                                                        className="w-full text-left block px-6 py-2 text-sm text-gray-600 font-bold hover:text-hanbok-jade transition-colors cursor-default"
+                                                    >
+                                                        {subName}
+                                                    </button>
+                                                )}
+                                                {/* Render Sub-Sub items for mobile */}
+                                                {typeof sub !== 'string' && 'subMenus' in sub && (sub as any).subMenus.map((subSub: any, sIdx: number) => (
+                                                    <Link
+                                                        key={sIdx}
+                                                        to={subSub.path || '#'}
+                                                        onClick={(e) => {
+                                                            if (!subSub.path || subSub.path === '#') {
+                                                                e.preventDefault();
+                                                            } else {
+                                                                setIsMobileMenuOpen(false);
+                                                            }
+                                                        }}
+                                                        className="w-full text-left block px-8 py-2 text-xs text-gray-500 hover:text-gray-900"
+                                                    >
+                                                        - {subSub.name}
+                                                    </Link>
+                                                ))}
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            </div>
+
+
+
 
             {/* Main Content */}
             <main className="flex-grow bg-gray-50">

@@ -1,19 +1,50 @@
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { usePartners } from '../context/PartnerContext';
 import { useAuthStore } from '../store/useAuthStore';
 import MainLayout from '../layouts/MainLayout';
 import { motion } from 'framer-motion';
 import clsx from 'clsx';
+import { useState, useEffect } from 'react';
 
 export default function PerformancePartners() {
     const { partners } = usePartners();
     const navigate = useNavigate();
     const { userType } = useAuthStore();
+    const location = useLocation();
+    const searchParams = new URLSearchParams(location.search);
+
+    const isAdmin = userType === 'admin';
+    const categoryParam = searchParams.get('category');
+    const [selectedCategory, setSelectedCategory] = useState<string | null>(categoryParam);
+
+    useEffect(() => {
+        setSelectedCategory(categoryParam);
+    }, [categoryParam]);
+
+    // Update URL when dropdown changes
+    const handleCategoryChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+        const val = e.target.value;
+        setSelectedCategory(val === 'ALL' ? null : val);
+        const newParams = new URLSearchParams(searchParams);
+        if (val === 'ALL') {
+            newParams.delete('category');
+        } else {
+            newParams.set('category', val);
+        }
+        navigate(`${location.pathname}?${newParams.toString()}`);
+    };
 
     // Specific category filter
-    // Specific category filter
     const displayedPartners = partners
-        .filter(p => p.category?.trim() === '공연 & 전시')
+        .filter(p => {
+            const isPerformance = p.category?.trim() === '공연 & 전시';
+            if (!selectedCategory) return isPerformance;
+            return isPerformance && (
+                (p.description && p.description.includes(selectedCategory)) ||
+                (p.name && p.name.includes(selectedCategory)) ||
+                (p.category && p.category.includes(selectedCategory))
+            );
+        })
         .sort((a, b) => b.id - a.id);
 
     return (
@@ -35,6 +66,25 @@ export default function PerformancePartners() {
                 </div>
 
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+
+                    {/* ADMIN ONLY DROPDOWN */}
+                    {isAdmin && (
+                        <div className="mb-8 p-4 bg-white rounded-lg shadow-sm border border-gray-200 flex items-center justify-between">
+                            <span className="font-bold text-gray-700">관리자 카테고리 설정:</span>
+                            <select
+                                value={selectedCategory || 'ALL'}
+                                onChange={handleCategoryChange}
+                                className="border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:border-indigo-500"
+                            >
+                                <option value="ALL">전체 보기</option>
+                                <option value="DANCE">댄스</option>
+                                <option value="PHOTO">사진</option>
+                                <option value="CONCERT">공연</option>
+                                <option value="EXHIBITION">전시</option>
+                            </select>
+                        </div>
+                    )}
+
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
                         {displayedPartners.map((partner) => (
                             <motion.div

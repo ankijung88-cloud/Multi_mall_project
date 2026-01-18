@@ -137,7 +137,7 @@ export default function PersonalHome() {
                                 color: '#4A5568',
                                 borderLeft: '4px solid #8B5CF6'
                             }}>
-                                에이전트 찾기
+                                AGENT
                             </h2>
                             <button
                                 onClick={() => navigate('/agents')}

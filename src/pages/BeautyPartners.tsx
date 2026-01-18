@@ -1,4 +1,5 @@
 import { useNavigate, useLocation } from 'react-router-dom';
+import { useState, useEffect } from 'react';
 import { usePartners } from '../context/PartnerContext';
 import { useAuthStore } from '../store/useAuthStore';
 import MainLayout from '../layouts/MainLayout';
@@ -14,9 +15,41 @@ export default function BeautyPartners() {
     const queryType = searchParams.get('type');
     const isCompanyView = userType === 'company' || queryType === 'company';
 
+    const isAdmin = userType === 'admin';
+    const categoryParam = searchParams.get('category');
+    const [selectedCategory, setSelectedCategory] = useState<string | null>(categoryParam);
+
+    useEffect(() => {
+        setSelectedCategory(categoryParam);
+    }, [categoryParam]);
+
+    // Update URL when dropdown changes
+    const handleCategoryChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+        const val = e.target.value;
+        setSelectedCategory(val === 'ALL' ? null : val);
+        const newParams = new URLSearchParams(searchParams);
+        if (val === 'ALL') {
+            newParams.delete('category');
+        } else {
+            newParams.set('category', val);
+        }
+        navigate(`${location.pathname}?${newParams.toString()}`);
+    };
+
     // Specific category filter
     const displayedPartners = partners
-        .filter(p => p.category?.trim() === '뷰티 & 성형')
+        .filter(p => {
+            const isBeauty = p.category?.trim() === '뷰티 & 성형';
+            if (!selectedCategory) return isBeauty;
+            // Loose matching for sub-category if strict field doesn't exist
+            // Check description or name for the category keyword
+            return isBeauty && (
+                (p.description && p.description.includes(selectedCategory)) ||
+                (p.name && p.name.includes(selectedCategory)) ||
+                // Or if we decide to store it in category field later, e.g. "뷰티 & 성형 - COLOR"
+                (p.category && p.category.includes(selectedCategory))
+            );
+        })
         .sort((a, b) => b.id - a.id);
 
     return (
@@ -38,6 +71,25 @@ export default function BeautyPartners() {
                 </div>
 
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+
+                    {/* ADMIN ONLY DROPDOWN */}
+                    {isAdmin && (
+                        <div className="mb-8 p-4 bg-white rounded-lg shadow-sm border border-gray-200 flex items-center justify-between">
+                            <span className="font-bold text-gray-700">관리자 카테고리 설정:</span>
+                            <select
+                                value={selectedCategory || 'ALL'}
+                                onChange={handleCategoryChange}
+                                className="border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:border-pink-500"
+                            >
+                                <option value="ALL">전체 보기</option>
+                                <option value="COLOR">COLOR</option>
+                                <option value="PLASTIC SURGERY">PLASTIC SURGERY</option>
+                                <option value="SKIN">SKIN</option>
+                                <option value="HAIR">HAIR</option>
+                            </select>
+                        </div>
+                    )}
+
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
                         {displayedPartners.map((partner) => (
                             <motion.div
