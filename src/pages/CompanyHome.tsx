@@ -18,6 +18,7 @@ import KAuditionSection from '../components/sections/KAuditionSection';
 import KFashionSection from '../components/sections/KFashionSection';
 import KCourseSection from '../components/sections/KCourseSection';
 
+
 export default function CompanyHome() {
     const { products } = useProducts();
     const { contents } = useContents();
@@ -56,17 +57,11 @@ export default function CompanyHome() {
                 <section className="relative h-[600px] flex items-center justify-center overflow-hidden" style={{
                     background: '#FFFFFF'
                 }}>
-                    <div className="absolute inset-0 z-0" style={{
-                        backgroundImage: 'url(https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&q=80&w=2000)',
-                        backgroundSize: 'cover',
-                        backgroundPosition: 'center',
-                    }} />
+
 
                     <div className="relative z-10 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row items-center justify-between">
                         <div className="md:w-1/2">
-                            <motion.div
-                                initial={{ opacity: 0, x: -20 }}
-                                animate={{ opacity: 1, x: 0 }}
+                            <div
                                 className="inline-flex items-center space-x-2 rounded-full px-4 py-1 mb-6 font-korean"
                                 style={{
                                     background: 'rgba(255, 182, 185, 0.2)',
@@ -75,21 +70,21 @@ export default function CompanyHome() {
                             >
                                 <ShieldCheck size={16} style={{ color: '#FF9AA2' }} />
                                 <span className="text-sm font-medium" style={{ color: '#4A5568' }}>인증된 기업 파트너</span>
-                            </motion.div>
-                            <motion.h1
-                                initial={{ opacity: 0, y: 20 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                className="text-4xl md:text-6xl font-bold mb-6 leading-tight font-hanbok"
-                                style={{ color: '#FFFFFF' }}
+                            </div>
+                            <div
+                                className="text-4xl md:text-6xl font-bold mb-6 leading-tight font-korean"
+                                style={{
+                                    color: '#2D3748',
+                                }}
                             >
                                 기업을 위한 <br /><span style={{ color: '#FFB6B9' }}>특별한 혜택</span>
-                            </motion.h1>
-                            <p className="text-xl mb-8 max-w-lg font-korean" style={{ color: '#FFFFFF' }}>
+                            </div>
+                            <p className="text-xl mb-8 max-w-lg font-korean" style={{ color: '#4A5568' }}>
                                 기업 전용 할인가, 자동 인보이스 발행, 그리고 전담 지원 서비스를 경험하세요.
                             </p>
                             <button
                                 onClick={handleViewCatalog}
-                                className="font-bold py-3 px-8 rounded-lg transition-all font-korean text-white"
+                                className="font-bold py-3 px-8 rounded-full transition-all font-korean text-white hover-effect-on-air"
                                 style={{
                                     background: 'linear-gradient(135deg, #FFB6B9 0%, #FF9AA2 100%)',
                                     border: '3px solid #FFFFFF'
@@ -97,38 +92,6 @@ export default function CompanyHome() {
                             >
                                 기업 전용 카탈로그 보기
                             </button>
-                        </div>
-
-                        {/* Stats/Cards */}
-                        <div className="md:w-1/2 mt-10 md:mt-0 flex gap-4 overflow-x-auto md:justify-end pb-4 md:pb-0">
-                            <motion.div
-                                initial={{ opacity: 0, scale: 0.9 }}
-                                animate={{ opacity: 1, scale: 1 }}
-                                transition={{ delay: 0.2 }}
-                                className="p-6 rounded-xl min-w-[200px]"
-                                style={{
-                                    background: 'rgba(255, 255, 255, 0.9)',
-                                    border: '2px solid rgba(255, 182, 185, 0.3)'
-                                }}
-                            >
-                                <div className="mb-2 font-korean" style={{ color: '#FF9AA2' }}>파트너 할인</div>
-                                <div className="text-4xl font-bold" style={{ color: '#4A5568' }}>20%</div>
-                                <div className="text-sm mt-1 font-korean" style={{ color: '#8E9AAF' }}>평균 할인율</div>
-                            </motion.div>
-                            <motion.div
-                                initial={{ opacity: 0, scale: 0.9 }}
-                                animate={{ opacity: 1, scale: 1 }}
-                                transition={{ delay: 0.3 }}
-                                className="p-6 rounded-xl min-w-[200px]"
-                                style={{
-                                    background: 'rgba(255, 255, 255, 0.9)',
-                                    border: '2px solid rgba(255, 229, 180, 0.3)'
-                                }}
-                            >
-                                <div className="mb-2 font-korean" style={{ color: '#FFD89B' }}>배송 시간</div>
-                                <div className="text-4xl font-bold" style={{ color: '#4A5568' }}>24h</div>
-                                <div className="text-sm mt-1 font-korean" style={{ color: '#8E9AAF' }}>익일 배송</div>
-                            </motion.div>
                         </div>
                     </div>
 

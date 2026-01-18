@@ -5,6 +5,9 @@ import clsx from 'clsx';
 import { useAuthStore } from '../store/useAuthStore';
 import { useCart } from '../context/CartContext';
 import CartModal from '../components/CartModal';
+import PrivacyModal from '../components/PrivacyModal';
+import InquiryModal from '../components/InquiryModal';
+import FAQModal from '../components/FAQModal';
 
 interface MainLayoutProps {
     children: ReactNode;
@@ -15,6 +18,11 @@ export default function MainLayout({ children, hideFooter = false }: MainLayoutP
     const { userType, logout, isAuthenticated, viewMode } = useAuthStore();
     const navigate = useNavigate();
     const { toggleCart, totalItems } = useCart();
+
+    // Modal State
+    const [showPrivacyModal, setShowPrivacyModal] = useState(false);
+    const [showInquiryModal, setShowInquiryModal] = useState(false);
+    const [showFAQModal, setShowFAQModal] = useState(false);
 
     // Determine current view mode: prioritize userType (if logged in), otherwise viewMode (set by Landing Pages)
     // Default to 'personal' if neither is set
@@ -28,13 +36,9 @@ export default function MainLayout({ children, hideFooter = false }: MainLayoutP
     const isCompany = activeType === 'company';
 
 
-    // Helper to generate dummy sub-sub items
-    const generateSubSub = (baseName: string, count: number) => {
-        return Array.from({ length: count }, (_, i) => ({
-            name: `${baseName} 상세 ${i + 1}`,
-            path: '#'
-        }));
-    };
+
+
+
 
     const navItems = [
         {
@@ -42,42 +46,60 @@ export default function MainLayout({ children, hideFooter = false }: MainLayoutP
             path: isCompany ? '/company' : '/personal',
             subMenus: isCompany
                 ? [
-                    { name: '소개', path: '/intro?type=company', subMenus: generateSubSub('소개', 5) },
-                    { name: '공지사항', path: '/notice?type=company', subMenus: generateSubSub('공지사항', 5) },
-                    { name: '이벤트', path: '/event?type=company', subMenus: generateSubSub('이벤트', 5) },
-                    { name: '오시는 길', path: '/location?type=company', subMenus: generateSubSub('오시는 길', 5) },
-                    { name: '사이트맵', path: '/sitemap?type=company', subMenus: generateSubSub('사이트맵', 5) }
+                    { name: '소개', path: '/intro?type=company' },
+                    { name: '공지사항', path: '/notice?type=company' },
+                    { name: '이벤트', path: '/event?type=company' },
+                    { name: '오시는 길', path: '/location?type=company' },
+                    { name: '사이트맵', path: '/sitemap?type=company' }
                 ]
                 : [
-                    { name: '소개', path: '/intro', subMenus: generateSubSub('소개', 5) },
-                    { name: '공지사항', path: '/notice', subMenus: generateSubSub('공지사항', 5) },
-                    { name: '이벤트', path: '/event', subMenus: generateSubSub('이벤트', 5) },
-                    { name: '채용', path: '/recruit', subMenus: generateSubSub('채용', 5) },
-                    { name: '오시는 길', path: '/location', subMenus: generateSubSub('오시는 길', 5) }
+                    { name: '소개', path: '/intro' },
+                    { name: '공지사항', path: '/notice' },
+                    { name: '이벤트', path: '/event' },
+                    { name: '채용', path: '/recruit' },
+                    { name: '오시는 길', path: '/location' }
                 ]
         },
         {
             name: 'K-컬처',
             path: isCompany ? '/partners?type=company' : '/partners',
             subMenus: [
-                { name: 'K-COURSE', path: isCompany ? '/partners/course?type=company' : '/partners/course', subMenus: generateSubSub('K-COURSE', 5) },
-                { name: 'K-BEAUTY', path: isCompany ? '/partners/beauty?type=company' : '/partners/beauty', subMenus: generateSubSub('K-BEAUTY', 5) },
-                { name: 'K-PERFORMANCE', path: isCompany ? '/partners/performance?type=company' : '/partners/performance', subMenus: generateSubSub('K-PERFORMANCE', 5) },
-                { name: 'K-AUDITION', path: isCompany ? '/partners/audition?type=company' : '/partners/audition', subMenus: generateSubSub('K-AUDITION', 5) },
-                { name: 'K-FASHION', path: isCompany ? '/partners/fashion?type=company' : '/partners/fashion', subMenus: generateSubSub('K-FASHION', 5) },
-                { name: 'K-FOOD', path: isCompany ? '/partners/travel?type=company' : '/partners/travel', subMenus: generateSubSub('K-FOOD', 5) },
-                { name: 'K-GUIDE', path: isCompany ? '/partners/guide?type=company' : '/partners/guide', subMenus: generateSubSub('K-GUIDE', 5) }
+                { name: 'K-COURSE', path: isCompany ? '/partners/course?type=company' : '/partners/course' },
+                {
+                    name: 'K-BEAUTY',
+                    path: isCompany ? '/partners/beauty?type=company' : '/partners/beauty',
+                    subMenus: [
+                        { name: 'COLOR', path: '#' },
+                        { name: 'PLASTIC SURGERY', path: '#' },
+                        { name: 'SKIN', path: '#' },
+                        { name: 'HAIR', path: '#' }
+                    ]
+                },
+                {
+                    name: 'K-PERFORMANCE',
+                    path: isCompany ? '/partners/performance?type=company' : '/partners/performance',
+                    subMenus: [
+                        { name: '댄스', path: '#' },
+                        { name: '사진', path: '#' },
+                        { name: '공연', path: '#' },
+                        { name: '전시', path: '#' }
+                    ]
+                },
+                { name: 'K-AUDITION', path: isCompany ? '/partners/audition?type=company' : '/partners/audition' },
+                { name: 'K-FASHION', path: isCompany ? '/partners/fashion?type=company' : '/partners/fashion' },
+                { name: 'K-FOOD', path: isCompany ? '/partners/travel?type=company' : '/partners/travel' },
+                { name: 'K-GUIDE', path: isCompany ? '/partners/guide?type=company' : '/partners/guide' }
             ]
         },
         {
             name: '에이전트',
             path: isCompany ? '/agents?type=company' : '/agents',
             subMenus: [
-                { name: '이용 가이드', path: isCompany ? '/agents/guide?type=company' : '/agents/guide', subMenus: generateSubSub('이용 가이드', 5) },
-                { name: '수수료 안내', path: isCompany ? '/agents/fee?type=company' : '/agents/fee', subMenus: generateSubSub('수수료 안내', 5) },
-                { name: '후기', path: isCompany ? '/agents/reviews?type=company' : '/agents/reviews', subMenus: generateSubSub('후기', 5) },
-                { name: '혜택 안내', path: isCompany ? '/agents/benefits?type=company' : '/agents/benefits', subMenus: generateSubSub('혜택 안내', 5) },
-                { name: '자주 묻는 질문', path: isCompany ? '/agents/faq?type=company' : '/agents/faq', subMenus: generateSubSub('FAQ', 5) }
+                { name: '이용 가이드', path: isCompany ? '/agents/guide?type=company' : '/agents/guide' },
+                { name: '수수료 안내', path: isCompany ? '/agents/fee?type=company' : '/agents/fee' },
+                { name: '후기', path: isCompany ? '/agents/reviews?type=company' : '/agents/reviews' },
+                { name: '혜택 안내', path: isCompany ? '/agents/benefits?type=company' : '/agents/benefits' },
+                { name: '자주 묻는 질문', path: isCompany ? '/agents/faq?type=company' : '/agents/faq' }
             ]
         },
         {
@@ -85,29 +107,29 @@ export default function MainLayout({ children, hideFooter = false }: MainLayoutP
             path: isCompany ? '/contents?type=company' : '/contents',
             subMenus: isCompany
                 ? [
-                    { name: '등록컨텐츠', path: '/contents?type=company', subMenus: generateSubSub('등록컨텐츠', 5) },
-                    { name: '통계', path: '/contents/stats?type=company', subMenus: generateSubSub('통계', 5) },
-                    { name: '설정', path: '/contents/settings?type=company', subMenus: generateSubSub('설정', 5) },
-                    { name: '알림', path: '/contents/notifications?type=company', subMenus: generateSubSub('알림', 5) },
-                    { name: '고객지원', path: '/contents/support?type=company', subMenus: generateSubSub('고객지원', 5) }
+                    { name: '등록컨텐츠', path: '/contents?type=company' },
+                    { name: '통계', path: '/contents/stats?type=company' },
+                    { name: '설정', path: '/contents/settings?type=company' },
+                    { name: '알림', path: '/contents/notifications?type=company' },
+                    { name: '고객지원', path: '/contents/support?type=company' }
                 ]
                 : [
-                    { name: '등록컨텐츠', path: '/contents', subMenus: generateSubSub('등록컨텐츠', 5) },
-                    { name: '나의 컨텐츠', path: '/contents/my', subMenus: generateSubSub('나의 컨텐츠', 5) },
-                    { name: '관심 목록', path: '/contents/wishlist', subMenus: generateSubSub('관심 목록', 5) },
-                    { name: '활동 내역', path: '/contents/history', subMenus: generateSubSub('활동 내역', 5) },
-                    { name: '설정', path: '/contents/settings', subMenus: generateSubSub('설정', 5) }
+                    { name: '등록컨텐츠', path: '/contents' },
+                    { name: '나의 컨텐츠', path: '/contents/my' },
+                    { name: '관심 목록', path: '/contents/wishlist' },
+                    { name: '활동 내역', path: '/contents/history' },
+                    { name: '설정', path: '/contents/settings' }
                 ]
         },
         {
             name: '커뮤니티',
             path: '#',
             subMenus: [
-                { name: '정보공유', path: isCompany ? '/community/info?type=company' : '/community/info', subMenus: generateSubSub('정보공유', 5) },
-                { name: '항공사링크', path: isCompany ? '/community/airline?type=company' : '/community/airline', subMenus: generateSubSub('항공사링크', 5) },
-                { name: '호텔링크', path: isCompany ? '/community/hotel?type=company' : '/community/hotel', subMenus: generateSubSub('호텔링크', 5) },
-                { name: '교통링크', path: isCompany ? '/community/transport?type=company' : '/community/transport', subMenus: generateSubSub('교통링크', 5) },
-                { name: '고객센터', path: isCompany ? '/community/center?type=company' : '/community/center', subMenus: generateSubSub('고객센터', 5) }
+                { name: '정보공유', path: isCompany ? '/community/info?type=company' : '/community/info' },
+                { name: '항공사링크', path: isCompany ? '/community/airline?type=company' : '/community/airline' },
+                { name: '호텔링크', path: isCompany ? '/community/hotel?type=company' : '/community/hotel' },
+                { name: '교통링크', path: isCompany ? '/community/transport?type=company' : '/community/transport' },
+                { name: '고객센터', path: isCompany ? '/community/center?type=company' : '/community/center' }
             ]
         },
         {
@@ -115,18 +137,18 @@ export default function MainLayout({ children, hideFooter = false }: MainLayoutP
             path: isCompany ? '/shop?type=company' : '/shop',
             subMenus: isCompany
                 ? [
-                    { name: '추천', path: '/shop?type=company#recommended', subMenus: generateSubSub('추천', 5) },
-                    { name: '신상품', path: '/shop?type=company#new', subMenus: generateSubSub('신상품', 5) },
-                    { name: '브랜드', path: '/shop?type=company#brand', subMenus: generateSubSub('브랜드', 5) },
-                    { name: '세일', path: '/shop?type=company#sale', subMenus: generateSubSub('세일', 5) },
-                    { name: '베스트', path: '/shop?type=company#best', subMenus: generateSubSub('베스트', 5) }
+                    { name: '추천', path: '/shop?type=company#recommended' },
+                    { name: '신상품', path: '/shop?type=company#new' },
+                    { name: '브랜드', path: '/shop?type=company#brand' },
+                    { name: '세일', path: '/shop?type=company#sale' },
+                    { name: '베스트', path: '/shop?type=company#best' }
                 ]
                 : [
-                    { name: '추천', path: '/shop#recommended', subMenus: generateSubSub('추천', 5) },
-                    { name: '신상품', path: '/shop#new', subMenus: generateSubSub('신상품', 5) },
-                    { name: '브랜드', path: '/shop#brand', subMenus: generateSubSub('브랜드', 5) },
-                    { name: '세일', path: '/shop#sale', subMenus: generateSubSub('세일', 5) },
-                    { name: '베스트', path: '/shop#best', subMenus: generateSubSub('베스트', 5) }
+                    { name: '추천', path: '/shop#recommended' },
+                    { name: '신상품', path: '/shop#new' },
+                    { name: '브랜드', path: '/shop#brand' },
+                    { name: '세일', path: '/shop#sale' },
+                    { name: '베스트', path: '/shop#best' }
                 ]
         },
     ];
@@ -186,7 +208,7 @@ export default function MainLayout({ children, hideFooter = false }: MainLayoutP
             }}>
                 {/* Merged Header (Logo + Search + Utilities) */}
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                    <div className="flex justify-between items-center h-20">
+                    <div className="flex justify-between items-center h-14">
                         {/* Left: Logo & Search */}
                         <div className="flex items-center gap-8">
                             {/* Logo */}
@@ -318,7 +340,7 @@ export default function MainLayout({ children, hideFooter = false }: MainLayoutP
                             <div className="flex h-full items-stretch space-x-1 flex-1">
                                 {navItems.map((item) => (
                                     <div key={item.name} className="relative group px-1 h-full flex items-center">
-                                        <div className="group flex flex-col items-center h-full justify-center">
+                                        <div className="group flex flex-col items-center h-full justify-center relative">
                                             <Link
                                                 to={item.path}
                                                 className={clsx(
@@ -331,6 +353,23 @@ export default function MainLayout({ children, hideFooter = false }: MainLayoutP
                                                 {item.name}
                                             </Link>
 
+                                            {/* Dropdown Menu */}
+                                            {item.subMenus && item.subMenus.length > 0 && (
+                                                <div className="absolute top-full left-0 w-48 bg-white shadow-lg rounded-b-lg overflow-hidden hidden group-hover:block z-50 transition-all duration-200 opacity-0 group-hover:opacity-100 translate-y-2 group-hover:translate-y-0"
+                                                    style={{ borderTop: isCompany ? '2px solid #FFB6B9' : '2px solid #A8D8EA' }}>
+                                                    <div className="py-2">
+                                                        {item.subMenus.map((subItem) => (
+                                                            <Link
+                                                                key={subItem.name}
+                                                                to={subItem.path}
+                                                                className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-hanbok-jade transition-colors font-medium"
+                                                            >
+                                                                {subItem.name}
+                                                            </Link>
+                                                        ))}
+                                                    </div>
+                                                </div>
+                                            )}
                                         </div>
                                     </div>
                                 ))}
@@ -408,7 +447,7 @@ export default function MainLayout({ children, hideFooter = false }: MainLayoutP
                                                 <div key={idx}>
                                                     <div className="px-6 py-2 text-sm text-gray-600 font-bold">{subName}</div>
                                                     {/* Render Sub-Sub items for mobile */}
-                                                    {typeof sub !== 'string' && sub.subMenus && sub.subMenus.map((subSub: any, sIdx: number) => (
+                                                    {typeof sub !== 'string' && 'subMenus' in sub && (sub as any).subMenus.map((subSub: any, sIdx: number) => (
                                                         <Link
                                                             key={sIdx}
                                                             to={subSub.path}
@@ -498,7 +537,7 @@ export default function MainLayout({ children, hideFooter = false }: MainLayoutP
                                             <div className="space-y-8">
                                                 {navItems.find(i => i.name === activeAllMenuCategory)?.subMenus.map((sub, idx) => {
                                                     const subName = typeof sub === 'string' ? sub : sub.name;
-                                                    const hasSubSub = typeof sub !== 'string' && sub.subMenus && sub.subMenus.length > 0;
+                                                    const hasSubSub = typeof sub !== 'string' && 'subMenus' in sub && (sub as any).subMenus && (sub as any).subMenus.length > 0;
 
                                                     return (
                                                         <div key={idx} className="group">
@@ -551,13 +590,7 @@ export default function MainLayout({ children, hideFooter = false }: MainLayoutP
                 </div>
 
                 {/* Backdrop Layer (Removed, integrated into drawer structure above) */}
-                {/* Decorative Bar (50% height of bottom nav = h-7 -> reduced by 50% again = h-3.5) */}
-                <div className="w-full h-3.5" style={{
-                    backgroundImage: 'url(/images/header_bg.jpg)',
-                    backgroundSize: 'cover',
-                    backgroundPosition: 'center',
-                    backgroundRepeat: 'no-repeat'
-                }}></div>
+
             </nav>
 
             {/* Main Content */}
@@ -586,19 +619,25 @@ export default function MainLayout({ children, hideFooter = false }: MainLayoutP
                                 <h3 className="text-sm font-semibold text-gray-400 tracking-wider uppercase">고객센터</h3>
                                 <ul className="mt-4 space-y-4">
                                     <li>
-                                        <a href="#" className="text-base text-gray-500 hover:text-gray-900">
+                                        <button
+                                            onClick={() => setShowInquiryModal(true)}
+                                            className="text-base text-gray-500 hover:text-gray-900"
+                                        >
                                             1:1 문의
-                                        </a>
+                                        </button>
                                     </li>
                                     <li>
-                                        <a href="#" className="text-base text-gray-500 hover:text-gray-900">
+                                        <button
+                                            onClick={() => setShowFAQModal(true)}
+                                            className="text-base text-gray-500 hover:text-gray-900"
+                                        >
                                             자주 묻는 질문
-                                        </a>
+                                        </button>
                                     </li>
                                     <li>
-                                        <a href="#" className="text-base text-gray-500 hover:text-gray-900">
+                                        <Link to="/notice" className="text-base text-gray-500 hover:text-gray-900">
                                             공지사항
-                                        </a>
+                                        </Link>
                                     </li>
                                 </ul>
                             </div>
@@ -606,9 +645,12 @@ export default function MainLayout({ children, hideFooter = false }: MainLayoutP
                                 <h3 className="text-sm font-semibold text-gray-400 tracking-wider uppercase">회사소개</h3>
                                 <ul className="mt-4 space-y-4">
                                     <li>
-                                        <a href="#" className="text-base text-gray-500 hover:text-gray-900">
+                                        <Link
+                                            to={isCompany ? "/intro?type=company" : "/intro"}
+                                            className="text-base text-gray-500 hover:text-gray-900 cursor-pointer"
+                                        >
                                             회사소개
-                                        </a>
+                                        </Link>
                                     </li>
                                     <li>
                                         <a href="#" className="text-base text-gray-500 hover:text-gray-900">
@@ -616,9 +658,12 @@ export default function MainLayout({ children, hideFooter = false }: MainLayoutP
                                         </a>
                                     </li>
                                     <li>
-                                        <a href="#" className="text-base text-gray-500 hover:text-gray-900">
+                                        <button
+                                            onClick={() => setShowPrivacyModal(true)}
+                                            className="text-base text-gray-500 hover:text-gray-900 font-bold"
+                                        >
                                             개인정보처리방침
-                                        </a>
+                                        </button>
                                     </li>
                                 </ul>
                             </div>
@@ -633,6 +678,9 @@ export default function MainLayout({ children, hideFooter = false }: MainLayoutP
             )}
 
             <CartModal />
+            <PrivacyModal isOpen={showPrivacyModal} onClose={() => setShowPrivacyModal(false)} />
+            <InquiryModal isOpen={showInquiryModal} onClose={() => setShowInquiryModal(false)} />
+            <FAQModal isOpen={showFAQModal} onClose={() => setShowFAQModal(false)} />
         </div>
     );
 }

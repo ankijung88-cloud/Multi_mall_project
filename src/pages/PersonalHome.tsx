@@ -35,7 +35,7 @@ export default function PersonalHome() {
 
     const displayedProducts = (isFiltered
         ? products.filter(p => p.isRecommendedPersonal)
-        : products).slice(0, 6);
+        : products).slice(0, 8);
 
     const handleShopCollection = () => {
         setIsFiltered(true);
@@ -74,8 +74,13 @@ export default function PersonalHome() {
                         backgroundPosition: 'center',
                     }} />
 
+                    {/* Dark Overlay with Gradient */}
+                    <div className="absolute inset-0 z-0" style={{
+                        background: 'linear-gradient(to bottom, rgba(0,0,0,0.3), rgba(0,0,0,0.6))'
+                    }} />
+
                     <div className="relative z-10 text-center px-4 max-w-7xl mx-auto">
-                        <motion.h1
+                        <div
                             className="text-5xl md:text-7xl font-extrabold mb-6 tracking-tight font-hanbok"
                             style={{
                                 color: '#FFFFFF',
@@ -83,8 +88,8 @@ export default function PersonalHome() {
                             }}
                         >
                             한국 문화의 <span style={{ color: '#A8D8EA', textShadow: '0 2px 4px rgba(255, 255, 255, 0.4)' }}>특별한 경험</span>
-                        </motion.h1>
-                        <motion.p
+                        </div>
+                        <p
                             className="text-xl md:text-2xl mb-10 font-korean"
                             style={{
                                 color: '#FFFFFF',
@@ -92,12 +97,10 @@ export default function PersonalHome() {
                             }}
                         >
                             K-Culture의 모든 것, 당신만을 위한 프리미엄 여정
-                        </motion.p>
-                        <motion.button
-                            whileHover={{ scale: 1.05 }}
-                            whileTap={{ scale: 0.95 }}
+                        </p>
+                        <button
                             onClick={handleShopCollection}
-                            className="font-bold py-4 px-10 rounded-full text-lg font-korean transition-all text-white"
+                            className="font-bold py-4 px-10 rounded-full text-lg font-korean transition-all text-white hover-effect-on-air"
                             style={{
                                 background: 'linear-gradient(135deg, #A8D8EA 0%, #7AC5DC 100%)',
                                 border: '3px solid #FFFFFF'
@@ -105,7 +108,7 @@ export default function PersonalHome() {
                         >
                             시작하기
 
-                        </motion.button>
+                        </button>
                     </div>
 
 
@@ -208,53 +211,48 @@ export default function PersonalHome() {
                             </div>
                         </div>
 
-                        {/* Carousel Container */}
-                        <div className="relative group">
-                            <div
-                                className="flex overflow-x-auto snap-x snap-mandatory gap-6 pb-6 scrollbar-hide"
-                                style={{ scrollBehavior: 'smooth' }}
-                            >
-                                {useContents().contents.slice(0, 10).map((content) => (
-                                    <motion.div
-                                        key={content.id}
-                                        whileHover={{ y: -5 }}
-                                        className="min-w-[280px] md:min-w-[320px] bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-all cursor-pointer snap-start"
-                                        onClick={() => navigate(`/contents/${content.id}`)}
-                                    >
-                                        <div className="relative h-48 overflow-hidden">
-                                            <img
-                                                src={content.thumbnailUrl}
-                                                alt={content.title}
-                                                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                                            />
-                                            <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
-                                            <div className="absolute bottom-4 left-4 text-white">
-                                                <p className="text-xs font-medium text-orange-200 mb-1">{content.userName}</p>
-                                                <h3 className="font-bold text-lg line-clamp-1">{content.title}</h3>
-                                            </div>
-                                            <div className="absolute top-4 right-4 bg-black/60 backdrop-blur-sm px-2 py-1 rounded text-white text-xs font-bold">
-                                                ₩{content.price.toLocaleString()}
-                                            </div>
+                        {/* Grid Container */}
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+                            {useContents().contents.slice(0, 8).map((content) => (
+                                <motion.div
+                                    key={content.id}
+                                    whileHover={{ y: -5 }}
+                                    className="bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-all cursor-pointer"
+                                    onClick={() => navigate(`/contents/${content.id}`)}
+                                >
+                                    <div className="relative h-48 overflow-hidden">
+                                        <img
+                                            src={content.thumbnailUrl}
+                                            alt={content.title}
+                                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                                        />
+                                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+                                        <div className="absolute bottom-4 left-4 text-white">
+                                            <p className="text-xs font-medium text-orange-200 mb-1">{content.userName}</p>
+                                            <h3 className="font-bold text-lg line-clamp-1">{content.title}</h3>
                                         </div>
-                                        <div className="p-4">
-                                            <p className="text-gray-600 text-sm line-clamp-2 mb-3">
-                                                {content.description}
-                                            </p>
-                                            <div className="flex items-center text-xs text-orange-500 font-medium">
-                                                <span>상세보기</span>
-                                                <svg className="w-4 h-4 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                                                </svg>
-                                            </div>
+                                        <div className="absolute top-4 right-4 bg-black/60 backdrop-blur-sm px-2 py-1 rounded text-white text-xs font-bold">
+                                            ₩{content.price.toLocaleString()}
                                         </div>
-                                    </motion.div>
-                                ))}
-                                {useContents().contents.length === 0 && (
-                                    <div className="w-full text-center py-10 text-gray-500 bg-white rounded-xl">
-                                        등록된 컨텐츠가 없습니다.
                                     </div>
-                                )}
-                            </div>
+                                    <div className="p-4">
+                                        <p className="text-gray-600 text-sm line-clamp-2 mb-3">
+                                            {content.description}
+                                        </p>
+                                        <div className="flex items-center text-xs text-orange-500 font-medium">
+                                            <span>상세보기</span>
+                                            <svg className="w-4 h-4 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                                            </svg>
+                                        </div>
+                                    </div>
+                                </motion.div>
+                            ))}
+                            {useContents().contents.length === 0 && (
+                                <div className="col-span-full text-center py-10 text-gray-500 bg-white rounded-xl">
+                                    등록된 컨텐츠가 없습니다.
+                                </div>
+                            )}
                         </div>
                     </div>
                 </section>
@@ -291,7 +289,7 @@ export default function PersonalHome() {
                         </div>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
                         {displayedProducts.map((product) => (
                             <motion.div
                                 key={product.id}

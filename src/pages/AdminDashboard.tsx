@@ -8,6 +8,7 @@ import { usePartners } from '../context/PartnerContext';
 import { useAgents } from '../context/AgentContext';
 import { useFreelancers } from '../context/FreelancerContext';
 import { useBoard } from '../context/BoardContext';
+import { useInquiryStore } from '../store/useInquiryStore';
 import { Trash } from 'lucide-react';
 import clsx from 'clsx';
 
@@ -18,6 +19,7 @@ export default function AdminDashboard() {
     const { requests: agentRequests } = useAgents();
     const { requests: freelancerRequests, freelancers } = useFreelancers();
     const { posts, deletePost } = useBoard();
+    const { inquiries, deleteInquiry, updateStatus } = useInquiryStore();
 
     // Stats State
     const [stats, setStats] = useState({
@@ -594,6 +596,90 @@ export default function AdminDashboard() {
                                     </tr>
                                 ));
                             })()}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            {/* 1:1 Inquiry List (Admin Dashboard Integration) */}
+            <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200 mb-8">
+                <div className="flex justify-between items-center mb-4">
+                    <div className="flex items-center gap-2">
+                        <h3 className="font-bold text-gray-800">1:1 Inquiries (고객 문의)</h3>
+                        <span className="bg-blue-50 text-blue-600 text-xs px-2 py-0.5 rounded-full font-bold">
+                            {inquiries.filter(i => i.status === 'Pending').length} Pending
+                        </span>
+                    </div>
+                </div>
+
+                <div className="overflow-x-auto">
+                    <table className="w-full text-left">
+                        <thead className="bg-gray-50 border-b border-gray-100">
+                            <tr>
+                                <th className="px-4 py-3 text-xs font-semibold text-gray-500">Date</th>
+                                <th className="px-4 py-3 text-xs font-semibold text-gray-500">Type</th>
+                                <th className="px-4 py-3 text-xs font-semibold text-gray-500">Author</th>
+                                <th className="px-4 py-3 text-xs font-semibold text-gray-500">Subject</th>
+                                <th className="px-4 py-3 text-xs font-semibold text-gray-500">Content</th>
+                                <th className="px-4 py-3 text-xs font-semibold text-gray-500 text-right">Status</th>
+                                <th className="px-4 py-3 text-xs font-semibold text-gray-500 text-right">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody className="divide-y divide-gray-100">
+                            {inquiries.length === 0 ? (
+                                <tr>
+                                    <td colSpan={7} className="px-4 py-8 text-center text-gray-400 text-sm">
+                                        등록된 문의 내역이 없습니다. (No inquiries found)
+                                    </td>
+                                </tr>
+                            ) : (
+                                inquiries.slice(0, 5).map((inq) => (
+                                    <tr key={inq.id} className="hover:bg-gray-50 transition-colors">
+                                        <td className="px-4 py-3 text-xs text-gray-500">
+                                            {new Date(inq.date).toLocaleDateString()}
+                                        </td>
+                                        <td className="px-4 py-3">
+                                            <span className={clsx(
+                                                "text-[10px] px-2 py-0.5 rounded font-bold border",
+                                                inq.userType === 'Company' ? "bg-indigo-50 text-indigo-700 border-indigo-100" : "bg-gray-50 text-gray-600 border-gray-100"
+                                            )}>
+                                                {inq.userType} / {inq.type}
+                                            </span>
+                                        </td>
+                                        <td className="px-4 py-3 text-sm font-medium text-gray-800">
+                                            {inq.author}
+                                            <div className="text-[10px] text-gray-400">{inq.email}</div>
+                                        </td>
+                                        <td className="px-4 py-3 text-sm text-gray-600 font-bold">
+                                            {inq.type}
+                                        </td>
+                                        <td className="px-4 py-3 text-sm text-gray-600 truncate max-w-[200px]" title={inq.content}>
+                                            {inq.content}
+                                        </td>
+                                        <td className="px-4 py-3 text-right">
+                                            <button
+                                                onClick={() => updateStatus(inq.id, inq.status === 'Pending' ? 'Answered' : 'Pending')}
+                                                className={clsx(
+                                                    "text-[10px] px-2 py-1 rounded font-bold transition-colors",
+                                                    inq.status === 'Pending' ? "bg-yellow-100 text-yellow-700 hover:bg-yellow-200" : "bg-green-100 text-green-700 hover:bg-green-200"
+                                                )}
+                                            >
+                                                {inq.status}
+                                            </button>
+                                        </td>
+                                        <td className="px-4 py-3 text-right">
+                                            <button
+                                                onClick={() => {
+                                                    if (confirm('Delete this inquiry?')) deleteInquiry(inq.id);
+                                                }}
+                                                className="text-gray-300 hover:text-red-500"
+                                            >
+                                                <Trash size={16} />
+                                            </button>
+                                        </td>
+                                    </tr>
+                                ))
+                            )}
                         </tbody>
                     </table>
                 </div>
